@@ -1,20 +1,16 @@
 package com.dineswift.userservice.controller;
 
 import com.dineswift.userservice.model.entites.BookingStatus;
-import com.dineswift.userservice.model.request.LoginRequest;
-import com.dineswift.userservice.model.request.UserDetailsRequest;
-import com.dineswift.userservice.model.request.UserRequest;
-import com.dineswift.userservice.model.response.AuthResponse;
+import com.dineswift.userservice.model.request.*;
 import com.dineswift.userservice.model.response.BookingDTO;
 import com.dineswift.userservice.model.response.UserDTO;
 import com.dineswift.userservice.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import javax.security.auth.login.LoginException;
 import java.util.UUID;
 
 @RestController
@@ -58,5 +54,19 @@ public class UserController {
         userService.deactivateUser(userId);
         return ResponseEntity.ok("Account has been deleted Successfully");
     }
+
+    @PostMapping("/update-username/{userId}")
+    public ResponseEntity<String> updateUserName(@PathVariable UUID userId, @Valid @RequestBody UsernameUpdateRequest usernameRequest){
+        userService.updateUsername(userId,usernameRequest);
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body("Username Updated Successfully");
+    }
+
+    @PostMapping("/update-password/{userId}")
+    public ResponseEntity<String> updatePassword(@PathVariable UUID userId, @Valid @RequestBody PasswordUpdateRequest passwordRequest){
+        userService.updatePassword(userId,passwordRequest);
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body("Password Updated Successfully");
+    }
+
+
 
 }
