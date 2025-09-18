@@ -1,6 +1,7 @@
 package com.dineswift.userservice.service;
 
 import com.dineswift.userservice.exception.BookingException;
+import com.dineswift.userservice.exception.CustomAuthenticationException;
 import com.dineswift.userservice.exception.UserException;
 import com.dineswift.userservice.model.entites.*;
 import com.dineswift.userservice.model.request.LoginRequest;
@@ -20,6 +21,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import javax.security.auth.login.LoginException;
@@ -30,55 +34,14 @@ import java.util.*;
 public class UserService {
 
     private final UserRepository userRepository;
-    private final RoleRepository roleRepository;
     private final BookingRepository bookingRepository;
     private final ModelMapper modelMapper;
 
 
-    public UserService(UserRepository userRepository, RoleRepository roleRepository, BookingRepository bookingRepository, ModelMapper modelMapper) {
+    public UserService(UserRepository userRepository, BookingRepository bookingRepository, ModelMapper modelMapper) {
         this.userRepository = userRepository;
-        this.roleRepository = roleRepository;
         this.bookingRepository = bookingRepository;
         this.modelMapper = modelMapper;
-    }
-
-    public AuthResponse signupUser(UserRequest userRequest) {
-        try {
-            if (userRequest==null){
-                throw new UserException("User Details not found");
-            }
-            User user=modelMapper.map(userRequest,User.class);
-
-            Cart cart=new Cart();
-
-            Role role=roleRepository.findByRoleName("USER");
-
-            user.setRoles(Set.of(role));
-            user.setCart(cart);
-
-            userRepository.save(user);
-
-            UserDTO userDTO=modelMapper.map(user,UserDTO.class);
-
-            AuthResponse authResponse=new AuthResponse();
-            authResponse.setUser(userDTO);
-            authResponse.setExpiresIn(15);
-            authResponse.setAuthToken(UUID.randomUUID().toString());
-
-            return authResponse;
-
-        } catch (DataIntegrityViolationException e){
-            throw new DataIntegrityViolationException(e.getLocalizedMessage());
-        }
-
-    }
-
-    public AuthResponse signInUser(@Valid LoginRequest loginRequest) throws LoginException {
-        AuthResponse authResponse=new AuthResponse();
-//        authResponse.setUser(userDTO);
-        authResponse.setExpiresIn(15);
-        authResponse.setAuthToken(UUID.randomUUID().toString());
-        return authResponse;
     }
 
     public UserDTO updateDetails(UserDetailsRequest userDetailsRequest, UUID userId) {
@@ -86,11 +49,41 @@ public class UserService {
         User user=userRepository.findById(userId).orElseThrow(
                 () -> new UserException("User not found with ID: " + userId));
 
+        if (!isValidUser(user)){
+            throw new CustomAuthenticationException("Not a Valid User");
+        }
         updateUserFromRequest(user, userDetailsRequest);
 
         userRepository.save(user);
 
         return modelMapper.map(user,UserDTO.class);
+    }
+
+    private boolean isValidUser(User user) {
+
+        User currentUser=getCurrentUser();
+        if (user.equals(currentUser)){
+            return true;
+        }
+        return false;
+    }
+
+    private User getCurrentUser() {
+        try {
+            User user = null;
+            Authentication authentication= SecurityContextHolder.getContext().getAuthentication();
+            if (authentication!=null && authentication.isAuthenticated()){
+                Object principal = authentication.getPrincipal();
+
+                if (principal instanceof User) {
+                     user=(User) principal;
+                }
+            }
+            return user;
+        } catch (AuthenticationException e) {
+            throw new CustomAuthenticationException(e.getLocalizedMessage());
+        }
+
     }
 
     private void updateUserFromRequest(User user, UserDetailsRequest request) {

@@ -11,6 +11,7 @@ import com.dineswift.userservice.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import javax.security.auth.login.LoginException;
@@ -31,18 +32,6 @@ public class UserController {
         return "Hello World";
     }
 
-    @PostMapping("/sign-up")
-    public ResponseEntity<AuthResponse> signup(@Valid @RequestBody UserRequest userRequest){
-        AuthResponse authResponse=userService.signupUser(userRequest);
-        return ResponseEntity.ok(authResponse);
-    }
-
-    @PostMapping("/sign-in")
-    public ResponseEntity<AuthResponse> signIn(@Valid @RequestBody LoginRequest loginRequest) throws LoginException {
-        AuthResponse authResponse=userService.signInUser(loginRequest);
-        return ResponseEntity.ok(authResponse);
-
-    }
 
     @GetMapping("/bookings/{userId}")
     public ResponseEntity<Page<BookingDTO>> getBookings(
@@ -64,6 +53,7 @@ public class UserController {
     }
 
     @DeleteMapping("/delete/{userId}")
+    //@PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<String> deactivateUser(@PathVariable UUID userId){
         userService.deactivateUser(userId);
         return ResponseEntity.ok("Account has been deleted Successfully");

@@ -4,3 +4,7 @@ spring:
 
   profiles:
     active: dev
+
+jwt:
+  secret-key: "3A7F5D9C1E6B8A2F4D9C0E5B8A1F3D7E2C6A9D0B4F8E3C7A1D5F9E2B6C8A0D4"
+  expiration-time: 86400000

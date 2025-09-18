@@ -42,15 +42,6 @@ public class ExceptionHandler {
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
 
-
-    @org.springframework.web.bind.annotation.ExceptionHandler(LoginException.class)
-    public ResponseEntity<ErrorResponse> handleLoginErrors(LoginException ex){
-        String errorMessage= ex.getLocalizedMessage();
-        ErrorResponse error = new ErrorResponse( errorMessage,HttpStatus.NOT_FOUND);
-        return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
-
-    }
-
     @org.springframework.web.bind.annotation.ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ErrorResponse> handleMismatchException(MethodArgumentTypeMismatchException ex){
         List<String> strings= Collections.singletonList(ex.getParameter().toString());
