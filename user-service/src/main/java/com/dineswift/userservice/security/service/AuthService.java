@@ -49,7 +49,7 @@ public class AuthService {
                 throw new UserException("User Details not found");
             }
             User user=modelMapper.map(userRequest,User.class);
-            String encodedPassword= passwordEncoder.encode(userRequest.getPassword());
+            String encodedPassword=passwordEncoder.encode(userRequest.getPassword());
             user.setPassword(encodedPassword);
 
             Cart cart=new Cart();
@@ -89,6 +89,8 @@ public class AuthService {
             jwtToken=jwtUtilities.generateToken(loginRequest.getEmail());
 
             User user=userRepository.findByEmail(loginRequest.getEmail()).orElseThrow(()->new UserException(" User not found with provided mail Id"));
+            isActiveUser(user);
+
             UserDTO userDTO=modelMapper.map(user,UserDTO.class);
 
             AuthResponse authResponse=new AuthResponse();
@@ -98,6 +100,13 @@ public class AuthService {
             return authResponse;
         } catch (AuthenticationException e) {
             throw new CustomAuthenticationException(e.getLocalizedMessage());
+        }
+    }
+
+    private void isActiveUser(User user) {
+
+        if (!user.getIsActive()){
+            throw new UserException("User account was inactive");
         }
     }
 }
