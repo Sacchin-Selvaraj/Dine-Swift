@@ -28,8 +28,8 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-mail'
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
-	// https://mvnrepository.com/artifact/com.twilio.sdk/twilio
 	implementation 'com.twilio.sdk:twilio:10.9.2'
+	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf:3.5.5'
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
