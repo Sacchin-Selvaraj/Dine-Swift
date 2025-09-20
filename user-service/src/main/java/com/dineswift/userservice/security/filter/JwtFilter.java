@@ -1,14 +1,17 @@
 package com.dineswift.userservice.security.filter;
 
+import com.dineswift.userservice.exception.ErrorResponse;
 import com.dineswift.userservice.exception.TokenException;
 import com.dineswift.userservice.exception.UserException;
 import com.dineswift.userservice.security.service.CustomUserDetailsService;
 import com.dineswift.userservice.security.utilities.JWTUtilities;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -18,6 +21,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.List;
 
 @Component
 public class JwtFilter extends OncePerRequestFilter {
@@ -56,11 +60,13 @@ public class JwtFilter extends OncePerRequestFilter {
              }
             filterChain.doFilter(request,response);
         }catch (ExpiredJwtException e) {
-            throw new TokenException(e.getMessage());
-        } catch (UsernameNotFoundException e) {
-            throw new UserException(e.getMessage());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            response.setContentType("application/json");
+            response.getWriter().write(
+                    new ObjectMapper().writeValueAsString(
+                            new ErrorResponse("Token Exception", HttpStatus.BAD_REQUEST, List.of(e.getMessage()))
+                    )
+            );
         }
     }
 }

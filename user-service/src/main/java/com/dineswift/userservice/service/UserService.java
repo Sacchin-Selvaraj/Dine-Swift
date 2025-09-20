@@ -32,21 +32,22 @@ public class UserService {
     private final ModelMapper modelMapper;
     private final SecureService secureService;
     private final PasswordEncoder passwordEncoder;
+    private final UserCommonService userCommonService;
 
 
 
-    public UserService(UserRepository userRepository, BookingRepository bookingRepository, ModelMapper modelMapper, SecureService secureService, PasswordEncoder passwordEncoder) {
+    public UserService(UserRepository userRepository, BookingRepository bookingRepository, ModelMapper modelMapper, SecureService secureService, PasswordEncoder passwordEncoder, UserCommonService userCommonService) {
         this.userRepository = userRepository;
         this.bookingRepository = bookingRepository;
         this.modelMapper = modelMapper;
         this.secureService = secureService;
         this.passwordEncoder = passwordEncoder;
+        this.userCommonService = userCommonService;
     }
 
     public UserDTO updateDetails(UserDetailsRequest userDetailsRequest, UUID userId) {
 
-        User user=userRepository.findById(userId).orElseThrow(
-                () -> new UserException("User not found with ID: " + userId));
+        User user=userCommonService.findValidUser(userId);
 
         if (secureService.isValidUser(user)){
             throw new CustomAuthenticationException("Not a Valid User");
@@ -93,16 +94,12 @@ public class UserService {
         }else {
             bookings=bookingRepository.findByUser_UserIdAndBookingStatus(userId,bookingStatus,pageable);
         }
-//        if (bookings.isEmpty()){
-//            throw new BookingException("No Bookings found with given condition");
-//        }
 
         return bookings.map(booking -> modelMapper.map(booking,BookingDTO.class));
     }
 
     public void deactivateUser(UUID userId) {
-        User user=userRepository.findById(userId).orElseThrow(
-                () -> new UserException("User not found with ID: " + userId));
+        User user=userCommonService.findValidUser(userId);
 
         if (secureService.isValidUser(user)){
             throw new CustomAuthenticationException("Not a Valid User");
@@ -117,11 +114,9 @@ public class UserService {
             throw new CustomAuthenticationException("Not a Valid User");
         }
         validUsername(usernameRequest.getUsername(),userId);
-        Optional<User> user=userRepository.findById(userId);
-        user.ifPresent(
-                currentUser -> currentUser.setUsername(usernameRequest.getUsername())
-        );
-        userRepository.save(user.get());
+        User user=userCommonService.findValidUser(userId);
+        user.setUsername(usernameRequest.getUsername());
+        userRepository.save(user);
     }
 
     private void validUsername(String username, UUID userId) {
@@ -141,15 +136,14 @@ public class UserService {
         if (!passwordRequest.getNewPassword().equals(passwordRequest.getConfirmPassword())){
             throw new UserException("Password Mismatch between new and confirm password");
         }
-        User user=userRepository.findById(userId).orElseThrow(()->new UserException("User not found with provided Id"));
+        User user=userCommonService.findValidUser(userId);
 
         if (!passwordEncoder.matches(passwordRequest.getCurrentPassword(), user.getPassword())){
-            throw new UserException("Old Password is Invalid");
+            throw new UserException("Current Password is Invalid");
         }
         user.setPassword(passwordEncoder.encode(passwordRequest.getNewPassword()));
 
         userRepository.save(user);
     }
-
 
 }
