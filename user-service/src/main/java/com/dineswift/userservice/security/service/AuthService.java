@@ -82,10 +82,10 @@ public class AuthService {
             throw new UserException("User Details not found");
         }
         if (userRepository.existsByUsername(userRequest.getUsername())) {
-            throw new RuntimeException("Username already taken!");
+            throw new UserException("Username already taken!");
         }
         if (userRepository.existsByEmail(userRequest.getEmail())) {
-            throw new RuntimeException("Email already registered!");
+            throw new UserException("Email already registered!");
         }
     }
 

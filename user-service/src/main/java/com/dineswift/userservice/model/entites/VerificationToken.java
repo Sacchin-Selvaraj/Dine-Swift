@@ -6,6 +6,8 @@ import jakarta.persistence.Table;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
+import lombok.Data;
+import lombok.RequiredArgsConstructor;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
@@ -13,6 +15,8 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "verification_tokens")
+@Data
+@RequiredArgsConstructor
 public class VerificationToken {
 
     @Id
@@ -22,16 +26,15 @@ public class VerificationToken {
 
     @NotBlank(message = "Token is required")
     @Size(min = 6, max = 20, message = "Token must be between 6 and 20 characters")
-    @Column(name = "token", nullable = false, length = 20,unique = true)
+    @Column(name = "token", nullable = false,unique = true)
     private String token;
 
-    @NotBlank(message = "Token type is required")
-    @Size(min = 3, max = 50, message = "Token type must be between 3 and 50 characters")
-    @Column(name = "token_type", nullable = false, length = 50)
+    @NotNull(message = "Token type is required")
+    @Column(name = "token_type", nullable = false)
     @Enumerated(EnumType.STRING)
     private TokenType tokenType;
 
-    @Future(message = "Token expiry date must be in the future")
+
     @Column(name = "token_expiry_date", nullable = false)
     private LocalDateTime tokenExpiryDate;
 

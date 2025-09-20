@@ -47,11 +47,10 @@ public class UserService {
 
     public UserDTO updateDetails(UserDetailsRequest userDetailsRequest, UUID userId) {
 
+        secureService.isValidUser(userId);
+
         User user=userCommonService.findValidUser(userId);
 
-        if (secureService.isValidUser(user)){
-            throw new CustomAuthenticationException("Not a Valid User");
-        }
         updateUserFromRequest(user, userDetailsRequest);
 
         userRepository.save(user);
@@ -75,9 +74,8 @@ public class UserService {
 
     public Page<BookingDTO> getBookings(UUID userId, Integer pageNumber, Integer limit, BookingStatus bookingStatus, String sortField, String sortOrder) {
 
-        if (secureService.isValidUser(userId)){
-            throw new CustomAuthenticationException("Not a Valid User");
-        }
+        secureService.isValidUser(userId);
+
         Set<String> allowedFields = Set.of("createdAt", "lastModifiedAt", "bookingStatus","tableBookingId","bookingTime");
 
         if (!allowedFields.contains(sortField)) {
@@ -99,20 +97,19 @@ public class UserService {
     }
 
     public void deactivateUser(UUID userId) {
+
+        secureService.isValidUser(userId);
+
         User user=userCommonService.findValidUser(userId);
 
-        if (secureService.isValidUser(user)){
-            throw new CustomAuthenticationException("Not a Valid User");
-        }
         user.setIsActive(false);
         userRepository.save(user);
     }
 
     public void updateUsername(UUID userId, UsernameUpdateRequest usernameRequest) {
 
-        if (secureService.isValidUser(userId)){
-            throw new CustomAuthenticationException("Not a Valid User");
-        }
+        secureService.isValidUser(userId);
+
         validUsername(usernameRequest.getUsername(),userId);
         User user=userCommonService.findValidUser(userId);
         user.setUsername(usernameRequest.getUsername());
@@ -129,9 +126,7 @@ public class UserService {
     }
 
     public void updatePassword(UUID userId, PasswordUpdateRequest passwordRequest) {
-        if (secureService.isValidUser(userId)){
-            throw new CustomAuthenticationException("Not a Valid User");
-        }
+        secureService.isValidUser(userId);
 
         if (!passwordRequest.getNewPassword().equals(passwordRequest.getConfirmPassword())){
             throw new UserException("Password Mismatch between new and confirm password");

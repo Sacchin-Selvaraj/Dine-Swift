@@ -12,6 +12,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -28,10 +29,12 @@ public class JwtFilter extends OncePerRequestFilter {
 
     private final JWTUtilities jwtUtilities;
     private final CustomUserDetailsService customUserDetailsService;
+    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
 
-    public JwtFilter(JWTUtilities jwtUtilities, CustomUserDetailsService customUserDetailsService) {
+    public JwtFilter(JWTUtilities jwtUtilities, CustomUserDetailsService customUserDetailsService, JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint) {
         this.jwtUtilities = jwtUtilities;
         this.customUserDetailsService = customUserDetailsService;
+        this.jwtAuthenticationEntryPoint = jwtAuthenticationEntryPoint;
     }
 
     @Override
@@ -60,13 +63,9 @@ public class JwtFilter extends OncePerRequestFilter {
              }
             filterChain.doFilter(request,response);
         }catch (ExpiredJwtException e) {
-            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            response.setContentType("application/json");
-            response.getWriter().write(
-                    new ObjectMapper().writeValueAsString(
-                            new ErrorResponse("Token Exception", HttpStatus.BAD_REQUEST, List.of(e.getMessage()))
-                    )
-            );
+            jwtAuthenticationEntryPoint.commence(request,response,new BadCredentialsException("Invalid Token"));
+        }catch (UserException e) {
+            jwtAuthenticationEntryPoint.commence(request,response,new BadCredentialsException(e.getMessage()));
         }
     }
 }

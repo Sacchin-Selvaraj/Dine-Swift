@@ -21,43 +21,28 @@ public class SecureService {
         this.userRepository = userRepository;
     }
 
-    public boolean isValidUser(User user) {
-
-        if (user==null)
-            return true;
-
-        User currentUser=getCurrentUser();
-
-        if (currentUser==null)
-            return true;
-
-        if (user.getUserId().equals(currentUser.getUserId())){
-            return false;
-        }
-        return true;
-    }
-
-    public boolean isValidUser(UUID userId) {
+    public void isValidUser(UUID userId) {
 
         if (userId==null)
-            return true;
+            throw new CustomAuthenticationException("Not a Valid UserId");
 
         User currentUser=getCurrentUser();
 
         if (currentUser==null)
-            return true;
+            throw new CustomAuthenticationException("No User found with given token");
 
-        if (userId.equals(currentUser.getUserId())){
-            return false;
+        if (!userId.equals(currentUser.getUserId())){
+            throw new CustomAuthenticationException("Not a Valid User");
         }
-        return true;
     }
 
     private User getCurrentUser() {
         try {
             User user = null;
-            Authentication authentication= SecurityContextHolder.getContext().getAuthentication();
-            if (authentication!=null && authentication.isAuthenticated()){
+            Authentication authentication=SecurityContextHolder.getContext().getAuthentication();
+            if (authentication == null || !authentication.isAuthenticated()) {
+                throw new CustomAuthenticationException("User not authenticated");
+            }
                 Object principal = authentication.getPrincipal();
 
                 if (principal instanceof User) {
@@ -70,7 +55,6 @@ public class SecureService {
                         user=userRepository.findByEmail(email).orElseThrow(()->new UserException("Email not valid"));
                     }
                 }
-            }
             return user;
         } catch (AuthenticationException e) {
             throw new CustomAuthenticationException(e.getLocalizedMessage());

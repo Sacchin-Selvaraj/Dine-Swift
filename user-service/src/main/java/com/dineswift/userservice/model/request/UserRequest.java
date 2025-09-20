@@ -32,6 +32,6 @@ public class UserRequest {
     private String gender;
 
     @NotBlank(message = "phoneNumber is required")
-    @Pattern(regexp = "^[6-9]\\d{9}$", message = "Invalid phone number")
+    @Pattern(regexp = "^\\+[1-9]\\d{1,14}$", message = "Phone number must be in Standard format : +91phoneNumber")
     private String phoneNumber;
 }

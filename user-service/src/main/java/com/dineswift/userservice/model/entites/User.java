@@ -21,7 +21,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 @Data
 @RequiredArgsConstructor
 @Table(name = "users")
-public class User implements UserDetails {
+public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -47,6 +47,7 @@ public class User implements UserDetails {
     private String gender;
 
     @Column(name = "phone_number", length = 20)
+    @Pattern(regexp = "^\\+[1-9]\\d{1,14}$", message = "Phone number must be in Standard format : +91phoneNumber")
     private String phoneNumber;
 
 
@@ -129,39 +130,5 @@ public class User implements UserDetails {
         booking.setUser(null);
     }
 
-    public String getOrginalUsername(){
-        return username;
-    }
 
-    @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        return roles.stream()
-                .map(role->new SimpleGrantedAuthority(role.getRoleName()))
-                .toList();
-    }
-
-    @Override
-    public String getUsername() {
-        return email;
-    }
-
-    @Override
-    public boolean isAccountNonExpired() {
-        return UserDetails.super.isAccountNonExpired();
-    }
-
-    @Override
-    public boolean isAccountNonLocked() {
-        return UserDetails.super.isAccountNonLocked();
-    }
-
-    @Override
-    public boolean isCredentialsNonExpired() {
-        return UserDetails.super.isCredentialsNonExpired();
-    }
-
-    @Override
-    public boolean isEnabled() {
-        return UserDetails.super.isEnabled();
-    }
 }

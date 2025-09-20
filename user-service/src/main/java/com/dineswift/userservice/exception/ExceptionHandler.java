@@ -32,7 +32,7 @@ public class ExceptionHandler {
 
     @org.springframework.web.bind.annotation.ExceptionHandler(UserException.class)
     public ResponseEntity<ErrorResponse> handleUserException(UserException ex) {
-        ErrorResponse errorResponse = new ErrorResponse(ex.getMessage(), HttpStatus.BAD_REQUEST);
+        ErrorResponse errorResponse = new ErrorResponse("User Details Not valid", HttpStatus.BAD_REQUEST,List.of(ex.getMessage()));
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
