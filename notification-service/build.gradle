@@ -1,11 +1,13 @@
 plugins {
+	id 'java-library'
 	id 'java'
 	id 'org.springframework.boot' version '3.5.5'
 	id 'io.spring.dependency-management' version '1.1.7'
+	id 'maven-publish'
 }
 
 group = 'com.dineswift'
-version = '0.0.1-SNAPSHOT'
+version = '1.0.0'
 description = 'Notification-Service'
 
 java {
@@ -17,6 +19,17 @@ java {
 configurations {
 	compileOnly {
 		extendsFrom annotationProcessor
+	}
+}
+
+publishing {
+	publications {
+		mavenJava(MavenPublication) {
+			from components.java
+			groupId = 'com.dineswift'
+			artifactId = 'notification-service'
+			version = '1.0.0'
+		}
 	}
 }
 
@@ -38,3 +51,5 @@ dependencies {
 tasks.named('test') {
 	useJUnitPlatform()
 }
+
+
