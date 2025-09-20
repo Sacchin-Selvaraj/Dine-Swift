@@ -45,9 +45,8 @@ public class AuthService {
 
     public AuthResponse signupUser(UserRequest userRequest) {
         try {
-            if (userRequest==null){
-                throw new UserException("User Details not found");
-            }
+            verifyUser(userRequest);
+
             User user=modelMapper.map(userRequest,User.class);
             String encodedPassword=passwordEncoder.encode(userRequest.getPassword());
             user.setPassword(encodedPassword);
@@ -76,6 +75,18 @@ public class AuthService {
             throw new DataIntegrityViolationException(e.getLocalizedMessage());
         }
 
+    }
+
+    private void verifyUser(UserRequest userRequest) {
+        if (userRequest ==null){
+            throw new UserException("User Details not found");
+        }
+        if (userRepository.existsByUsername(userRequest.getUsername())) {
+            throw new RuntimeException("Username already taken!");
+        }
+        if (userRepository.existsByEmail(userRequest.getEmail())) {
+            throw new RuntimeException("Email already registered!");
+        }
     }
 
     public AuthResponse signInUser(LoginRequest loginRequest) {

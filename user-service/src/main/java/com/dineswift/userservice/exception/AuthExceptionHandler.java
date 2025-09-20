@@ -7,10 +7,11 @@ import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.Collections;
 
-@ControllerAdvice
+@RestControllerAdvice
 public class AuthExceptionHandler {
 
 
@@ -44,5 +45,13 @@ public class AuthExceptionHandler {
                 "User not properly authenticated", HttpStatus.FORBIDDEN, Collections.singletonList(ex.getMessage())
         );
         return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
+    }
+
+    @ExceptionHandler(TokenException.class)
+    public ResponseEntity<ErrorResponse> handleTokenException(TokenException ex){
+        ErrorResponse errorResponse = new ErrorResponse(
+                "Token Exception ", HttpStatus.BAD_REQUEST, Collections.singletonList(ex.getMessage())
+        );
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 }

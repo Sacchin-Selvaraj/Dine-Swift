@@ -67,6 +67,4 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.ACCEPTED).body("Password Updated Successfully");
     }
 
-
-
 }

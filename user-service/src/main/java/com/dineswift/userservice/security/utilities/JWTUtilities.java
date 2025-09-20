@@ -1,7 +1,10 @@
 package com.dineswift.userservice.security.utilities;
 
 
+import com.dineswift.userservice.exception.TokenException;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
@@ -48,6 +51,7 @@ public class JWTUtilities {
     }
 
     private Claims extractClaims(String token) {
+
         return Jwts.parser().setSigningKey(key)
                 .build()
                 .parseSignedClaims(token)

@@ -34,6 +34,7 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
 
 
+
     public UserService(UserRepository userRepository, BookingRepository bookingRepository, ModelMapper modelMapper, SecureService secureService, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.bookingRepository = bookingRepository;
