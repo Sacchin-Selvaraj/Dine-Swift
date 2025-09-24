@@ -16,8 +16,6 @@ public class UserDTO {
 
     private String email;
 
-    private String password;
-
     private String gender;
 
     private String phoneNumber;
@@ -42,19 +40,11 @@ public class UserDTO {
 
     private String pincode;
 
-    private String passwordForgotToken;
-
-    private LocalDateTime tokenExpiryDate;
-
     private LocalDateTime registrationDate;
 
-    private LocalDateTime systemUpdatedDate;
-
-    private LocalDateTime lastLoginTime;
+    private LocalDateTime UpdatedDate;
 
     private Boolean isActive;
-
-    private Boolean isVerified;
 
     private CartDTO cart;
 

@@ -9,6 +9,7 @@ import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -49,7 +50,7 @@ public class UserController {
     }
 
     @DeleteMapping("/delete/{userId}")
-    //@PreAuthorize("hasRole('ADMIN')")
+    //@PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<String> deactivateUser(@PathVariable UUID userId){
         userService.deactivateUser(userId);
         return ResponseEntity.ok("Account has been deleted Successfully");
@@ -61,11 +62,10 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.ACCEPTED).body("Username Updated Successfully");
     }
 
-    @PostMapping("/update-password/{userId}")
-    public ResponseEntity<String> updatePassword(@PathVariable UUID userId, @Valid @RequestBody PasswordUpdateRequest passwordRequest){
-        userService.updatePassword(userId,passwordRequest);
-        return ResponseEntity.status(HttpStatus.ACCEPTED).body("Password Updated Successfully");
+    @PostMapping("/create-user")
+    public ResponseEntity<UUID> createUser(@RequestBody UserRequest userRequest){
+       UUID userId= userService.createUser(userRequest);
+        return ResponseEntity.ok(userId);
     }
-
 
 }

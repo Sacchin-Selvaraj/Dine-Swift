@@ -46,7 +46,6 @@ public class Booking {
     @NotNull(message = "User is required")
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", referencedColumnName = "user_id", nullable = false)
-    @JsonIgnore
     private User user;
 
 }

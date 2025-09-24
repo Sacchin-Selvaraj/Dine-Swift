@@ -10,7 +10,6 @@ import com.dineswift.userservice.model.request.PhoneNumberUpdateRequest;
 import com.dineswift.userservice.model.request.VerifyTokenRequest;
 import com.dineswift.userservice.repository.UserRepository;
 import com.dineswift.userservice.repository.VerificationRepository;
-import com.dineswift.userservice.security.service.SecureService;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import org.springframework.stereotype.Service;
@@ -25,15 +24,13 @@ import java.util.concurrent.CompletableFuture;
 @Transactional
 public class VerificationService {
 
-    private final SecureService secureService;
     private final UserCommonService userCommonService;
     private final VerificationRepository verificationRepository;
     private final EmailService emailService;
     private final UserRepository userRepository;
     private final SmsService smsService;
 
-    public VerificationService(SecureService secureService, UserCommonService userCommonService, VerificationRepository verificationRepository, EmailService emailService, UserRepository userRepository, SmsService smsService) {
-        this.secureService = secureService;
+    public VerificationService(UserCommonService userCommonService, VerificationRepository verificationRepository, EmailService emailService, UserRepository userRepository, SmsService smsService) {
         this.userCommonService = userCommonService;
         this.verificationRepository = verificationRepository;
         this.emailService = emailService;
@@ -43,7 +40,6 @@ public class VerificationService {
 
     public CompletableFuture<String> updateEmail(UUID userId, EmailUpdateRequest emailUpdateRequest) {
 
-        secureService.isValidUser(userId);
         if (userRepository.existsByEmail(emailUpdateRequest.getEmail())){
             throw new UserException("Email already registered by another user");
         }
@@ -74,7 +70,6 @@ public class VerificationService {
 
 
     public void verifyEmail(UUID userId, @Valid VerifyTokenRequest verifyEmailRequest) {
-        secureService.isValidUser(userId);
 
         VerificationToken verificationToken=verificationRepository.findByToken(verifyEmailRequest.getToken())
                 .orElseThrow(()->new TokenException("Email Verification Token was invalid"));
@@ -97,7 +92,7 @@ public class VerificationService {
     }
 
     public CompletableFuture<String> updatePhoneNumber(UUID userId, PhoneNumberUpdateRequest phoneNumberUpdateRequest) {
-        secureService.isValidUser(userId);
+
         if (userRepository.existsByPhoneNumber(phoneNumberUpdateRequest.getPhoneNumber())){
             throw new UserException("Phone Number already registered by another user");
         }
@@ -121,7 +116,6 @@ public class VerificationService {
     }
 
     public void verifyPhoneNumber(UUID userId, VerifyTokenRequest verifyPhoneNumberRequest) {
-        secureService.isValidUser(userId);
 
         VerificationToken verificationToken=verificationRepository.findByToken(verifyPhoneNumberRequest.getToken())
                 .orElseThrow(()->new TokenException("Verification Token was invalid"));
