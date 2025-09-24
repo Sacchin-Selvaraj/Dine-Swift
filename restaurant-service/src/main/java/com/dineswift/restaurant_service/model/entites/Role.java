@@ -1,41 +1,33 @@
 package com.dineswift.restaurant_service.model.entites;
 
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
+import jakarta.validation.constraints.*;
+import lombok.*;
 
-import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
 @Entity
+@Table(name = "roles", uniqueConstraints = {
+        @UniqueConstraint(columnNames = "role_name", name = "uk_roles_name")
+})
 @Data
 @RequiredArgsConstructor
-@Table(name = "roles")
 public class Role {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "role_id",updatable = false,nullable = false)
+    @Column(name = "role_id", nullable = false, updatable = false)
     private UUID roleId;
 
-    @Column(name = "role_name",updatable = false,nullable = false)
-    private String roleName;
+    @NotBlank(message = "Role name is required")
+    @Size(min = 2, max = 100, message = "Role name must be between 2 and 100 characters")
+    @Pattern(regexp = "^[A-Z_]+$", message = "Role name must contain only uppercase letters and underscores")
+    @Column(name = "role_name", nullable = false, unique = true)
+    private RoleName roleName;
 
-    @Column(name = "created_at",updatable = false,nullable = false)
-    @CreationTimestamp
-    private LocalDateTime createdAt;
+    @ManyToMany(mappedBy = "roles", fetch = FetchType.LAZY)
+    private Set<Employee> employees = new HashSet<>();
 
-    @UpdateTimestamp
-    @Column(name = "last_modified_at", nullable = false)
-    private LocalDateTime lastModifiedAt;
-
-//    @ManyToMany(mappedBy = "roles", fetch = FetchType.LAZY)
-//    @JsonIgnore
-//    private Set<User> users = new HashSet<>();
 }

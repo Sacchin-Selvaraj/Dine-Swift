@@ -9,9 +9,10 @@ public enum BookingStatus {
     NO_SHOW,
     CANCELLED_BY_CUSTOMER,
     CANCELLED_BY_RESTAURANT,
-    ONHOLD,
+    ON_HOLD,
     ARRIVED,
     SEATED,
     ORDER_PLACED,
-    DINING;
-}
+    DINING,
+
+    }
