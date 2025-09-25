@@ -68,4 +68,6 @@ public class Dish {
 
     @OneToMany(mappedBy = "dish",fetch = FetchType.LAZY,cascade = CascadeType.ALL, orphanRemoval = true)
     private List<DishImage> dishImages;
+
+
 }
