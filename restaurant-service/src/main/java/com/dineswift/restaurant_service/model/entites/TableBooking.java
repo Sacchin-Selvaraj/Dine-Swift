@@ -44,10 +44,11 @@ public class TableBooking {
     private Integer noOfGuest;
 
     @NotBlank(message = "Booking status is required")
+    @Enumerated(EnumType.STRING)
     @Column(name = "booking_status", nullable = false, length = 50)
     private BookingStatus bookingStatus;
 
-
+    @Enumerated(EnumType.STRING)
     @Column(name = "dish_status", length = 50)
     private DishStatus dishStatus;
 

@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.math.BigDecimal;
 import java.time.LocalTime;
 import java.time.ZonedDateTime;
 import java.util.UUID;
@@ -71,13 +72,13 @@ public class Restaurant {
     @DecimalMax(value = "90.0", message = "Latitude must be between -90 and 90")
     @Digits(integer = 2, fraction = 8, message = "Latitude must have 2 integer and 8 decimal places")
     @Column(name = "latitude", precision = 10, scale = 8)
-    private Double latitude;
+    private BigDecimal latitude;
 
     @DecimalMin(value = "-180.0", message = "Longitude must be between -180 and 180")
     @DecimalMax(value = "180.0", message = "Longitude must be between -180 and 180")
     @Digits(integer = 3, fraction = 8, message = "Longitude must have 3 integer and 8 decimal places")
     @Column(name = "longitude", precision = 11, scale = 8)
-    private Double longitude;
+    private BigDecimal longitude;
 
     @NotBlank(message = "Contact number is required")
     @Pattern(regexp = "^[\\+]?[0-9\\s\\-\\(\\)]{10,20}$",

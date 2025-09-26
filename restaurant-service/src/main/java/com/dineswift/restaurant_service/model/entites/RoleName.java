@@ -1,7 +1,6 @@
 package com.dineswift.restaurant_service.model.entites;
 
 public enum RoleName {
-
     ROLE_ADMIN,
     ROLE_MANAGER,
     ROLE_STAFF,

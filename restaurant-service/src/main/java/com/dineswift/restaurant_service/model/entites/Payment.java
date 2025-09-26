@@ -31,10 +31,12 @@ public class Payment {
     private BigDecimal amount;
 
     @NotBlank(message = "Payment method is required")
+    @Enumerated(EnumType.STRING)
     @Column(name = "payment_method", nullable = false, length = 50)
     private PaymentMethod paymentMethod;
 
     @NotBlank(message = "Payment status is required")
+    @Enumerated(EnumType.STRING)
     @Column(name = "payment_status", nullable = false, length = 50)
     private PaymentStatus paymentStatus;
 

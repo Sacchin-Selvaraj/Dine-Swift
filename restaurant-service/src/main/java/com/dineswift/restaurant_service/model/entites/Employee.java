@@ -66,12 +66,11 @@ public class Employee {
     @Column(name = "last_modified_date", nullable = false)
     private ZonedDateTime lastModifiedDate;
 
-    @NotNull(message = "Restaurant is required")
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "restaurant_id", nullable = false)
+    @JoinColumn(name = "restaurant_id")
     private Restaurant restaurant;
 
-    @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @ManyToMany(cascade = {CascadeType.PERSIST,CascadeType.MERGE}, fetch = FetchType.LAZY)
     @JoinTable(
             name = "employee_role",
             joinColumns = @JoinColumn(name = "employee_id",referencedColumnName = "employee_id"),

@@ -4,11 +4,9 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
-import javax.security.auth.login.LoginException;
 import java.util.Collections;
 import java.util.List;
 
@@ -18,21 +16,14 @@ public class ExceptionHandler {
 
     @org.springframework.web.bind.annotation.ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ErrorResponse> handleDataIntegrityViolation(DataIntegrityViolationException ex) {
-        String errorMessage = ex.getLocalizedMessage();
 
-        if (ex.getMessage().contains("username")) {
-            errorMessage = "Username already exists";
-        } else if (ex.getMessage().contains("email")) {
-            errorMessage = "Email already exists";
-        }
-
-        ErrorResponse errorResponse = new ErrorResponse(errorMessage, HttpStatus.CONFLICT);
+        ErrorResponse errorResponse = new ErrorResponse("DataIntegrity Violation ", HttpStatus.CONFLICT, List.of(ex.getMessage()));
         return new ResponseEntity<>(errorResponse, HttpStatus.CONFLICT);
     }
 
-    @org.springframework.web.bind.annotation.ExceptionHandler(UserException.class)
-    public ResponseEntity<ErrorResponse> handleUserException(UserException ex) {
-        ErrorResponse errorResponse = new ErrorResponse("User Details Not valid", HttpStatus.BAD_REQUEST,List.of(ex.getMessage()));
+    @org.springframework.web.bind.annotation.ExceptionHandler(RestaurantException.class)
+    public ResponseEntity<ErrorResponse> handleUserException(RestaurantException ex) {
+        ErrorResponse errorResponse = new ErrorResponse("Restaurant Details Not valid", HttpStatus.BAD_REQUEST,List.of(ex.getMessage()));
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 

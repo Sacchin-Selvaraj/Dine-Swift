@@ -1,15 +1,12 @@
 package com.dineswift.restaurant_service.exception;
 
-import com.dineswift.userservice.exception.CustomAuthenticationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.authorization.AuthorizationDeniedException;
-import org.springframework.security.core.AuthenticationException;
-import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import javax.naming.AuthenticationException;
+import java.nio.file.AccessDeniedException;
 import java.util.Collections;
 
 @RestControllerAdvice
@@ -32,13 +29,13 @@ public class AuthExceptionHandler {
         return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
     }
 
-    @ExceptionHandler(AuthorizationDeniedException.class)
-    public ResponseEntity<ErrorResponse> handleAuthorizationException(AuthorizationDeniedException ex){
-        ErrorResponse errorResponse = new ErrorResponse(
-                "Authorization Required", HttpStatus.FORBIDDEN, Collections.singletonList(ex.getMessage())
-        );
-        return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
-    }
+//    @ExceptionHandler(AuthorizationDeniedException.class)
+//    public ResponseEntity<ErrorResponse> handleAuthorizationException(AuthorizationDeniedException ex){
+//        ErrorResponse errorResponse = new ErrorResponse(
+//                "Authorization Required", HttpStatus.FORBIDDEN, Collections.singletonList(ex.getMessage())
+//        );
+//        return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
+//    }
 
     @ExceptionHandler(CustomAuthenticationException.class)
     public ResponseEntity<ErrorResponse> handleCustomAuthenticationException(CustomAuthenticationException ex){

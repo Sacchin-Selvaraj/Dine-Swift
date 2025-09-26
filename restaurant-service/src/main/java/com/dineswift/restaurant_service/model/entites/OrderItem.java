@@ -46,8 +46,9 @@ public class OrderItem {
     @Column(name = "cart_id", nullable = false)
     private UUID cartId;
 
-    @OneToMany(mappedBy = "dishes", fetch = FetchType.LAZY)
-    private List<Dish> dishes;
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "dish_id", nullable = false)
+    private Dish dish;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "table_booking_id")

@@ -4,8 +4,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.*;
 
-import java.util.HashSet;
-import java.util.Set;
+
 import java.util.UUID;
 
 @Entity
@@ -23,11 +22,8 @@ public class Role {
 
     @NotBlank(message = "Role name is required")
     @Size(min = 2, max = 100, message = "Role name must be between 2 and 100 characters")
-    @Pattern(regexp = "^[A-Z_]+$", message = "Role name must contain only uppercase letters and underscores")
     @Column(name = "role_name", nullable = false, unique = true)
+    @Enumerated(EnumType.STRING)
     private RoleName roleName;
-
-    @ManyToMany(mappedBy = "roles", fetch = FetchType.LAZY)
-    private Set<Employee> employees = new HashSet<>();
 
 }
