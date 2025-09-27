@@ -5,6 +5,7 @@ import com.dineswift.restaurant_service.payload.request.employee.EmployeeCreateR
 import com.dineswift.restaurant_service.payload.dto.EmployeeDTO;
 import com.dineswift.restaurant_service.payload.request.employee.EmployeeNameRequest;
 import com.dineswift.restaurant_service.payload.request.employee.PasswordChangeRequest;
+import com.dineswift.restaurant_service.payload.request.employee.RoleRemovalRequest;
 import com.dineswift.restaurant_service.service.EmployeeService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -28,7 +29,7 @@ public class EmployeeController {
 
     @PatchMapping("/change-username/{employeeId}")
     public ResponseEntity<String> changeUsername(@Valid @RequestBody EmployeeNameRequest employeeNameRequest, @PathVariable UUID employeeId) {
-        employeeService.changeUsername(employeeNameRequest,employeeId);
+        employeeService.changeUsername(employeeNameRequest, employeeId);
         return ResponseEntity.ok(employeeNameRequest.getEmployeeName());
     }
 
@@ -40,15 +41,19 @@ public class EmployeeController {
 
     @PutMapping("/change-password/{employeeId}")
     public ResponseEntity<String> changePassword(@RequestBody PasswordChangeRequest passwordChangeRequest, @PathVariable UUID employeeId) {
-        employeeService.changePassword(passwordChangeRequest,employeeId);
+        employeeService.changePassword(passwordChangeRequest, employeeId);
         return ResponseEntity.ok("Password changed successfully");
     }
 
-    @PostMapping("create-employee/{restaurantId}" )
+    @PostMapping("create-employee/{restaurantId}")
     public ResponseEntity<String> createEmployeeByRestaurant(@Valid @RequestBody EmployeeCreateRequest employeeCreateRequest, @PathVariable UUID restaurantId) {
         String employeeName = employeeService.createEmployer(employeeCreateRequest, restaurantId);
         return ResponseEntity.ok("Employee created successfully with name: " + employeeName);
     }
 
-
+    @DeleteMapping("/remove-roles/{employeeId}")
+    public ResponseEntity<EmployeeDTO> removeAllRolesFromEmployee(@PathVariable UUID employeeId, @Valid @RequestBody RoleRemovalRequest roleRemovalRequest) {
+        EmployeeDTO employeeDTO = employeeService.removeRolesFromEmployee(employeeId, roleRemovalRequest);
+        return ResponseEntity.ok(employeeDTO);
+    }
 }

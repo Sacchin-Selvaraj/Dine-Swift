@@ -11,6 +11,7 @@ import com.dineswift.restaurant_service.payload.request.employee.EmployeeCreateR
 import com.dineswift.restaurant_service.payload.dto.EmployeeDTO;
 import com.dineswift.restaurant_service.payload.request.employee.EmployeeNameRequest;
 import com.dineswift.restaurant_service.payload.request.employee.PasswordChangeRequest;
+import com.dineswift.restaurant_service.payload.request.employee.RoleRemovalRequest;
 import com.dineswift.restaurant_service.repository.EmployeeRepository;
 import com.dineswift.restaurant_service.repository.RestaurantRepository;
 import com.dineswift.restaurant_service.repository.RoleRepository;
@@ -21,6 +22,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -128,5 +130,19 @@ public class EmployeeService {
         employeeRepository.save(employee);
 
         return employee.getEmployeeName();
+    }
+
+    public EmployeeDTO removeRolesFromEmployee(UUID employeeId, RoleRemovalRequest roleRemovalRequest) {
+        if (employeeId == null || roleRemovalRequest == null || roleRemovalRequest.getRoleIds().isEmpty()) {
+            throw new EmployeeException("Invalid request to remove roles from employee");
+        }
+        Employee employee = employeeRepository.findById(employeeId).orElseThrow(() -> new EmployeeException("Employee not found"));
+
+        Set<Role> updatedRoles=employee.getRoles().stream().filter(
+                role -> !roleRemovalRequest.getRoleIds().contains(role.getRoleId())).collect(Collectors.toSet());
+
+        employee.setRoles(updatedRoles);
+        employee = employeeRepository.save(employee);
+        return employeeMapper.toDTO(employee);
     }
 }
