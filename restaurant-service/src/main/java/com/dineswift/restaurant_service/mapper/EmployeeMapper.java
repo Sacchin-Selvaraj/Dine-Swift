@@ -46,7 +46,6 @@ public class EmployeeMapper {
 
     public Set<Role> getRoles(Set<RoleDTO> roles) {
         Set<Role> roleSet = new HashSet<>();
-
         for (RoleDTO tempRole : roles) {
             try {
                 RoleName roleName = RoleName.fromDisplayName(tempRole.getRoleName());

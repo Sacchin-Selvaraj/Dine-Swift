@@ -77,10 +77,25 @@ public class EmployeeService {
             throw new EmployeeException("Invalid request");
         }
         Employee employee = employeeRepository.findById(employeeId).orElseThrow(() -> new EmployeeException("Employee not found"));
+        isAdmin(employee);
+
         employee.setEmployeeIsActive(false);
         // need to sent it to auth service to disable the user
         employeeRepository.save(employee);
 
+    }
+
+    private void isAdmin(Employee employee) {
+        Set<Role> roles=employee.getRoles();
+        for (Role role:roles){
+            if (role.getRoleName().equals(RoleName.ROLE_ADMIN)){
+                if (employee.getRestaurant().getIsActive()){
+                    throw new EmployeeException("Cannot delete admin of an active restaurant");
+                }else {
+                    return;
+                }
+            }
+        }
     }
 
     public void changePassword(PasswordChangeRequest passwordChangeRequest, UUID employeeId) {
@@ -110,7 +125,6 @@ public class EmployeeService {
         Restaurant restaurant=restaurantRepository.findById(restaurantId).orElseThrow(()-> new RestaurantException("Restaurant not found with id: " + restaurantId));
 
         employee.setRestaurant(restaurant);
-
         employeeRepository.save(employee);
 
         return employee.getEmployeeName();
