@@ -1,15 +1,10 @@
-package com.dineswift.restaurant_service.model.response;
+package com.dineswift.restaurant_service.payload.dto;
 
-import com.dineswift.restaurant_service.model.entites.Restaurant;
 import com.dineswift.restaurant_service.model.entites.Role;
-import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 
-import java.time.ZonedDateTime;
 import java.util.Set;
 import java.util.UUID;
 
@@ -33,14 +28,6 @@ public class EmployeeDTO {
 
     @NotNull(message = "Active status is required")
     private Boolean employeeIsActive;
-
-    private ZonedDateTime createdAt;
-
-    private UUID lastModifiedBy;
-
-    private ZonedDateTime lastModifiedDate;
-
-    private Restaurant restaurant;
 
     private Set<Role> roles;
 

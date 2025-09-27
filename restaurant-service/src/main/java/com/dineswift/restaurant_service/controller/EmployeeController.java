@@ -1,8 +1,8 @@
 package com.dineswift.restaurant_service.controller;
 
 
-import com.dineswift.restaurant_service.model.request.EmployeeCreateRequest;
-import com.dineswift.restaurant_service.model.response.EmployeeDTO;
+import com.dineswift.restaurant_service.payload.request.EmployeeCreateRequest;
+import com.dineswift.restaurant_service.payload.dto.EmployeeDTO;
 import com.dineswift.restaurant_service.service.EmployeeService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -19,11 +19,13 @@ public class EmployeeController {
 
     private final EmployeeService employeeService;
 
-    @PostMapping(value = "/sign-up")
+    @PostMapping("/sign-up")
     public ResponseEntity<EmployeeDTO> createEmployee(@Valid @RequestBody EmployeeCreateRequest employeeCreateRequest) {
         EmployeeDTO employeeDTO = employeeService.createEmployee(employeeCreateRequest);
         return ResponseEntity.ok(employeeDTO);
     }
+
+
 
 
 }

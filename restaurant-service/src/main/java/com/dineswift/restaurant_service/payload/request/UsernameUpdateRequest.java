@@ -1,4 +1,4 @@
-package com.dineswift.restaurant_service.model.request;
+package com.dineswift.restaurant_service.payload.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;

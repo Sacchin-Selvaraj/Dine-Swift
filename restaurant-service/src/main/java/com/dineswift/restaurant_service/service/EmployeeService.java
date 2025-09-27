@@ -1,16 +1,16 @@
 package com.dineswift.restaurant_service.service;
 
 import com.dineswift.restaurant_service.exception.EmployeeException;
+import com.dineswift.restaurant_service.mapper.EmployeeMapper;
 import com.dineswift.restaurant_service.model.entites.Employee;
 import com.dineswift.restaurant_service.model.entites.Role;
 import com.dineswift.restaurant_service.model.entites.RoleName;
-import com.dineswift.restaurant_service.model.request.EmployeeCreateRequest;
-import com.dineswift.restaurant_service.model.response.EmployeeDTO;
+import com.dineswift.restaurant_service.payload.request.EmployeeCreateRequest;
+import com.dineswift.restaurant_service.payload.dto.EmployeeDTO;
 import com.dineswift.restaurant_service.repository.EmployeeRepository;
 import com.dineswift.restaurant_service.repository.RoleRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
 import java.util.Set;
@@ -21,8 +21,8 @@ import java.util.Set;
 public class EmployeeService {
 
     private final EmployeeRepository employeeRepository;
-    private final ModelMapper modelMapper;
     private final RoleRepository roleRepository;
+    private final EmployeeMapper employeeMapper;
 
 
     public EmployeeDTO createEmployee(EmployeeCreateRequest employeeCreateRequest) {
@@ -36,7 +36,7 @@ public class EmployeeService {
 
         employee=employeeRepository.save(employee);
 
-        return modelMapper.map(employee,EmployeeDTO.class);
+        return employeeMapper.toDTO(employee);
 
     }
 
