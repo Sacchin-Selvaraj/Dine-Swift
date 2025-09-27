@@ -2,6 +2,7 @@ package com.dineswift.restaurant_service.service;
 
 import com.dineswift.restaurant_service.exception.EmployeeException;
 import com.dineswift.restaurant_service.exception.RestaurantException;
+import com.dineswift.restaurant_service.exception.RoleException;
 import com.dineswift.restaurant_service.mapper.EmployeeMapper;
 import com.dineswift.restaurant_service.model.Employee;
 import com.dineswift.restaurant_service.model.Restaurant;
@@ -11,7 +12,8 @@ import com.dineswift.restaurant_service.payload.request.employee.EmployeeCreateR
 import com.dineswift.restaurant_service.payload.dto.EmployeeDTO;
 import com.dineswift.restaurant_service.payload.request.employee.EmployeeNameRequest;
 import com.dineswift.restaurant_service.payload.request.employee.PasswordChangeRequest;
-import com.dineswift.restaurant_service.payload.request.employee.RoleRemovalRequest;
+import com.dineswift.restaurant_service.payload.request.employee.RoleRequest;
+import com.dineswift.restaurant_service.payload.response.employee.RoleDTOResponse;
 import com.dineswift.restaurant_service.repository.EmployeeRepository;
 import com.dineswift.restaurant_service.repository.RestaurantRepository;
 import com.dineswift.restaurant_service.repository.RoleRepository;
@@ -20,6 +22,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -61,6 +64,12 @@ public class EmployeeService {
             throw new EmployeeException("Email already registered!");
         }
     }
+
+    public EmployeeDTO getEmployee(UUID employeeId) {
+        Employee employee=employeeRepository.findById(employeeId).orElseThrow(() -> new EmployeeException("Employee not found"));
+        return employeeMapper.toDTO(employee);
+    }
+
 
     public void changeUsername(EmployeeNameRequest employeeNameRequest, UUID employeeId) {
         if (employeeNameRequest == null || employeeId == null) {
@@ -132,7 +141,7 @@ public class EmployeeService {
         return employee.getEmployeeName();
     }
 
-    public EmployeeDTO removeRolesFromEmployee(UUID employeeId, RoleRemovalRequest roleRemovalRequest) {
+    public EmployeeDTO removeRolesFromEmployee(UUID employeeId, RoleRequest roleRemovalRequest) {
         if (employeeId == null || roleRemovalRequest == null || roleRemovalRequest.getRoleIds().isEmpty()) {
             throw new EmployeeException("Invalid request to remove roles from employee");
         }
@@ -143,6 +152,29 @@ public class EmployeeService {
 
         employee.setRoles(updatedRoles);
         employee = employeeRepository.save(employee);
+        return employeeMapper.toDTO(employee);
+    }
+
+    public List<RoleDTOResponse> getAllRoles() {
+        List<Role> roles=roleRepository.findAll();
+        if (roles.isEmpty()){
+            throw new RoleException("No roles found");
+        }
+        return roles.stream().map(employeeMapper::toRoleDTO).collect(Collectors.toList());
+    }
+
+
+    public EmployeeDTO addRolesToEmployee(UUID employeeId, RoleRequest roleAddRequest) {
+        if (employeeId==null || roleAddRequest==null || roleAddRequest.getRoleIds().isEmpty()){
+            throw new EmployeeException("Invalid request to add roles to employee");
+        }
+        Employee employee=employeeRepository.findById(employeeId).orElseThrow(()-> new EmployeeException("Employee not found"));
+        Set<Role> rolesToAdd=roleRepository.findAllById(roleAddRequest.getRoleIds()).stream().collect(Collectors.toSet());
+        if (rolesToAdd.isEmpty()) {
+            throw new RoleException("No valid roles found to add");
+        }
+        employee.setRoles(rolesToAdd);
+        employee=employeeRepository.save(employee);
         return employeeMapper.toDTO(employee);
     }
 }

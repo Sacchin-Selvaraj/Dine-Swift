@@ -7,6 +7,7 @@ import com.dineswift.restaurant_service.model.RoleName;
 import com.dineswift.restaurant_service.payload.dto.EmployeeDTO;
 import com.dineswift.restaurant_service.payload.dto.RoleDTO;
 import com.dineswift.restaurant_service.payload.request.employee.EmployeeCreateRequest;
+import com.dineswift.restaurant_service.payload.response.employee.RoleDTOResponse;
 import com.dineswift.restaurant_service.repository.RoleRepository;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -23,7 +25,11 @@ public class EmployeeMapper {
     private final RoleRepository roleRepository;
 
     public EmployeeDTO toDTO(Employee employee){
-        return mapper.map(employee, EmployeeDTO.class);
+        EmployeeDTO employeeDTO=mapper.map(employee, EmployeeDTO.class);
+        employeeDTO.setRoles(employee.getRoles().stream()
+                .map(this::toRoleDTO).collect(Collectors.toSet()));
+
+        return employeeDTO;
     }
 
     public Employee convertToEntity(EmployeeCreateRequest employeeCreateRequest) {
@@ -57,5 +63,12 @@ public class EmployeeMapper {
             }
         }
         return roleSet;
+    }
+
+    public RoleDTOResponse toRoleDTO(Role role) {
+        RoleDTOResponse roleDTOResponse=new RoleDTOResponse();
+        roleDTOResponse.setRoleId(role.getRoleId());
+        roleDTOResponse.setRoleName(role.getRoleName().getDisplayName());
+        return roleDTOResponse;
     }
 }

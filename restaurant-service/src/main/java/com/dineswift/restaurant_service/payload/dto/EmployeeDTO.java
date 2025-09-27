@@ -1,6 +1,7 @@
 package com.dineswift.restaurant_service.payload.dto;
 
 import com.dineswift.restaurant_service.model.Role;
+import com.dineswift.restaurant_service.payload.response.employee.RoleDTOResponse;
 import jakarta.validation.constraints.*;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +30,6 @@ public class EmployeeDTO {
     @NotNull(message = "Active status is required")
     private Boolean employeeIsActive;
 
-    private Set<Role> roles;
+    private Set<RoleDTOResponse> roles;
 
 }

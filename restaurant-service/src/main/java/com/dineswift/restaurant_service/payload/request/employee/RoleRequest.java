@@ -9,7 +9,7 @@ import java.util.UUID;
 
 @Data
 @RequiredArgsConstructor
-public class RoleRemovalRequest {
+public class RoleRequest {
 
     @NotNull(message = "Role IDs are required")
     private List<UUID> roleIds;

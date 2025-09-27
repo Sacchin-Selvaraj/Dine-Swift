@@ -1,4 +1,4 @@
-package com.dineswift.restaurant_service.payload.response;
+package com.dineswift.restaurant_service.payload.response.employee;
 
 import com.dineswift.restaurant_service.model.Role;
 import jakarta.persistence.*;
