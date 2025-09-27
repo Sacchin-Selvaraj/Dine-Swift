@@ -3,14 +3,15 @@ package com.dineswift.restaurant_service.controller;
 
 import com.dineswift.restaurant_service.payload.request.EmployeeCreateRequest;
 import com.dineswift.restaurant_service.payload.dto.EmployeeDTO;
+import com.dineswift.restaurant_service.payload.request.EmployeeNameRequest;
+import com.dineswift.restaurant_service.payload.request.PasswordChangeRequest;
 import com.dineswift.restaurant_service.service.EmployeeService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/restaurant/employee")
@@ -25,7 +26,21 @@ public class EmployeeController {
         return ResponseEntity.ok(employeeDTO);
     }
 
+    @PostMapping("/change-username/{employeeId}")
+    public ResponseEntity<String> changeUsername(@Valid @RequestBody EmployeeNameRequest employeeNameRequest, @PathVariable UUID employeeId) {
+        employeeService.changeUsername(employeeNameRequest,employeeId);
+        return ResponseEntity.ok(employeeNameRequest.getEmployeeName());
+    }
 
+    @DeleteMapping("/delete/{employeeId}")
+    public ResponseEntity<String> deleteEmployee(@PathVariable UUID employeeId) {
+        employeeService.deleteEmployee(employeeId);
+        return ResponseEntity.ok("Employee deleted successfully");
+    }
 
-
+    @PostMapping("/change-password/{employeeId}")
+    public ResponseEntity<String> changePassword(@RequestBody PasswordChangeRequest passwordChangeRequest, @PathVariable UUID employeeId) {
+        employeeService.changePassword(passwordChangeRequest,employeeId);
+        return ResponseEntity.ok("Password changed successfully");
+    }
 }
