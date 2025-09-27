@@ -39,6 +39,7 @@ public class EmployeeCreateRequest {
             regexp = "^[\\+]?[0-9\\s\\-\\(\\)]{10,20}$",
             message = "Phone number must be valid and between 10-20 digits"
     )
+    @NotBlank(message = "Phone Number is Required")
     private String phoneNumber;
 
     private Set<RoleDTO> roles;

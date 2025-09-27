@@ -9,11 +9,14 @@ import com.dineswift.restaurant_service.payload.dto.RoleDTO;
 import com.dineswift.restaurant_service.payload.request.employee.EmployeeCreateRequest;
 import com.dineswift.restaurant_service.payload.response.employee.RoleDTOResponse;
 import com.dineswift.restaurant_service.repository.RoleRepository;
+import jakarta.persistence.criteria.CriteriaBuilder;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Component;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 

@@ -66,7 +66,7 @@ public class EmployeeService {
     }
 
     public EmployeeDTO getEmployee(UUID employeeId) {
-        Employee employee=employeeRepository.findById(employeeId).orElseThrow(() -> new EmployeeException("Employee not found"));
+        Employee employee=employeeRepository.findByIdAndIsActive(employeeId).orElseThrow(() -> new EmployeeException("Employee not found"));
         return employeeMapper.toDTO(employee);
     }
 
@@ -100,7 +100,7 @@ public class EmployeeService {
         Set<Role> roles=employee.getRoles();
         for (Role role:roles){
             if (role.getRoleName().equals(RoleName.ROLE_ADMIN)){
-                if (employee.getRestaurant().getIsActive()){
+                if (employee.getRestaurant()!=null && employee.getRestaurant().getIsActive()){
                     throw new EmployeeException("Cannot delete admin of an active restaurant");
                 }else {
                     return;
@@ -116,7 +116,7 @@ public class EmployeeService {
         if (!passwordChangeRequest.getNewPassword().equals(passwordChangeRequest.getConfirmNewPassword())){
             throw new EmployeeException("New password and confirm password do not match");
         }
-        Employee employee = employeeRepository.findById(employeeId).orElseThrow(() -> new EmployeeException("Employee not found"));
+        Employee employee = employeeRepository.findById(employeeId).orElseThrow(() -> new EmployeeException("Employee not found with provided Id"));
         if (!employee.getPassword().equals(passwordChangeRequest.getOldPassword())) {
             throw new EmployeeException("Old password is incorrect");
         }
@@ -173,7 +173,7 @@ public class EmployeeService {
         if (rolesToAdd.isEmpty()) {
             throw new RoleException("No valid roles found to add");
         }
-        employee.setRoles(rolesToAdd);
+        employee.getRoles().addAll(rolesToAdd);
         employee=employeeRepository.save(employee);
         return employeeMapper.toDTO(employee);
     }

@@ -1,7 +1,6 @@
 package com.dineswift.restaurant_service.controller;
 
 
-import com.dineswift.restaurant_service.payload.dto.RoleDTO;
 import com.dineswift.restaurant_service.payload.request.employee.EmployeeCreateRequest;
 import com.dineswift.restaurant_service.payload.dto.EmployeeDTO;
 import com.dineswift.restaurant_service.payload.request.employee.EmployeeNameRequest;
@@ -49,7 +48,7 @@ public class EmployeeController {
     }
 
     @PutMapping("/change-password/{employeeId}")
-    public ResponseEntity<String> changePassword(@RequestBody PasswordChangeRequest passwordChangeRequest, @PathVariable UUID employeeId) {
+    public ResponseEntity<String> changePassword( @Valid @RequestBody PasswordChangeRequest passwordChangeRequest, @PathVariable UUID employeeId) {
         employeeService.changePassword(passwordChangeRequest, employeeId);
         return ResponseEntity.ok("Password changed successfully");
     }

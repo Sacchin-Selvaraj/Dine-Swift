@@ -1,5 +1,6 @@
 package com.dineswift.restaurant_service.exception;
 
+import jakarta.validation.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -67,5 +68,12 @@ public class ExceptionHandler {
     public ResponseEntity<ErrorResponse> handleRoleException(RoleException ex) {
         ErrorResponse errorResponse = new ErrorResponse("Role Details Not valid", HttpStatus.BAD_REQUEST,List.of(ex.getMessage()));
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
+
+    @org.springframework.web.bind.annotation.ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ErrorResponse> handleConstraintException(ConstraintViolationException ex){
+        ErrorResponse errorResponse=ErrorResponse.builder().errorMessage("Constraint Violation")
+                .httpStatus(HttpStatus.BAD_REQUEST).errors(List.of(ex.getMessage())).build();
+        return new ResponseEntity<>(errorResponse,HttpStatus.BAD_REQUEST);
     }
 }

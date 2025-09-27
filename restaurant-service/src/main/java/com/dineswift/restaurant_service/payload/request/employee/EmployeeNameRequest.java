@@ -1,5 +1,6 @@
 package com.dineswift.restaurant_service.payload.request.employee;
 
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -8,6 +9,6 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class EmployeeNameRequest {
 
-    @NotNull(message = "Employee name is required")
+    @NotBlank(message = "Employee name is required")
     private String employeeName;
 }

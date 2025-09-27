@@ -30,6 +30,9 @@ public class RestaurantService {
         Employee employee=employeeRepository.findById(employeeId)
                 .orElseThrow(() -> new EmployeeException("Employee not found with id: " + employeeId));
 
+        if (employee.getRestaurant()!=null && employee.getRestaurant().getIsActive()){
+            throw new RestaurantException("Admin Can have only one Active Restaurant");
+        }
         Restaurant restaurant=restaurantMapper.toEntity(restaurantCreateRequest,employee);
 
         // need to set latitude and longitude from address using geocoding service in future

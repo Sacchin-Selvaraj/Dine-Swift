@@ -1,6 +1,5 @@
 package com.dineswift.restaurant_service.payload.request.restaurant;
 
-import com.dineswift.restaurant_service.model.RestaurantStatus;
 import jakarta.persistence.Column;
 import jakarta.validation.constraints.*;
 import lombok.Data;
@@ -55,9 +54,6 @@ public class RestaurantCreateRequest {
 
     @Size(max = 500, message = "Website link cannot exceed 500 characters")
     private String websiteLink;
-
-    @NotNull(message = "Restaurant status is required")
-    private RestaurantStatus restaurantStatus;
 
     @NotNull(message = "Opening time is required")
     private LocalTime openingTime;
