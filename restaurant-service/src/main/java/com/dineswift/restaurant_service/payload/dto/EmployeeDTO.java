@@ -1,6 +1,6 @@
 package com.dineswift.restaurant_service.payload.dto;
 
-import com.dineswift.restaurant_service.model.entites.Role;
+import com.dineswift.restaurant_service.model.Role;
 import jakarta.validation.constraints.*;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;

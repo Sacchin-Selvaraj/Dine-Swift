@@ -1,10 +1,10 @@
 package com.dineswift.restaurant_service.controller;
 
 
-import com.dineswift.restaurant_service.payload.request.EmployeeCreateRequest;
+import com.dineswift.restaurant_service.payload.request.employee.EmployeeCreateRequest;
 import com.dineswift.restaurant_service.payload.dto.EmployeeDTO;
-import com.dineswift.restaurant_service.payload.request.EmployeeNameRequest;
-import com.dineswift.restaurant_service.payload.request.PasswordChangeRequest;
+import com.dineswift.restaurant_service.payload.request.employee.EmployeeNameRequest;
+import com.dineswift.restaurant_service.payload.request.employee.PasswordChangeRequest;
 import com.dineswift.restaurant_service.service.EmployeeService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +26,7 @@ public class EmployeeController {
         return ResponseEntity.ok(employeeDTO);
     }
 
-    @PostMapping("/change-username/{employeeId}")
+    @PatchMapping("/change-username/{employeeId}")
     public ResponseEntity<String> changeUsername(@Valid @RequestBody EmployeeNameRequest employeeNameRequest, @PathVariable UUID employeeId) {
         employeeService.changeUsername(employeeNameRequest,employeeId);
         return ResponseEntity.ok(employeeNameRequest.getEmployeeName());
@@ -38,9 +38,15 @@ public class EmployeeController {
         return ResponseEntity.ok("Employee deleted successfully");
     }
 
-    @PostMapping("/change-password/{employeeId}")
+    @PutMapping("/change-password/{employeeId}")
     public ResponseEntity<String> changePassword(@RequestBody PasswordChangeRequest passwordChangeRequest, @PathVariable UUID employeeId) {
         employeeService.changePassword(passwordChangeRequest,employeeId);
         return ResponseEntity.ok("Password changed successfully");
+    }
+
+    @PostMapping("create-employee/{restaurantId}" )
+    public ResponseEntity<String> createEmployeeByRestaurant(@Valid @RequestBody EmployeeCreateRequest employeeCreateRequest, @PathVariable UUID restaurantId) {
+        String employeeName = employeeService.createEmployer(employeeCreateRequest, restaurantId);
+        return ResponseEntity.ok("Employee created successfully with name: " + employeeName);
     }
 }

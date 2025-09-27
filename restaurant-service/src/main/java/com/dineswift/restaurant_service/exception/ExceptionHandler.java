@@ -56,4 +56,16 @@ public class ExceptionHandler {
                 .toList();
         return errors;
     }
+
+    @org.springframework.web.bind.annotation.ExceptionHandler(EmployeeException.class)
+    public ResponseEntity<ErrorResponse> handleEmployeeException(EmployeeException ex) {
+        ErrorResponse errorResponse = new ErrorResponse("Employee Details Not valid", HttpStatus.BAD_REQUEST,List.of(ex.getMessage()));
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
+
+    @org.springframework.web.bind.annotation.ExceptionHandler(RoleException.class)
+    public ResponseEntity<ErrorResponse> handleRoleException(RoleException ex) {
+        ErrorResponse errorResponse = new ErrorResponse("Role Details Not valid", HttpStatus.BAD_REQUEST,List.of(ex.getMessage()));
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
 }

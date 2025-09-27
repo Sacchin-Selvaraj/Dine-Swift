@@ -1,9 +1,6 @@
 package com.dineswift.restaurant_service.repository;
 
-import com.dineswift.restaurant_service.model.entites.Employee;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
+import com.dineswift.restaurant_service.model.Employee;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

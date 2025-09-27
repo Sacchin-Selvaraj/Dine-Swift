@@ -1,15 +1,18 @@
 package com.dineswift.restaurant_service.service;
 
 import com.dineswift.restaurant_service.exception.EmployeeException;
+import com.dineswift.restaurant_service.exception.RestaurantException;
 import com.dineswift.restaurant_service.mapper.EmployeeMapper;
-import com.dineswift.restaurant_service.model.entites.Employee;
-import com.dineswift.restaurant_service.model.entites.Role;
-import com.dineswift.restaurant_service.model.entites.RoleName;
-import com.dineswift.restaurant_service.payload.request.EmployeeCreateRequest;
+import com.dineswift.restaurant_service.model.Employee;
+import com.dineswift.restaurant_service.model.Restaurant;
+import com.dineswift.restaurant_service.model.Role;
+import com.dineswift.restaurant_service.model.RoleName;
+import com.dineswift.restaurant_service.payload.request.employee.EmployeeCreateRequest;
 import com.dineswift.restaurant_service.payload.dto.EmployeeDTO;
-import com.dineswift.restaurant_service.payload.request.EmployeeNameRequest;
-import com.dineswift.restaurant_service.payload.request.PasswordChangeRequest;
+import com.dineswift.restaurant_service.payload.request.employee.EmployeeNameRequest;
+import com.dineswift.restaurant_service.payload.request.employee.PasswordChangeRequest;
 import com.dineswift.restaurant_service.repository.EmployeeRepository;
+import com.dineswift.restaurant_service.repository.RestaurantRepository;
 import com.dineswift.restaurant_service.repository.RoleRepository;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
@@ -27,13 +30,14 @@ public class EmployeeService {
     private final EmployeeRepository employeeRepository;
     private final RoleRepository roleRepository;
     private final EmployeeMapper employeeMapper;
+    private final RestaurantRepository restaurantRepository;
 
 
     public EmployeeDTO createEmployee(EmployeeCreateRequest employeeCreateRequest) {
 
         verifyUser(employeeCreateRequest);
 
-        Employee employee = convertToEntity(employeeCreateRequest);
+        Employee employee = employeeMapper.convertToEntity(employeeCreateRequest);
 
         Role role = roleRepository.findByRoleName(RoleName.ROLE_ADMIN).orElseThrow(() -> new EmployeeException("Role not found"));
         employee.setRoles(Set.of(role));
@@ -43,21 +47,6 @@ public class EmployeeService {
         return employeeMapper.toDTO(employee);
 
     }
-
-    private Employee convertToEntity(EmployeeCreateRequest employeeCreateRequest) {
-        Employee employee = new Employee();
-        if (employeeCreateRequest.getEmployeeName() != null)
-            employee.setEmployeeName(employeeCreateRequest.getEmployeeName());
-        if (employeeCreateRequest.getPassword() != null)
-            employee.setPassword(employeeCreateRequest.getPassword());
-        if (employeeCreateRequest.getEmail() != null)
-            employee.setEmail(employeeCreateRequest.getEmail());
-        if (employeeCreateRequest.getPhoneNumber() != null)
-            employee.setPhoneNumber(employeeCreateRequest.getPhoneNumber());
-        employee.setEmployeeIsActive(true);
-        return employee;
-    }
-
 
     private void verifyUser(EmployeeCreateRequest employeeCreateRequest) {
         if (employeeCreateRequest == null) {
@@ -108,5 +97,22 @@ public class EmployeeService {
         // need to encode the password and sent it to auth service
         employee.setPassword(passwordChangeRequest.getNewPassword());
         employeeRepository.save(employee);
+    }
+
+    public String createEmployer(EmployeeCreateRequest employeeCreateRequest, UUID restaurantId) {
+        if (restaurantId == null) {
+            throw new EmployeeException("Invalid Restaurant id");
+        }
+        verifyUser(employeeCreateRequest);
+
+        Employee employee = employeeMapper.convertToEntity(employeeCreateRequest);
+
+        Restaurant restaurant=restaurantRepository.findById(restaurantId).orElseThrow(()-> new RestaurantException("Restaurant not found with id: " + restaurantId));
+
+        employee.setRestaurant(restaurant);
+
+        employeeRepository.save(employee);
+
+        return employee.getEmployeeName();
     }
 }

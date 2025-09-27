@@ -1,6 +1,6 @@
 package com.dineswift.restaurant_service.payload.response;
 
-import com.dineswift.restaurant_service.model.entites.Role;
+import com.dineswift.restaurant_service.model.Role;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.Data;
