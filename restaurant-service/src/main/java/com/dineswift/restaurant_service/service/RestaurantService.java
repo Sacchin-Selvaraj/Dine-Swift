@@ -5,10 +5,14 @@ import com.dineswift.restaurant_service.exception.RestaurantException;
 import com.dineswift.restaurant_service.mapper.RestaurantMapper;
 import com.dineswift.restaurant_service.model.Employee;
 import com.dineswift.restaurant_service.model.Restaurant;
+import com.dineswift.restaurant_service.model.RestaurantStatus;
+import com.dineswift.restaurant_service.payload.dto.RestaurantDTO;
 import com.dineswift.restaurant_service.payload.request.restaurant.RestaurantCreateRequest;
+import com.dineswift.restaurant_service.payload.request.restaurant.RestaurantUpdateRequest;
 import com.dineswift.restaurant_service.repository.EmployeeRepository;
 import com.dineswift.restaurant_service.repository.RestaurantRepository;
 import jakarta.transaction.Transactional;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -39,5 +43,43 @@ public class RestaurantService {
         employee.setRestaurant(restaurant);
 
         employeeRepository.save(employee);
+    }
+
+    public RestaurantDTO editRestaurantDetails(UUID restaurantId, @Valid RestaurantUpdateRequest restaurantUpdateRequest) {
+        if (restaurantId == null || restaurantUpdateRequest == null) {
+            throw new RestaurantException("Invalid Restaurant Update data");
+        }
+        Restaurant restaurant = restaurantRepository.findByIdAndIsActive(restaurantId)
+                .orElseThrow(() -> new RestaurantException("Restaurant not found with id: " + restaurantId));
+        restaurant=restaurantMapper.updateEntity(restaurant, restaurantUpdateRequest);
+        restaurantRepository.save(restaurant);
+        return restaurantMapper.toDTO(restaurant);
+
+    }
+
+    public void deactivateRestaurant(UUID restaurantId) {
+        if (restaurantId == null) {
+            throw new RestaurantException("Invalid Restaurant Id");
+        }
+        Restaurant restaurant = restaurantRepository.findByIdAndIsActive(restaurantId)
+                .orElseThrow(() -> new RestaurantException("Restaurant not found with id: " + restaurantId));
+        restaurant.setIsActive(false);
+        restaurantRepository.save(restaurant);
+    }
+
+
+    public void changeRestaurantStatus(UUID restaurantId, String status) {
+        if (restaurantId == null || status == null) {
+            throw new RestaurantException("Invalid data for changing Restaurant status");
+        }
+        Restaurant restaurant = restaurantRepository.findByIdAndIsActive(restaurantId)
+                .orElseThrow(() -> new RestaurantException("Restaurant not found with id: " + restaurantId));
+        try {
+            RestaurantStatus restaurantStatus = RestaurantStatus.fromDisplayName(status);
+            restaurant.setRestaurantStatus(restaurantStatus);
+            restaurantRepository.save(restaurant);
+        } catch (IllegalArgumentException e) {
+            throw new RestaurantException("Invalid status: " + status);
+        }
     }
 }

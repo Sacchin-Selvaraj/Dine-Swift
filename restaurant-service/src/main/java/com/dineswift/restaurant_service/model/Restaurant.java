@@ -14,9 +14,7 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "restaurant", uniqueConstraints = {
-        @UniqueConstraint(columnNames = {"restaurant_name", "city", "state"}),
-        @UniqueConstraint(columnNames = "contact_number"),
-        @UniqueConstraint(columnNames = "contact_email")
+        @UniqueConstraint(columnNames = {"restaurant_name", "city", "state"})
 })
 @Data
 @RequiredArgsConstructor

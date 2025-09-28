@@ -18,7 +18,6 @@ import com.dineswift.restaurant_service.repository.EmployeeRepository;
 import com.dineswift.restaurant_service.repository.RestaurantRepository;
 import com.dineswift.restaurant_service.repository.RoleRepository;
 import jakarta.transaction.Transactional;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
