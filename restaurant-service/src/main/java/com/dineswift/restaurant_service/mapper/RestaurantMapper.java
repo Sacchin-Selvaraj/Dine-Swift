@@ -5,13 +5,16 @@ import com.dineswift.restaurant_service.model.Restaurant;
 import com.dineswift.restaurant_service.model.RestaurantImage;
 import com.dineswift.restaurant_service.model.RestaurantStatus;
 import com.dineswift.restaurant_service.payload.dto.RestaurantDTO;
+import com.dineswift.restaurant_service.payload.dto.RestaurantImageDTO;
 import com.dineswift.restaurant_service.payload.request.restaurant.RestaurantCreateRequest;
 import com.dineswift.restaurant_service.payload.request.restaurant.RestaurantUpdateRequest;
+import com.dineswift.restaurant_service.repository.RestaurantImageRepository;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Map;
 
 @Component
@@ -19,6 +22,7 @@ import java.util.Map;
 public class RestaurantMapper {
 
     private final ModelMapper mapper;
+    private final RestaurantImageRepository restaurantImageRepository;
 
     public Restaurant toEntity(RestaurantCreateRequest restaurantCreateRequest, Employee employee) {
 
@@ -62,7 +66,12 @@ public class RestaurantMapper {
     }
 
     public RestaurantDTO toDTO(Restaurant restaurant) {
-        return mapper.map(restaurant, RestaurantDTO.class);
+        RestaurantDTO restaurantDTO = mapper.map(restaurant, RestaurantDTO.class);
+        List<RestaurantImage> restaurantImages = restaurantImageRepository.findByRestaurant(restaurant);
+        if (!restaurantImages.isEmpty())
+            restaurantDTO.setRestaurantImages(restaurantImages.stream().map(this::toImageDTO).toList());
+
+        return restaurantDTO;
     }
 
     public RestaurantImage toImageEntity(Map<String, Object> uploadResult, Restaurant restaurant) {
@@ -77,5 +86,9 @@ public class RestaurantMapper {
         restaurantImage.setWidth((Integer) uploadResult.get("width"));
         restaurantImage.setHeight((Integer) uploadResult.get("height"));
         return restaurantImage;
+    }
+
+    public RestaurantImageDTO toImageDTO(RestaurantImage image) {
+        return mapper.map(image, RestaurantImageDTO.class);
     }
 }

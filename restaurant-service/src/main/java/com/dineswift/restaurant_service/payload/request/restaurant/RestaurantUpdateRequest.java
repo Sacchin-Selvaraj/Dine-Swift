@@ -10,7 +10,6 @@ import java.time.LocalTime;
 
 @Data
 @RequiredArgsConstructor
-@Builder
 public class RestaurantUpdateRequest {
 
 

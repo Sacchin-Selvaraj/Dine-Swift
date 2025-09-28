@@ -9,6 +9,7 @@ import com.dineswift.restaurant_service.model.Restaurant;
 import com.dineswift.restaurant_service.model.RestaurantImage;
 import com.dineswift.restaurant_service.model.RestaurantStatus;
 import com.dineswift.restaurant_service.payload.dto.RestaurantDTO;
+import com.dineswift.restaurant_service.payload.dto.RestaurantImageDTO;
 import com.dineswift.restaurant_service.payload.request.restaurant.RestaurantCreateRequest;
 import com.dineswift.restaurant_service.payload.request.restaurant.RestaurantUpdateRequest;
 import com.dineswift.restaurant_service.repository.EmployeeRepository;
@@ -17,9 +18,16 @@ import com.dineswift.restaurant_service.repository.RestaurantRepository;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalTime;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -50,6 +58,38 @@ public class RestaurantService {
         employee.setRestaurant(restaurant);
 
         employeeRepository.save(employee);
+    }
+
+    public Page<RestaurantDTO> getRestaurants(int page, int size, String restaurantStatus, String sortBy,
+                                              String area, String city, String district, String state, String country,
+                                              String restaurantName, LocalTime openingTime, LocalTime closingTime) {
+        RestaurantStatus restaurantStatusEnum=null;
+
+        Sort sort = sortBy.equalsIgnoreCase("asc") ? Sort.by("restaurantName").ascending() : Sort.by("restaurantName").descending();
+
+        restaurantStatusEnum=RestaurantStatus.fromDisplayName(restaurantStatus);
+
+        Specification<Restaurant> spec = Specification.<Restaurant>allOf()
+                .and(RestaurantSpecification.hasStatus(restaurantStatusEnum))
+                .and(RestaurantSpecification.hasArea(area))
+                .and(RestaurantSpecification.hasCity(city))
+                .and(RestaurantSpecification.hasDistrict(district))
+                .and(RestaurantSpecification.hasState(state))
+                .and(RestaurantSpecification.hasCountry(country))
+                .and(RestaurantSpecification.nameContains(restaurantName))
+                .and(RestaurantSpecification.openBefore(openingTime))
+                .and(RestaurantSpecification.closeAfter(closingTime));
+
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        Page<Restaurant> restaurantPage;
+
+        restaurantPage=restaurantRepository.findAll(spec, pageable);
+        if (restaurantPage.hasContent()) {
+            return restaurantPage.map(restaurantMapper::toDTO);
+        }else {
+            return Page.empty();
+        }
     }
 
     public RestaurantDTO editRestaurantDetails(UUID restaurantId, @Valid RestaurantUpdateRequest restaurantUpdateRequest) {
@@ -114,4 +154,16 @@ public class RestaurantService {
         imageService.deleteImage(restaurantImage.getPublicId());
         restaurantImageRepository.delete(restaurantImage);
     }
+
+    public List<RestaurantImageDTO> getRestaurantImages(UUID restaurantId) {
+        if (restaurantId == null) {
+            throw new RestaurantException("Invalid Restaurant Id");
+        }
+        Restaurant restaurant = restaurantRepository.findByIdAndIsActive(restaurantId)
+                .orElseThrow(() -> new RestaurantException("Restaurant not found with id: " + restaurantId));
+        List<RestaurantImage> restaurantImages = restaurantImageRepository.findByRestaurant(restaurant);
+
+        return restaurantImages.stream().map(restaurantMapper::toImageDTO).toList();
+    }
+
 }

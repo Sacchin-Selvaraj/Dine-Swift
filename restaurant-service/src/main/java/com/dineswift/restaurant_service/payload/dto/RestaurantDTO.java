@@ -2,18 +2,16 @@ package com.dineswift.restaurant_service.payload.dto;
 
 import com.dineswift.restaurant_service.model.RestaurantStatus;
 import jakarta.validation.constraints.*;
-import lombok.Builder;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalTime;
-import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Data
 @RequiredArgsConstructor
-@Builder
 public class RestaurantDTO {
 
     private UUID restaurantId;
@@ -56,5 +54,7 @@ public class RestaurantDTO {
     private LocalTime closingTime;
 
     private Boolean isActive;
+
+    private List<RestaurantImageDTO> restaurantImages;
 
 }
