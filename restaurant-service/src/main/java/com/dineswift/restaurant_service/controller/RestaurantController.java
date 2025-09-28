@@ -9,6 +9,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.UUID;
 
@@ -42,4 +43,17 @@ public class RestaurantController {
         restaurantService.changeRestaurantStatus(restaurantId, status);
         return ResponseEntity.ok("Restaurant status changed successfully");
     }
+
+    @PostMapping("upload-image/{restaurantId}")
+    public ResponseEntity<String> uploadRestaurantImage(@PathVariable UUID restaurantId, @RequestBody MultipartFile imageFile) {
+        restaurantService.uploadRestaurantImage(restaurantId, imageFile);
+        return ResponseEntity.ok("Image uploaded successfully");
+    }
+
+    @DeleteMapping("delete-image/{imageId}")
+    public ResponseEntity<String> deleteRestaurantImage(@PathVariable UUID imageId) {
+        restaurantService.deleteRestaurantImage(imageId);
+        return ResponseEntity.ok("Image deleted successfully");
+    }
+
 }

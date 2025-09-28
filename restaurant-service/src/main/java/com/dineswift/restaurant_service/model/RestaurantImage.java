@@ -5,6 +5,7 @@ import jakarta.validation.constraints.*;
 import lombok.*;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.util.UUID;
 
@@ -19,42 +20,39 @@ public class RestaurantImage {
     @Column(name = "image_id", nullable = false, updatable = false)
     private UUID imageId;
 
-    @Lob
-    @Column(name = "image_data", columnDefinition = "BYTEA")
-    private byte[] imageData;
+    @Column(name = "public_id", nullable = false)
+    private String publicId;
 
-    @NotBlank(message = "Image name is required")
-    @Size(min = 1, max = 255, message = "Image name must be between 1 and 255 characters")
-    @Column(name = "image_name", nullable = false, length = 255)
-    private String imageName;
+    @Column(name = "image_url", nullable = false, length = 1000)
+    private String imageUrl;
 
-    @NotBlank(message = "Content type is required")
-    @Size(min = 1, max = 100, message = "Content type must be between 1 and 100 characters")
-    @Column(name = "content_type", nullable = false, length = 100)
-    private String contentType;
+    @Column(name = "secure_url", nullable = false, length = 1000)
+    private String secureUrl;
 
-    @NotNull(message = "File size is required")
-    @Min(value = 0, message = "File size must be greater than or equal to 0")
-    @Max(value = 104857600, message = "File size cannot exceed 100MB")
-    @Column(name = "file_size", nullable = false)
-    private Long fileSize;
+    @Column(name = "format")
+    private String format;
 
-    @Size(max = 500, message = "File path cannot exceed 500 characters")
-    @Column(name = "file_path", length = 500)
-    private String filePath;
+    @Column(name = "resource_type")
+    private String resourceType;
 
-    @NotNull(message = "Display order is required")
-    @Min(value = 0, message = "Display order must be greater than or equal to 0")
-    @Column(name = "display_order", nullable = false)
-    private Integer displayOrder = 0;
+    @Column(name = "bytes")
+    private Long bytes;
 
+    @Column(name = "width")
+    private Integer width;
+
+    @Column(name = "height")
+    private Integer height;
+
+    @Column(name = "is_primary")
+    private Boolean isPrimary = false;
+
+    @Column(name = "uploaded_at")
     @UpdateTimestamp
-    @NotNull(message = "Uploaded at timestamp is required")
-    @Column(name = "uploaded_at", nullable = false)
-    private ZonedDateTime uploadedAt;
+    private LocalDateTime uploadedAt;
 
     @NotNull(message = "Restaurant is required")
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY,cascade = {CascadeType.PERSIST,CascadeType.MERGE})
     @JoinColumn(name = "restaurant_id")
     private Restaurant restaurant;
 }

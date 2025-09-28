@@ -2,6 +2,7 @@ package com.dineswift.restaurant_service.mapper;
 
 import com.dineswift.restaurant_service.model.Employee;
 import com.dineswift.restaurant_service.model.Restaurant;
+import com.dineswift.restaurant_service.model.RestaurantImage;
 import com.dineswift.restaurant_service.model.RestaurantStatus;
 import com.dineswift.restaurant_service.payload.dto.RestaurantDTO;
 import com.dineswift.restaurant_service.payload.request.restaurant.RestaurantCreateRequest;
@@ -10,6 +11,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Component;
+
+import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
@@ -60,5 +63,19 @@ public class RestaurantMapper {
 
     public RestaurantDTO toDTO(Restaurant restaurant) {
         return mapper.map(restaurant, RestaurantDTO.class);
+    }
+
+    public RestaurantImage toImageEntity(Map<String, Object> uploadResult, Restaurant restaurant) {
+        RestaurantImage restaurantImage = new RestaurantImage();
+        restaurantImage.setRestaurant(restaurant);
+        restaurantImage.setPublicId((String) uploadResult.get("publicId"));
+        restaurantImage.setImageUrl((String) uploadResult.get("url"));
+        restaurantImage.setSecureUrl((String) uploadResult.get("secureUrl"));
+        restaurantImage.setFormat((String) uploadResult.get("format"));
+        restaurantImage.setResourceType((String) uploadResult.get("resourceType"));
+        restaurantImage.setBytes((Long) uploadResult.get("bytes"));
+        restaurantImage.setWidth((Integer) uploadResult.get("width"));
+        restaurantImage.setHeight((Integer) uploadResult.get("height"));
+        return restaurantImage;
     }
 }
