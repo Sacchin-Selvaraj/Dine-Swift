@@ -61,8 +61,9 @@ public final class RestaurantSpecification {
             return Specification.allOf();
         }
         // Case-insensitive exact match for location fields
+        String pattern = "%" + value.toLowerCase() + "%";
         return (root, query, builder) ->
-                builder.equal(builder.lower(root.get(fieldName)), value.toLowerCase());
+                builder.like(builder.lower(root.get(fieldName)), pattern);
     }
 
     // --- Time Specifications ---
@@ -77,7 +78,7 @@ public final class RestaurantSpecification {
         }
         // opening_time <= requested_time
         return (root, query, builder) ->
-                builder.lessThanOrEqualTo(root.get("openingTime"), time);
+                builder.greaterThanOrEqualTo(root.get("openingTime"), time);
     }
 
     /**
@@ -90,6 +91,6 @@ public final class RestaurantSpecification {
         }
         // closing_time >= requested_time
         return (root, query, builder) ->
-                builder.greaterThanOrEqualTo(root.get("closingTime"), time);
+                builder.lessThanOrEqualTo(root.get("closingTime"), time);
     }
 }

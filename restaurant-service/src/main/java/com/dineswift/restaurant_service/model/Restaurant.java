@@ -100,6 +100,7 @@ public class Restaurant {
 
     @NotNull(message = "Restaurant status is required")
     @Column(name = "restaurant_status")
+    @Enumerated(EnumType.STRING)
     private RestaurantStatus restaurantStatus;
 
     @NotNull(message = "Opening time is required")

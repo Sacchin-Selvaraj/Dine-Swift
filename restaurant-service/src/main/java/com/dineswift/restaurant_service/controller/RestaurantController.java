@@ -13,6 +13,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalTime;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 
 @RestController
 @RequestMapping("/restaurant")
@@ -52,20 +53,20 @@ public class RestaurantController {
         return ResponseEntity.ok(restaurants);
     }
 
-    @PatchMapping("/deactivate/{restaurantId}")
+    @DeleteMapping("/deactivate/{restaurantId}")
     public ResponseEntity<String> deactivateRestaurant(@PathVariable UUID restaurantId) {
         restaurantService.deactivateRestaurant(restaurantId);
         return ResponseEntity.ok("Restaurant deactivated successfully");
     }
 
     @PostMapping("/change-status/{restaurantId}")
-    public ResponseEntity<String> changeRestaurantStatus(@PathVariable UUID restaurantId, @RequestParam String status) {
+    public ResponseEntity<String> changeRestaurantStatus(@PathVariable UUID restaurantId, @RequestParam("status") String status) {
         restaurantService.changeRestaurantStatus(restaurantId, status);
         return ResponseEntity.ok("Restaurant status changed successfully");
     }
 
     @PostMapping("upload-image/{restaurantId}")
-    public ResponseEntity<String> uploadRestaurantImage(@PathVariable UUID restaurantId, @RequestParam("imageFile") MultipartFile imageFile) {
+    public ResponseEntity<String> uploadRestaurantImage(@PathVariable UUID restaurantId,@RequestParam("imageFile") MultipartFile imageFile) throws ExecutionException, InterruptedException {
         restaurantService.uploadRestaurantImage(restaurantId, imageFile);
         return ResponseEntity.ok("Image uploaded successfully");
     }

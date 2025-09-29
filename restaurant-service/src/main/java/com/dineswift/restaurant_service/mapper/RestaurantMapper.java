@@ -9,20 +9,29 @@ import com.dineswift.restaurant_service.payload.dto.RestaurantImageDTO;
 import com.dineswift.restaurant_service.payload.request.restaurant.RestaurantCreateRequest;
 import com.dineswift.restaurant_service.payload.request.restaurant.RestaurantUpdateRequest;
 import com.dineswift.restaurant_service.repository.RestaurantImageRepository;
+import com.dineswift.restaurant_service.repository.RestaurantRepository;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
 
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
+@Transactional
 public class RestaurantMapper {
 
     private final ModelMapper mapper;
     private final RestaurantImageRepository restaurantImageRepository;
+    private final RestaurantRepository restaurantRepository;
+
 
     public Restaurant toEntity(RestaurantCreateRequest restaurantCreateRequest, Employee employee) {
 

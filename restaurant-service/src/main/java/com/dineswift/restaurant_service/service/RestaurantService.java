@@ -18,18 +18,24 @@ import com.dineswift.restaurant_service.repository.RestaurantRepository;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.task.TaskExecutor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutionException;
 
 @Service
 @RequiredArgsConstructor
@@ -41,6 +47,7 @@ public class RestaurantService {
     private final RestaurantMapper restaurantMapper;
     private final ImageService imageService;
     private final RestaurantImageRepository restaurantImageRepository;
+    private final TaskExecutor taskExecutor;
 
     public void createRestaurant(RestaurantCreateRequest restaurantCreateRequest, UUID employeeId) {
         if (restaurantCreateRequest==null || employeeId==null) {
@@ -63,32 +70,36 @@ public class RestaurantService {
     public Page<RestaurantDTO> getRestaurants(int page, int size, String restaurantStatus, String sortBy,
                                               String area, String city, String district, String state, String country,
                                               String restaurantName, LocalTime openingTime, LocalTime closingTime) {
-        RestaurantStatus restaurantStatusEnum=null;
+        try {
+            RestaurantStatus restaurantStatusEnum=null;
 
-        Sort sort = sortBy.equalsIgnoreCase("asc") ? Sort.by("restaurantName").ascending() : Sort.by("restaurantName").descending();
+            Sort sort = sortBy.equalsIgnoreCase("asc") ? Sort.by("restaurantName").ascending() : Sort.by("restaurantName").descending();
+            if (restaurantStatus==null) restaurantStatus="OPEN";
+            restaurantStatusEnum=RestaurantStatus.fromDisplayName(restaurantStatus);
 
-        restaurantStatusEnum=RestaurantStatus.fromDisplayName(restaurantStatus);
+            Specification<Restaurant> spec = Specification.<Restaurant>allOf()
+                    .and(RestaurantSpecification.hasStatus(restaurantStatusEnum))
+                    .and(RestaurantSpecification.hasArea(area))
+                    .and(RestaurantSpecification.hasCity(city))
+                    .and(RestaurantSpecification.hasDistrict(district))
+                    .and(RestaurantSpecification.hasState(state))
+                    .and(RestaurantSpecification.hasCountry(country))
+                    .and(RestaurantSpecification.nameContains(restaurantName))
+                    .and(RestaurantSpecification.openBefore(openingTime))
+                    .and(RestaurantSpecification.closeAfter(closingTime));
 
-        Specification<Restaurant> spec = Specification.<Restaurant>allOf()
-                .and(RestaurantSpecification.hasStatus(restaurantStatusEnum))
-                .and(RestaurantSpecification.hasArea(area))
-                .and(RestaurantSpecification.hasCity(city))
-                .and(RestaurantSpecification.hasDistrict(district))
-                .and(RestaurantSpecification.hasState(state))
-                .and(RestaurantSpecification.hasCountry(country))
-                .and(RestaurantSpecification.nameContains(restaurantName))
-                .and(RestaurantSpecification.openBefore(openingTime))
-                .and(RestaurantSpecification.closeAfter(closingTime));
+            Pageable pageable = PageRequest.of(page, size, sort);
 
-        Pageable pageable = PageRequest.of(page, size, sort);
+            Page<Restaurant> restaurantPage;
 
-        Page<Restaurant> restaurantPage;
-
-        restaurantPage=restaurantRepository.findAll(spec, pageable);
-        if (restaurantPage.hasContent()) {
-            return restaurantPage.map(restaurantMapper::toDTO);
-        }else {
-            return Page.empty();
+            restaurantPage=restaurantRepository.findAll(spec, pageable);
+            if (restaurantPage.hasContent()) {
+                return restaurantPage.map(restaurantMapper::toDTO);
+            }else {
+                return Page.empty();
+            }
+        } catch (Exception e) {
+            throw new RestaurantException("Restaurant retrieval failed: " + e.getMessage());
         }
     }
 
@@ -120,7 +131,7 @@ public class RestaurantService {
             throw new RestaurantException("Invalid data for changing Restaurant status");
         }
         Restaurant restaurant = restaurantRepository.findByIdAndIsActive(restaurantId)
-                .orElseThrow(() -> new RestaurantException("Restaurant not found with id: " + restaurantId));
+                .orElseThrow(() -> new RestaurantException("Restaurant not found with id: " + restaurantId+" or is inactive"));
         try {
             RestaurantStatus restaurantStatus = RestaurantStatus.fromDisplayName(status);
             restaurant.setRestaurantStatus(restaurantStatus);
@@ -130,19 +141,34 @@ public class RestaurantService {
         }
     }
 
-    public void uploadRestaurantImage(UUID restaurantId, MultipartFile imageFile) {
+    public CompletableFuture<Void> uploadRestaurantImage(UUID restaurantId, MultipartFile imageFile) throws ExecutionException, InterruptedException {
         if (restaurantId == null || imageFile == null || imageFile.isEmpty()) {
             throw new RestaurantException("Invalid data for uploading Restaurant image");
         }
+
+       imageService.uploadImage(imageFile).thenApplyAsync( result-> {
+           if (result != null && (Boolean) result.get("isSuccessful")) {
+               saveRestaurantImage(result, restaurantId);
+           } else {
+               throw new RestaurantException("Image upload failed");
+           }
+           return result;
+
+       },taskExecutor).exceptionally(ex -> {
+            Throwable cause = ex.getCause() != null ? ex.getCause() : ex;
+            System.err.println("❌ Error while uploading restaurant image: " + cause.getMessage());
+            throw new CompletionException(new RestaurantException("Image upload failed" + cause));
+        });
+       return CompletableFuture.completedFuture(null);
+    }
+
+    @Transactional
+    public void saveRestaurantImage(Map<String, Object> result, UUID restaurantId) {
         Restaurant restaurant = restaurantRepository.findByIdAndIsActive(restaurantId)
                 .orElseThrow(() -> new RestaurantException("Restaurant not found with id: " + restaurantId));
 
-        Map<String, Object> uploadResult = imageService.uploadImage(imageFile);
-        if (uploadResult.get("isSuccessful") != null && (Boolean) uploadResult.get("isSuccessful")) {
-            restaurantImageRepository.save(restaurantMapper.toImageEntity(uploadResult, restaurant));
-        } else {
-            throw new RestaurantException("Image upload failed");
-        }
+        RestaurantImage imageEntity = restaurantMapper.toImageEntity(result, restaurant);
+        restaurantImageRepository.save(imageEntity);
     }
 
     public void deleteRestaurantImage(UUID imageId) {

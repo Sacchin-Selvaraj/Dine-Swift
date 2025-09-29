@@ -4,7 +4,7 @@ import lombok.Getter;
 
 @Getter
 public enum RestaurantStatus {
-    OPENED("Opened"),
+    OPEN("Open"),
     CLOSED("Closed"),
     RENOVATION("Renovation"),
     UNDER_CONSTRUCTION("Under Construction"),

@@ -52,7 +52,7 @@ public class RestaurantImage {
     private LocalDateTime uploadedAt;
 
     @NotNull(message = "Restaurant is required")
-    @ManyToOne(fetch = FetchType.LAZY,cascade = {CascadeType.PERSIST,CascadeType.MERGE})
+    @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.MERGE})
     @JoinColumn(name = "restaurant_id")
     private Restaurant restaurant;
 }
