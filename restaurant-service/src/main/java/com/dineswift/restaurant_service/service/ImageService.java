@@ -27,6 +27,19 @@ public class ImageService {
     @Async
     public CompletableFuture<Map<String,Object>> uploadImage(MultipartFile file) {
         Map<String,Object> uploadResponse = new HashMap<>();
+
+        byte[] fileBytes;
+        try {
+            if (file == null || file.isEmpty()) {
+                throw new IllegalArgumentException("File is null or empty");
+            }
+            fileBytes = file.getBytes();
+        } catch (IOException | IllegalArgumentException e) {
+            uploadResponse.put("isSuccessful", false);
+            uploadResponse.put("error", "Initial file read failed: " + e.getMessage());
+            return CompletableFuture.completedFuture(uploadResponse);
+        }
+
         int maxAttempts = 2;
         int attempt = 0;
         while (attempt < maxAttempts) {
@@ -41,7 +54,7 @@ public class ImageService {
                 uploadParams.put("quality", "auto");
                 uploadParams.put("fetch_format", "auto");
 
-                Map<?,?> uploadResult = cloudinary.uploader().upload(file.getBytes(), uploadParams);
+                Map<?,?> uploadResult = cloudinary.uploader().upload(fileBytes, uploadParams);
 
                 String publicId = (String) uploadResult.get("public_id");
                 String url = (String) uploadResult.get("url");
@@ -97,7 +110,8 @@ public class ImageService {
         }
     }
 
-    public void deleteImage(String publicId) {
+    @Async
+    public CompletableFuture<Void> deleteImage(String publicId) {
         try {
             Map<?, ?> result = cloudinary.uploader().destroy(publicId, ObjectUtils.emptyMap());
 
@@ -110,5 +124,6 @@ public class ImageService {
         } catch (IOException e) {
             throw new ImageException("Failed to delete image from Cloudinary " + e.getMessage());
         }
+        return CompletableFuture.completedFuture(null);
     }
 }

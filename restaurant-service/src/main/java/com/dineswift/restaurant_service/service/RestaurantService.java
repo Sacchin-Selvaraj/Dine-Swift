@@ -177,8 +177,15 @@ public class RestaurantService {
         }
         RestaurantImage restaurantImage = restaurantImageRepository.findById(imageId)
                 .orElseThrow(() -> new ImageException("Restaurant Image not found with id: " + imageId));
-        imageService.deleteImage(restaurantImage.getPublicId());
-        restaurantImageRepository.delete(restaurantImage);
+        imageService.deleteImage(restaurantImage.getPublicId()).thenApplyAsync(
+                result->{
+                    restaurantImageRepository.delete(restaurantImage);
+                    return null;
+                }
+        ).exceptionally(throwable -> {
+            throw new CompletionException(new ImageException("Image deletion failed: " + throwable.getMessage()));
+        });
+
     }
 
     public List<RestaurantImageDTO> getRestaurantImages(UUID restaurantId) {
