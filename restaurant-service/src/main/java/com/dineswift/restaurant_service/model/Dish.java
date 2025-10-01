@@ -3,6 +3,7 @@ package com.dineswift.restaurant_service.model;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.*;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
 import java.time.ZonedDateTime;
@@ -45,6 +46,19 @@ public class Dish {
     @Column(name = "discount", precision = 5, scale = 2)
     private BigDecimal discount = BigDecimal.ZERO;
 
+    @DecimalMin(value = "0.00", message = "Star rating cannot be negative")
+    @DecimalMax(value = "5.00", message = "Star rating cannot exceed 5.00")
+    @Column(name = "dish_star_rating", precision = 3, scale = 2)
+    private BigDecimal dishStarRating = BigDecimal.ZERO;
+
+    @Min(value = 0, message = "Total rating cannot be negative")
+    @Column(name = "dish_total_rating")
+    private Integer dishTotalRating = 0;
+
+    @Min(value = 0, message = "Rating count cannot be negative")
+    @Column(name = "dish_total_rating_count")
+    private Integer dishTotalRatingCount = 0;
+
     @Size(max = 500, message = "Dish comments cannot exceed 500 characters")
     @Column(name = "dish_comments", columnDefinition = "TEXT")
     private String dishComments;
@@ -53,16 +67,20 @@ public class Dish {
     @Column(name = "is_veg", nullable = false)
     private Boolean isVeg = false;
 
-    @Size(max = 255, message = "Last modified by cannot exceed 255 characters")
+    @NotNull(message = "Active status is required")
+    @Column(name = "is_active", nullable = false)
+    private Boolean isActive = true;
+
     @Column(name = "last_modified_by", length = 255)
-    private String lastModifiedBy;
+    private UUID lastModifiedBy;
 
     @PastOrPresent(message = "Last modified date must be in the past or present")
     @Column(name = "last_modified_date")
+    @UpdateTimestamp
     private ZonedDateTime lastModifiedDate;
 
     @NotNull(message = "Restaurant is required")
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY,cascade = {CascadeType.PERSIST,CascadeType.MERGE})
     @JoinColumn(name = "restaurant_id")
     private Restaurant restaurant;
 
