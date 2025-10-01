@@ -1,7 +1,7 @@
 package com.dineswift.restaurant_service.kafka.service;
 
-import com.dineswift.restaurant_service.kafka.payload.EmailVerificationDetail;
-import com.dineswift.restaurant_service.kafka.payload.SmsVerificationDetail;
+import com.dineswift.notification_service.model.EmailVerificationDetail;
+import com.dineswift.notification_service.model.SmsVerificationDetail;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
