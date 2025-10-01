@@ -30,3 +30,16 @@ spring:
             descriptor:
               sql:
                 BasicBinder: TRACE
+
+  kafka:
+    bootstrap-servers: localhost:9092
+
+
+app:
+  kafka:
+    topic:
+      email-verification-topic: email
+      sms-verification-topic: sms
+
+
+

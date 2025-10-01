@@ -32,7 +32,7 @@ logging:
 
       consumer:
           group-id: user-service-group
-          auto-offset-reset: latest
+          auto-offset-reset: earliest
           auto-commit-interval: 100
           properties:
             spring:

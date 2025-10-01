@@ -11,8 +11,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 
 @RestController
 @RequestMapping("/employee")
@@ -23,7 +21,7 @@ public class VerificationController {
 
 
     @PostMapping("/update-mail/{employeeId}")
-    public ResponseEntity<String> updateEmail(@PathVariable UUID employeeId, @Valid @RequestBody EmailUpdateRequest emailUpdateRequest) throws ExecutionException, InterruptedException {
+    public ResponseEntity<String> updateEmail(@PathVariable UUID employeeId, @Valid @RequestBody EmailUpdateRequest emailUpdateRequest) {
         String response=verificationService.updateEmail(employeeId,emailUpdateRequest);
         return ResponseEntity.ok(response);
     }

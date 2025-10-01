@@ -1,9 +1,7 @@
 package com.dineswift.userservice.kafka.service;
 
-import com.dineswift.userservice.exception.NotificationException;
 import com.dineswift.userservice.kafka.payload.EmailVerificationDetail;
 import com.dineswift.userservice.kafka.payload.SmsVerificationDetail;
-import com.dineswift.userservice.notification.service.EmailService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,7 +18,6 @@ public class KafkaService {
 
     private final KafkaTemplate<String,Object> kafkaTemplate;
 
-    private final EmailService emailService;
 
     @Value("${app.kafka.topic.email-verification-topic}")
     private String emailVerificationTopic;

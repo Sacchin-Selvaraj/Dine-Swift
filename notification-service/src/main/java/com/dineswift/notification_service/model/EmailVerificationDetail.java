@@ -5,9 +5,9 @@ import lombok.RequiredArgsConstructor;
 
 @Data
 @RequiredArgsConstructor
-public class EmailRequest {
+public class EmailVerificationDetail {
 
-    private String to;
-    private String subject;
-    private String body;
+    private String email;
+    private String token;
+    private String userName;
 }

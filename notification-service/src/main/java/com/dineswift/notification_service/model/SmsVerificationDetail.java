@@ -1,4 +1,4 @@
-package com.dineswift.userservice.kafka.payload;
+package com.dineswift.notification_service.model;
 
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
