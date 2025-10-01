@@ -4,6 +4,7 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/dine-swift.iml" filepath="$PROJECT_DIR$/.idea/dine-swift.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/notification-service.main.iml" filepath="$PROJECT_DIR$/.idea/modules/notification-service.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/restaurant-service.main.iml" filepath="$PROJECT_DIR$/.idea/modules/restaurant-service.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/userservice.main.iml" filepath="$PROJECT_DIR$/.idea/modules/userservice.main.iml" />
     </modules>
   </component>

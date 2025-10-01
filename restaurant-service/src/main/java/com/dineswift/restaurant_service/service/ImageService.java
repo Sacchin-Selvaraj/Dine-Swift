@@ -77,15 +77,13 @@ public class ImageService {
                 return CompletableFuture.completedFuture(uploadResponse);
             } catch (Exception e) {
                 attempt++;
-                System.err.println("Image upload attempt " + attempt + " failed: " + e.getMessage());
-                e.printStackTrace();
                 if (attempt >= maxAttempts) {
                     uploadResponse.put("isSuccessful", false);
                     uploadResponse.put("error", e.getMessage());
                     return CompletableFuture.completedFuture(uploadResponse);
                 }
                 try {
-                    Thread.sleep(500); // Wait before retry
+                    Thread.sleep(500);
                 } catch (InterruptedException ie) {
                     Thread.currentThread().interrupt();
                 }

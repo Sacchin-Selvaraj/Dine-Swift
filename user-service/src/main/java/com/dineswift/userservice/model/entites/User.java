@@ -38,6 +38,13 @@ public class User {
     @Column(unique = true, nullable = false)
     private String email;
 
+    @NotBlank(message = "Password is required")
+    @Size(min = 6, message = "Password must be at least 8 characters long")
+    @Pattern( regexp = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=!])(?=\\S+$).{8,}$",
+            message = "Password must contain at least one uppercase letter, one lowercase letter, one digit, and one special character")
+    @Column(nullable = false)
+    private String password;
+
     @Column(length = 10)
     private String gender;
 
@@ -92,13 +99,13 @@ public class User {
     @JoinColumn(name = "cart_id", referencedColumnName = "cart_id")
     private Cart cart;
 
-    @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @ManyToMany(cascade = {CascadeType.PERSIST,CascadeType.MERGE}, fetch = FetchType.LAZY)
     @JoinTable(
             name = "user_role",
             joinColumns = @JoinColumn(name = "user_id",referencedColumnName = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "role_id",referencedColumnName = "role_id")
     )
-    private Set<Role> roles;
+    private Set<Role> roles=new HashSet<>();
 
 
 }

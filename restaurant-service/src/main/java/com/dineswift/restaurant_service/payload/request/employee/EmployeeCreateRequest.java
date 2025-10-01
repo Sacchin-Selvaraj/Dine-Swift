@@ -1,9 +1,7 @@
 package com.dineswift.restaurant_service.payload.request.employee;
 
 
-import com.dineswift.restaurant_service.model.Role;
-import com.dineswift.restaurant_service.payload.dto.RoleDTO;
-import jakarta.persistence.Column;
+import com.dineswift.restaurant_service.payload.request.RoleRequest;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -42,5 +40,5 @@ public class EmployeeCreateRequest {
     @NotBlank(message = "Phone Number is Required")
     private String phoneNumber;
 
-    private Set<RoleDTO> roles;
+    private Set<RoleRequest> roles;
 }

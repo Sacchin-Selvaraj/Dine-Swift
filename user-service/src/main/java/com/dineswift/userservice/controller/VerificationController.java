@@ -24,8 +24,8 @@ public class VerificationController {
 
     @PostMapping("/update-mail/{userId}")
     public ResponseEntity<String> updateEmail(@PathVariable UUID userId, @Valid @RequestBody EmailUpdateRequest emailUpdateRequest) throws ExecutionException, InterruptedException {
-        CompletableFuture<String> response=verificationService.updateEmail(userId,emailUpdateRequest);
-        return ResponseEntity.ok(response.get());
+        String response=verificationService.updateEmail(userId,emailUpdateRequest);
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/verify-mail/{userId}")
@@ -35,9 +35,9 @@ public class VerificationController {
     }
 
     @PostMapping("/update-phone-number/{userId}")
-    public ResponseEntity<String> updatePhoneNumber(@PathVariable UUID userId, @Valid @RequestBody PhoneNumberUpdateRequest phoneNumberUpdateRequest) throws ExecutionException, InterruptedException {
-        CompletableFuture<String> response=verificationService.updatePhoneNumber(userId,phoneNumberUpdateRequest);
-        return ResponseEntity.ok(response.get());
+    public ResponseEntity<String> updatePhoneNumber(@PathVariable UUID userId, @Valid @RequestBody PhoneNumberUpdateRequest phoneNumberUpdateRequest) {
+        String response=verificationService.updatePhoneNumber(userId,phoneNumberUpdateRequest);
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/verify-phone-number/{userId}")

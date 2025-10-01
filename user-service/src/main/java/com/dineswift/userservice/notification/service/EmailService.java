@@ -1,4 +1,4 @@
-package com.dineswift.userservice.service;
+package com.dineswift.userservice.notification.service;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
@@ -27,7 +27,7 @@ public class EmailService {
     @Value("${spring.mail.username}")
     public String fromMail;
 
-    @Async
+
     public void sendMail(String toMail, String subject,String templateType, Map<String, Object> model) {
 
         try {

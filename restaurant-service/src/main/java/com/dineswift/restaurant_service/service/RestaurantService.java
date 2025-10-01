@@ -24,11 +24,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
@@ -141,7 +139,7 @@ public class RestaurantService {
         }
     }
 
-    public CompletableFuture<Void> uploadRestaurantImage(UUID restaurantId, MultipartFile imageFile) throws ExecutionException, InterruptedException {
+    public void uploadRestaurantImage(UUID restaurantId, MultipartFile imageFile) throws ExecutionException, InterruptedException {
         if (restaurantId == null || imageFile == null || imageFile.isEmpty()) {
             throw new RestaurantException("Invalid data for uploading Restaurant image");
         }
@@ -156,10 +154,9 @@ public class RestaurantService {
 
        },taskExecutor).exceptionally(ex -> {
             Throwable cause = ex.getCause() != null ? ex.getCause() : ex;
-            System.err.println("❌ Error while uploading restaurant image: " + cause.getMessage());
             throw new CompletionException(new RestaurantException("Image upload failed" + cause));
         });
-       return CompletableFuture.completedFuture(null);
+
     }
 
     @Transactional

@@ -4,12 +4,12 @@ import com.dineswift.userservice.model.entites.BookingStatus;
 import com.dineswift.userservice.model.request.*;
 import com.dineswift.userservice.model.response.BookingDTO;
 import com.dineswift.userservice.model.response.UserDTO;
+import com.dineswift.userservice.model.response.UserResponse;
 import com.dineswift.userservice.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -27,6 +27,13 @@ public class UserController {
     @GetMapping("/greet")
     public String greet(){
         return "Hello World";
+    }
+
+
+    @PostMapping("/sign-up")
+    public ResponseEntity<UserResponse> signUpUser(@Valid @RequestBody UserRequest userRequest){
+        UserResponse userResponse=userService.signUpUser(userRequest);
+        return ResponseEntity.status(HttpStatus.CREATED).body(userResponse);
     }
 
 
@@ -56,16 +63,16 @@ public class UserController {
         return ResponseEntity.ok("Account has been deleted Successfully");
     }
 
-    @PostMapping("/update-username/{userId}")
+    @PatchMapping("/update-username/{userId}")
     public ResponseEntity<String> updateUserName(@PathVariable UUID userId, @Valid @RequestBody UsernameUpdateRequest usernameRequest){
         userService.updateUsername(userId,usernameRequest);
         return ResponseEntity.status(HttpStatus.ACCEPTED).body("Username Updated Successfully");
     }
 
-    @PostMapping("/create-user")
-    public ResponseEntity<UUID> createUser(@RequestBody UserRequest userRequest){
-       UUID userId= userService.createUser(userRequest);
-        return ResponseEntity.ok(userId);
+    @PostMapping("/update-password/{userId}")
+    public ResponseEntity<String> updatePassword(@PathVariable UUID userId, @Valid @RequestBody PasswordUpdateRequest passwordRequest){
+        userService.updatePassword(userId,passwordRequest);
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body("Password Updated Successfully");
     }
 
 }

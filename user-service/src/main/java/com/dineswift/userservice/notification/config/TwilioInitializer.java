@@ -1,4 +1,4 @@
-package com.dineswift.userservice.config;
+package com.dineswift.userservice.notification.config;
 
 import com.twilio.Twilio;
 import jakarta.annotation.PostConstruct;

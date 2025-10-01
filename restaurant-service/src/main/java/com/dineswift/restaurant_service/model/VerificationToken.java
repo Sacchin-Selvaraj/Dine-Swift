@@ -1,8 +1,5 @@
-package com.dineswift.userservice.model.entites;
+package com.dineswift.restaurant_service.model;
 
-
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
@@ -60,7 +57,7 @@ public class VerificationToken {
     @UpdateTimestamp
     private LocalDateTime createdAt;
 
-    @ManyToOne(cascade = CascadeType.ALL,fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id",nullable = false)
-    private User user;
+    @ManyToOne(cascade = {CascadeType.MERGE,CascadeType.PERSIST},fetch = FetchType.LAZY)
+    @JoinColumn(name = "employee_id",nullable = false)
+    private Employee employee;
 }

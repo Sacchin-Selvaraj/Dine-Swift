@@ -1,41 +1,31 @@
 package com.dineswift.userservice.model.entites;
 
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 
-import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.UUID;
 
 @Entity
+@Table(name = "roles", uniqueConstraints = {
+        @UniqueConstraint(columnNames = "role_name", name = "uk_roles_name")
+})
 @Data
 @RequiredArgsConstructor
-@Table(name = "roles")
 public class Role {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "role_id",updatable = false,nullable = false)
+    @Column(name = "role_id", nullable = false, updatable = false)
     private UUID roleId;
 
-    @Column(name = "role_name",updatable = false,nullable = false)
-    private String roleName;
+    @NotNull(message = "Role name is required")
+    @Column(name = "role_name", nullable = false, unique = true)
+    @Enumerated(EnumType.STRING)
+    private RoleName roleName;
 
-    @Column(name = "created_at",updatable = false,nullable = false)
-    @CreationTimestamp
-    private LocalDateTime createdAt;
-
-    @UpdateTimestamp
-    @Column(name = "last_modified_at", nullable = false)
-    private LocalDateTime lastModifiedAt;
-
-//    @ManyToMany(mappedBy = "roles", fetch = FetchType.LAZY)
-//    @JsonIgnore
-//    private Set<User> users = new HashSet<>();
 }

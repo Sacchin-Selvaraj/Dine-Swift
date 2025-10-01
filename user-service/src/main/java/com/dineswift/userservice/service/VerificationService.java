@@ -1,44 +1,41 @@
 package com.dineswift.userservice.service;
 
+import com.dineswift.userservice.exception.NotificationException;
 import com.dineswift.userservice.exception.TokenException;
 import com.dineswift.userservice.exception.UserException;
+import com.dineswift.userservice.kafka.service.KafkaService;
+import com.dineswift.userservice.model.entites.TokenStatus;
 import com.dineswift.userservice.model.entites.TokenType;
 import com.dineswift.userservice.model.entites.User;
 import com.dineswift.userservice.model.entites.VerificationToken;
 import com.dineswift.userservice.model.request.EmailUpdateRequest;
 import com.dineswift.userservice.model.request.PhoneNumberUpdateRequest;
 import com.dineswift.userservice.model.request.VerifyTokenRequest;
+import com.dineswift.userservice.notification.service.SmsService;
 import com.dineswift.userservice.repository.UserRepository;
 import com.dineswift.userservice.repository.VerificationRepository;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class VerificationService {
 
     private final UserCommonService userCommonService;
     private final VerificationRepository verificationRepository;
-    private final EmailService emailService;
+    private final KafkaService kafkaService;
     private final UserRepository userRepository;
     private final SmsService smsService;
 
-    public VerificationService(UserCommonService userCommonService, VerificationRepository verificationRepository, EmailService emailService, UserRepository userRepository, SmsService smsService) {
-        this.userCommonService = userCommonService;
-        this.verificationRepository = verificationRepository;
-        this.emailService = emailService;
-        this.userRepository = userRepository;
-        this.smsService = smsService;
-    }
 
-    public CompletableFuture<String> updateEmail(UUID userId, EmailUpdateRequest emailUpdateRequest) {
+    public String updateEmail(UUID userId, EmailUpdateRequest emailUpdateRequest) {
 
         if (userRepository.existsByEmail(emailUpdateRequest.getEmail())){
             throw new UserException("Email already registered by another user");
@@ -47,25 +44,22 @@ public class VerificationService {
 
         String token=userCommonService.generateNumericCode(6);
 
-        Map<String,Object> modal = new HashMap<>();
-        modal.put("userName", user.getUsername());
-        modal.put("companyName", "DineSwift");
-        modal.put("verificationCode", token);
-        modal.put("expiryTime", 10);
-
-        VerificationToken verificationToken=new VerificationToken();
-        verificationToken.setToken(token);
+        VerificationToken verificationToken=setVerificationToken(token,user,TokenType.EMAIL_VERIFICATION);
         verificationToken.setNewEmail(emailUpdateRequest.getEmail());
-        verificationToken.setUser(user);
-        verificationToken.setTokenType(TokenType.EMAIL_VERIFICATION);
-        verificationToken.setTokenExpiryDate(LocalDateTime.now().plusMinutes(10));
-        verificationToken.setCreatedAt(LocalDateTime.now());
-
-        emailService.sendMail(emailUpdateRequest.getEmail(),"Email Verification Code from DineSwift","email-verification",modal);
 
         verificationRepository.save(verificationToken);
 
-        return CompletableFuture.completedFuture("Email Sent Successfully");
+        kafkaService.sendEmailVerification(emailUpdateRequest.getEmail(),token,user.getUsername()).thenApply(status->{
+            if (!status){
+                verificationToken.setTokenStatus(TokenStatus.FAILED);
+                throw new NotificationException("Failed to send Email");
+            }else {
+                verificationToken.setTokenStatus(TokenStatus.SENT);
+            }
+            return verificationRepository.save(verificationToken);
+        });
+
+        return "Email Sent Successfully";
     }
 
 
@@ -87,11 +81,12 @@ public class VerificationService {
         user.setEmail(verificationToken.getNewEmail());
 
         verificationToken.setWasUsed(true);
+        verificationToken.setTokenStatus(TokenStatus.VERIFIED);
         verificationRepository.save(verificationToken);
 
     }
 
-    public CompletableFuture<String> updatePhoneNumber(UUID userId, PhoneNumberUpdateRequest phoneNumberUpdateRequest) {
+    public String updatePhoneNumber(UUID userId, PhoneNumberUpdateRequest phoneNumberUpdateRequest) {
 
         if (userRepository.existsByPhoneNumber(phoneNumberUpdateRequest.getPhoneNumber())){
             throw new UserException("Phone Number already registered by another user");
@@ -101,18 +96,32 @@ public class VerificationService {
 
         String token=userCommonService.generateNumericCode(6);
 
-        VerificationToken verificationToken=new VerificationToken();
-        verificationToken.setToken(token);
+        VerificationToken verificationToken = setVerificationToken(token, user,TokenType.PHONE_VERIFICATION);
         verificationToken.setNewPhonenumber(phoneNumberUpdateRequest.getPhoneNumber());
-        verificationToken.setUser(user);
-        verificationToken.setTokenType(TokenType.PHONE_VERIFICATION);
-        verificationToken.setTokenExpiryDate(LocalDateTime.now().plusMinutes(10));
-        verificationToken.setCreatedAt(LocalDateTime.now());
-
-        smsService.sendSms(phoneNumberUpdateRequest.getPhoneNumber(),"Verification Code for "+user.getUsername()+" is: "+token);
+        verificationToken.setTokenStatus(TokenStatus.PENDING);
         verificationRepository.save(verificationToken);
 
-        return CompletableFuture.completedFuture("Verification Code Sent Successfully");
+        kafkaService.sendSmsVerification(phoneNumberUpdateRequest.getPhoneNumber(),token,user.getUsername()).thenApply(status->{
+            if (!status){
+                verificationToken.setTokenStatus(TokenStatus.FAILED);
+                throw new NotificationException("Failed to send SMS");
+            }else {
+                verificationToken.setTokenStatus(TokenStatus.SENT);
+            }
+            return verificationRepository.save(verificationToken);
+        });
+        return "Verification Code Sent Successfully";
+    }
+
+    private static VerificationToken setVerificationToken(String token, User user,TokenType tokenType) {
+        VerificationToken verificationToken=new VerificationToken();
+        verificationToken.setToken(token);
+        verificationToken.setUser(user);
+        verificationToken.setTokenStatus(TokenStatus.PENDING);
+        verificationToken.setTokenType(tokenType);
+        verificationToken.setTokenExpiryDate(LocalDateTime.now().plusMinutes(10));
+        verificationToken.setCreatedAt(LocalDateTime.now());
+        return verificationToken;
     }
 
     public void verifyPhoneNumber(UUID userId, VerifyTokenRequest verifyPhoneNumberRequest) {
@@ -133,7 +142,7 @@ public class VerificationService {
         user.setPhoneNumber(verificationToken.getNewPhonenumber());
 
         verificationToken.setWasUsed(true);
-
+        verificationToken.setTokenStatus(TokenStatus.VERIFIED);
         verificationRepository.save(verificationToken);
     }
 }

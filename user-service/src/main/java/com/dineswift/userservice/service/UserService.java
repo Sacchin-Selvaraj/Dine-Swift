@@ -1,16 +1,21 @@
 package com.dineswift.userservice.service;
 
 import com.dineswift.userservice.exception.UserException;
+import com.dineswift.userservice.mapper.UserMapper;
 import com.dineswift.userservice.model.entites.*;
+import com.dineswift.userservice.model.request.PasswordUpdateRequest;
 import com.dineswift.userservice.model.request.UserDetailsRequest;
 import com.dineswift.userservice.model.request.UserRequest;
 import com.dineswift.userservice.model.request.UsernameUpdateRequest;
 import com.dineswift.userservice.model.response.BookingDTO;
 import com.dineswift.userservice.model.response.UserDTO;
+import com.dineswift.userservice.model.response.UserResponse;
 import com.dineswift.userservice.repository.BookingRepository;
 import com.dineswift.userservice.repository.RoleRepository;
 import com.dineswift.userservice.repository.UserRepository;
 import jakarta.transaction.Transactional;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
@@ -24,6 +29,7 @@ import java.util.*;
 
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class UserService {
 
     private final UserRepository userRepository;
@@ -32,17 +38,8 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final UserCommonService userCommonService;
     private final RoleRepository roleRepository;
+    private final UserMapper userMapper;
 
-
-
-    public UserService(UserRepository userRepository, BookingRepository bookingRepository, ModelMapper modelMapper, PasswordEncoder passwordEncoder, UserCommonService userCommonService, RoleRepository roleRepository) {
-        this.userRepository = userRepository;
-        this.bookingRepository = bookingRepository;
-        this.modelMapper = modelMapper;
-        this.passwordEncoder = passwordEncoder;
-        this.userCommonService = userCommonService;
-        this.roleRepository = roleRepository;
-    }
 
     public UserDTO updateDetails(UserDetailsRequest userDetailsRequest, UUID userId) {
 
@@ -116,29 +113,6 @@ public class UserService {
                 });
     }
 
-    public UUID createUser(UserRequest userRequest) {
-        try {
-            verifyUser(userRequest);
-
-            User user=modelMapper.map(userRequest,User.class);
-
-            Cart cart=new Cart();
-
-            Role role=roleRepository.findByRoleName("USER").orElseThrow(
-                    ()-> new UserException("Role Not Found")
-            );
-
-            user.setRoles(Set.of(role));
-            user.setCart(cart);
-
-            userRepository.save(user);
-
-            return user.getUserId();
-
-        } catch (DataIntegrityViolationException e){
-            throw new DataIntegrityViolationException(e.getLocalizedMessage());
-        }
-    }
 
     private void verifyUser(UserRequest userRequest) {
         if (userRequest==null){
@@ -150,6 +124,51 @@ public class UserService {
         if (userRepository.existsByEmail(userRequest.getEmail())) {
             throw new UserException("Email already registered!");
         }
+        if (userRepository.existsByPhoneNumber(userRequest.getPhoneNumber())){
+            throw new UserException("Phone Number already registered!");
+        }
+    }
+
+    public UserResponse signUpUser(@Valid UserRequest userRequest) {
+
+        try {
+            verifyUser(userRequest);
+
+            User user=userMapper.toEntity(userRequest);
+            user.setPassword(passwordEncoder.encode(userRequest.getPassword()));
+
+            Cart cart=new Cart();
+
+            Role role=roleRepository.findByRoleName(RoleName.ROLE_USER).orElseThrow(
+                    ()-> new UserException("Role Not Found")
+            );
+
+            user.setRoles(Set.of(role));
+            user.setCart(cart);
+
+            userRepository.save(user);
+
+            return userMapper.toUserResponse(user);
+
+        } catch (DataIntegrityViolationException e){
+            throw new DataIntegrityViolationException(e.getLocalizedMessage());
+        }
+
+    }
+
+    public void updatePassword(UUID userId, PasswordUpdateRequest passwordRequest) {
+
+        if (!passwordRequest.getNewPassword().equals(passwordRequest.getConfirmPassword())){
+            throw new UserException("Password Mismatch between new and confirm password");
+        }
+        User user=userCommonService.findValidUser(userId);
+
+        if (!passwordEncoder.matches(passwordRequest.getCurrentPassword(), user.getPassword())){
+            throw new UserException("Current Password is Invalid");
+        }
+        user.setPassword(passwordEncoder.encode(passwordRequest.getNewPassword()));
+
+        userRepository.save(user);
     }
 
 }

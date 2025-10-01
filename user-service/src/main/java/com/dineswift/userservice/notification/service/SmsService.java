@@ -1,4 +1,4 @@
-package com.dineswift.userservice.service;
+package com.dineswift.userservice.notification.service;
 
 
 import com.dineswift.userservice.exception.UserException;
@@ -9,6 +9,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import java.util.concurrent.CompletableFuture;
+
 @Service
 public class SmsService {
 
@@ -16,7 +18,7 @@ public class SmsService {
     private String fromNumber;
 
     @Async
-    public String sendSms(String toNumber, String messageBody) {
+    public CompletableFuture<Boolean> sendSms(String toNumber, String messageBody) {
         try {
             Message message = Message.creator(
                             new PhoneNumber(toNumber),
@@ -24,7 +26,9 @@ public class SmsService {
                             messageBody)
                     .create();
 
-            return message.getSid();
+            return message.getSid() != null ?
+                    CompletableFuture.completedFuture(true) :
+                    CompletableFuture.completedFuture(false);
         } catch (ApiException e) {
             throw new UserException(e.getMessage());
         }

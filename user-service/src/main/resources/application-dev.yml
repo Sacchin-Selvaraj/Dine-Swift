@@ -2,7 +2,7 @@ spring:
   project:
     name: user-service
   datasource:
-    url: jdbc:postgresql://localhost:5432/userDB
+    url: jdbc:postgresql://localhost:5432/user_db
     username: postgres
     password: Sacchin
     driver-class-name: org.postgresql.Driver
@@ -26,3 +26,26 @@ logging:
           descriptor:
             sql:
               BasicBinder: TRACE
+
+  kafka:
+      bootstrap-servers: localhost:9092
+
+      consumer:
+          group-id: user-service-group
+          auto-offset-reset: latest
+          auto-commit-interval: 100
+          properties:
+            spring:
+              json:
+                trusted:
+                  packages: '*'
+
+
+
+
+
+app:
+  kafka:
+    topic:
+      email-verification-topic: email
+      sms-verification-topic: sms

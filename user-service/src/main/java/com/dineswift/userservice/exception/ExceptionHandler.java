@@ -65,4 +65,11 @@ public class ExceptionHandler {
                 .toList();
         return errors;
     }
+
+    @org.springframework.web.bind.annotation.ExceptionHandler(NotificationException.class)
+    public ResponseEntity<ErrorResponse> handleNotificationException(NotificationException ex){
+        String errorMessage = ex.getLocalizedMessage();
+        ErrorResponse error = new ErrorResponse(errorMessage,HttpStatus.INTERNAL_SERVER_ERROR);
+        return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
 }

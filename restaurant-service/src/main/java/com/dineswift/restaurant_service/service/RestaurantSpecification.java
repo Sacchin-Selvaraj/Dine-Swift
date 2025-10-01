@@ -76,7 +76,7 @@ public final class RestaurantSpecification {
         if (time == null) {
             return Specification.allOf();
         }
-        // opening_time <= requested_time
+        // opening_time => requested_time
         return (root, query, builder) ->
                 builder.greaterThanOrEqualTo(root.get("openingTime"), time);
     }
@@ -89,7 +89,7 @@ public final class RestaurantSpecification {
         if (time == null) {
             return Specification.allOf();
         }
-        // closing_time >= requested_time
+        // closing_time <= requested_time
         return (root, query, builder) ->
                 builder.lessThanOrEqualTo(root.get("closingTime"), time);
     }
