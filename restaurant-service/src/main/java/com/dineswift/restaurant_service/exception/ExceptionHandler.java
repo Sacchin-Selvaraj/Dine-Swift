@@ -76,4 +76,10 @@ public class ExceptionHandler {
                 .httpStatus(HttpStatus.BAD_REQUEST).errors(List.of(ex.getMessage())).build();
         return new ResponseEntity<>(errorResponse,HttpStatus.BAD_REQUEST);
     }
+
+    @org.springframework.web.bind.annotation.ExceptionHandler(DishException.class)
+    public ResponseEntity<ErrorResponse> handleDishException(DishException ex) {
+        ErrorResponse errorResponse = new ErrorResponse("Dish Details Not valid", HttpStatus.BAD_REQUEST,List.of(ex.getMessage()));
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
 }

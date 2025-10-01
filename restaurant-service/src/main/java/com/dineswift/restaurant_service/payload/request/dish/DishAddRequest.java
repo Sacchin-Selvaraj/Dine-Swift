@@ -1,4 +1,4 @@
-package com.dineswift.restaurant_service.payload.request;
+package com.dineswift.restaurant_service.payload.request.dish;
 
 
 import jakarta.validation.constraints.*;
