@@ -5,12 +5,15 @@ import com.dineswift.restaurant_service.exception.DishException;
 import com.dineswift.restaurant_service.exception.RestaurantException;
 import com.dineswift.restaurant_service.mapper.DishMapper;
 import com.dineswift.restaurant_service.model.Dish;
+import com.dineswift.restaurant_service.model.DishImage;
 import com.dineswift.restaurant_service.model.Restaurant;
 import com.dineswift.restaurant_service.payload.request.dish.DishAddRequest;
 import com.dineswift.restaurant_service.payload.request.dish.DishUpdateRequest;
 import com.dineswift.restaurant_service.payload.response.dish.DishDTO;
+import com.dineswift.restaurant_service.repository.DishImageRepository;
 import com.dineswift.restaurant_service.repository.DishRepository;
 import com.dineswift.restaurant_service.repository.RestaurantRepository;
+import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,17 +23,22 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Map;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@Transactional
 public class DishService {
 
     private final DishRepository dishRepository;
     private final RestaurantRepository restaurantRepository;
     private final DishMapper dishMapper;
+    private final ImageService imageService;
+    private final DishImageRepository dishImageRepository;
 
     public String addDish(DishAddRequest dishAddRequest, UUID restaurantId) {
 
@@ -78,7 +86,8 @@ public class DishService {
                     and(DishSpecification.hasDishMinRating(minRating)).
                     and(DishSpecification.hasDishMaxRating(maxRating)).
                     and(DishSpecification.hasDiscount(discount)).
-                    and(DishSpecification.isVeg(isVeg));
+                    and(DishSpecification.isVeg(isVeg))
+                    .and(DishSpecification.isActive(true));
 
             Page<Dish> dishes = dishRepository.findAll(spec, pageable);
 
@@ -91,5 +100,34 @@ public class DishService {
             throw new DishException("Dish retrieval failed: " + e.getMessage());
         }
 
+    }
+
+    public void uploadRestaurantImage(UUID dishId, MultipartFile imageFile) {
+        if (dishId == null || imageFile == null) {
+            throw new DishException("Invalid request to upload image");
+        }
+
+        imageService.uploadImage(imageFile,"dish").thenApplyAsync(res->{
+            if (res!=null && (Boolean) res.get("isSuccessful")){
+                saveDishImageDetails(dishId,res);
+                log.info("Image uploaded successfully for dish id: {}", dishId);
+            }else {
+                String error = res != null ? (String) res.get("error") : "Unknown error";
+                log.error("Image upload failed for dish id: {}. Error: {}", dishId, error);
+                throw new DishException("Image upload failed: " + error);
+            }
+            return null;
+        }).exceptionally(throwable -> {
+            log.error("Image upload failed for dish id: {}. Error: {}", dishId, throwable.getMessage());
+            throw new DishException("Image upload failed: " + throwable.getMessage());
+        });
+
+    }
+
+    private void saveDishImageDetails(UUID dishId, Map<String, Object> res) {
+        Dish dish = dishRepository.findByIdAndIsActive(dishId).orElseThrow(() -> new DishException("Dish not found with id: " + dishId));
+        log.info("Saving image details for dish: {}", dish.getDishName());
+        DishImage dishImage = dishMapper.toImageEntity(res, dish);
+        dishImageRepository.save(dishImage);
     }
 }

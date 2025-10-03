@@ -1,11 +1,11 @@
 package com.dineswift.restaurant_service.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.*;
+import org.hibernate.annotations.UpdateTimestamp;
 
-import java.time.ZonedDateTime;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
@@ -19,41 +19,40 @@ public class DishImage {
     @Column(name = "image_id", nullable = false, updatable = false)
     private UUID imageId;
 
-    @Lob
-    @Column(name = "image_data", columnDefinition = "BYTEA")
-    private byte[] imageData;
+    @Column(name = "public_id", nullable = false)
+    private String publicId;
 
-    @NotBlank(message = "Image name is required")
-    @Size(min = 1, max = 255, message = "Image name must be between 1 and 255 characters")
-    @Column(name = "image_name", nullable = false, length = 255)
-    private String imageName;
+    @Column(name = "image_url", nullable = false, length = 1000)
+    private String imageUrl;
 
-    @Size(max = 50, message = "Content type cannot exceed 50 characters")
-    @Column(name = "content_type", length = 50)
-    private String contentType;
+    @Column(name = "secure_url", nullable = false, length = 1000)
+    private String secureUrl;
 
-    @Min(value = 0, message = "File size must be greater than or equal to 0")
-    @Max(value = 10485760, message = "File size cannot exceed 10MB")
-    @Column(name = "file_size")
-    private Integer fileSize;
+    @Column(name = "format")
+    private String format;
 
-    @Size(max = 255, message = "File path cannot exceed 255 characters")
-    @Column(name = "file_path", length = 255)
-    private String filePath;
+    @Column(name = "resource_type")
+    private String resourceType;
 
-    @Min(value = 0, message = "Display order must be greater than or equal to 0")
-    @Column(name = "display_order")
-    private Integer displayOrder;
+    @Column(name = "bytes")
+    private Long bytes;
 
-    @NotNull(message = "Uploaded at timestamp is required")
-    @PastOrPresent(message = "Uploaded at must be in the past or present")
-    @Column(name = "uploaded_at", nullable = false)
-    private ZonedDateTime uploadedAt;
+    @Column(name = "width")
+    private Integer width;
 
-    @NotNull(message = "Dish is required")
-    @ManyToOne(fetch = FetchType.LAZY)
+    @Column(name = "height")
+    private Integer height;
+
+    @Column(name = "is_primary")
+    private Boolean isPrimary = false;
+
+    @Column(name = "uploaded_at")
+    @UpdateTimestamp
+    private LocalDateTime uploadedAt;
+
+    @NotNull(message = "Restaurant is required")
+    @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.MERGE})
     @JoinColumn(name = "dish_id")
-    @JsonIgnore
     private Dish dish;
 
 }

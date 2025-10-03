@@ -1,6 +1,7 @@
 package com.dineswift.restaurant_service.mapper;
 
 import com.dineswift.restaurant_service.model.Dish;
+import com.dineswift.restaurant_service.model.DishImage;
 import com.dineswift.restaurant_service.payload.request.dish.DishAddRequest;
 import com.dineswift.restaurant_service.payload.request.dish.DishUpdateRequest;
 import com.dineswift.restaurant_service.payload.response.dish.DishDTO;
@@ -9,6 +10,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
@@ -55,5 +57,19 @@ public class DishMapper {
 
     public DishDTO toDTO(Dish updatedDish) {
         return mapper.map(updatedDish, DishDTO.class);
+    }
+
+    public DishImage toImageEntity(Map<String, Object> uploadResult, Dish dish) {
+        DishImage dishImage = new DishImage();
+        dishImage.setPublicId((String) uploadResult.get("publicId"));
+        dishImage.setImageUrl((String) uploadResult.get("url"));
+        dishImage.setSecureUrl((String) uploadResult.get("secureUrl"));
+        dishImage.setFormat((String) uploadResult.get("format"));
+        dishImage.setResourceType((String) uploadResult.get("resourceType"));
+        dishImage.setBytes((Long) uploadResult.get("bytes"));
+        dishImage.setWidth((Integer) uploadResult.get("width"));
+        dishImage.setHeight((Integer) uploadResult.get("height"));
+        dishImage.setDish(dish);
+        return dishImage;
     }
 }

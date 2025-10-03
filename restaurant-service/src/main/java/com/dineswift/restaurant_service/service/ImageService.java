@@ -21,11 +21,8 @@ public class ImageService {
 
     private final Cloudinary cloudinary;
 
-    @Value("${cloudinary.upload-folder:restaurants}")
-    private String uploadFolder;
-
     @Async
-    public CompletableFuture<Map<String,Object>> uploadImage(MultipartFile file) {
+    public CompletableFuture<Map<String,Object>> uploadImage(MultipartFile file,String folderName) {
         Map<String,Object> uploadResponse = new HashMap<>();
 
         byte[] fileBytes;
@@ -49,7 +46,7 @@ public class ImageService {
                 }
 
                 Map<String, Object> uploadParams = new HashMap<>();
-                uploadParams.put("folder", uploadFolder);
+                uploadParams.put("folder", folderName);
                 uploadParams.put("resource_type", "auto");
                 uploadParams.put("quality", "auto");
                 uploadParams.put("fetch_format", "auto");

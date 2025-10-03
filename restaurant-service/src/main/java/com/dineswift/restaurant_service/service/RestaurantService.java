@@ -144,7 +144,7 @@ public class RestaurantService {
             throw new RestaurantException("Invalid data for uploading Restaurant image");
         }
 
-       imageService.uploadImage(imageFile).thenApplyAsync( result-> {
+       imageService.uploadImage(imageFile,"restaurant").thenApplyAsync( result-> {
            if (result != null && (Boolean) result.get("isSuccessful")) {
                saveRestaurantImage(result, restaurantId);
            } else {

@@ -62,5 +62,10 @@ public final class DishSpecification {
         return (root, query, builder) ->
                 builder.equal(root.get("isVeg"), isVeg);
     }
+
+    public static Specification<Dish> isActive(boolean value) {
+        return (root, query, builder) ->
+                builder.equal(root.get("isActive"), value);
+    }
 }
 

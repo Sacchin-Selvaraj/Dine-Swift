@@ -10,9 +10,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 
 @RestController
 @RequestMapping("/dish")
@@ -55,5 +57,22 @@ public class DishController {
     ){
         Page<DishDTO> dishDTOS = dishService.searchDishes(pageNo, pageSize, sortBy, sortDir, dishName, minPrice, maxPrice, minRating, maxRating, discount, isVeg);
         return ResponseEntity.ok(dishDTOS);
+    }
+
+    @PostMapping("upload-image/{dishId}")
+    public ResponseEntity<String> uploadRestaurantImage(@PathVariable UUID dishId,@RequestParam("imageFile") MultipartFile imageFile) throws ExecutionException, InterruptedException {
+        dishService.uploadRestaurantImage(dishId, imageFile);
+        return ResponseEntity.ok("Image uploaded successfully");
+    }
+
+    @DeleteMapping("delete-image/{imageId}")
+    public ResponseEntity<String> deleteRestaurantImage(@PathVariable UUID imageId) {
+        dishService.deleteRestaurantImage(imageId);
+        return ResponseEntity.ok("Image deleted successfully");
+    }
+
+    @GetMapping("/get-images/{dishId}")
+    public ResponseEntity<?> getRestaurantImages(@PathVariable UUID dishId) {
+        return ResponseEntity.ok(dishService.getRestaurantImages(dishId));
     }
 }
