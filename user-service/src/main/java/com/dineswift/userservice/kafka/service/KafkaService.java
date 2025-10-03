@@ -1,7 +1,8 @@
 package com.dineswift.userservice.kafka.service;
 
-import com.dineswift.userservice.kafka.payload.EmailVerificationDetail;
-import com.dineswift.userservice.kafka.payload.SmsVerificationDetail;
+
+import com.dineswift.notification_service.model.EmailVerificationDetail;
+import com.dineswift.notification_service.model.SmsVerificationDetail;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;

@@ -88,6 +88,4 @@ public class Dish {
     private List<DishImage> dishImages;
 
 
-
-
 }

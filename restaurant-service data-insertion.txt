@@ -1,0 +1,2 @@
+Insert into roles (role_id,role_name)
+values(gen_random_uuid(),'ROLE_USER')

@@ -38,7 +38,8 @@ public class RestaurantController {
     public ResponseEntity<Page<RestaurantDTO>> getRestaurants(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "asc") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDir,
+            @RequestParam(defaultValue = "restaurantName") String sortBy,
             @RequestParam(required = false) String restaurantStatus,
             @RequestParam(required = false) String area,
             @RequestParam(required = false) String city,
@@ -49,7 +50,7 @@ public class RestaurantController {
             @RequestParam(required = false)LocalTime openingTime,
             @RequestParam(required = false)LocalTime closingTime
             ) {
-        Page<RestaurantDTO> restaurants = restaurantService.getRestaurants(page, size, restaurantStatus, sortBy, area, city, district, state, country, restaurantName, openingTime, closingTime);
+        Page<RestaurantDTO> restaurants = restaurantService.getRestaurants(page, size, restaurantStatus, sortDir,sortBy, area, city, district, state, country, restaurantName, openingTime, closingTime);
         return ResponseEntity.ok(restaurants);
     }
 

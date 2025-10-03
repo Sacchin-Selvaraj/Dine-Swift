@@ -17,7 +17,7 @@ public class SmsService {
     @Value("${twilio.phone.number}")
     private String fromNumber;
 
-    @Async
+
     public CompletableFuture<Boolean> sendSms(String toNumber, String messageBody) {
         try {
             Message message = Message.creator(

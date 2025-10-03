@@ -26,6 +26,30 @@ public class DishMapper {
     }
 
     public Dish toEntity(DishUpdateRequest dishUpdateRequest, Dish dish) {
+        if (dishUpdateRequest.getDishName()!=null){
+            dish.setDishName(dishUpdateRequest.getDishName());
+        }
+        if (dishUpdateRequest.getDishPrice()!=null){
+            dish.setDishPrice(dishUpdateRequest.getDishPrice());
+        }
+        if (dishUpdateRequest.getDishDescription()!=null){
+            dish.setDishDescription(dishUpdateRequest.getDishDescription());
+        }
+        if (dishUpdateRequest.getIsAvailable()!=null){
+            dish.setIsAvailable(dishUpdateRequest.getIsAvailable());
+        }
+        if (dishUpdateRequest.getDiscount()!=null){
+            dish.setDiscount(dishUpdateRequest.getDiscount());
+        }
+        if (dishUpdateRequest.getDishComments()!=null){
+            dish.setDishComments(dishUpdateRequest.getDishComments());
+        }
+        if (dishUpdateRequest.getIsVeg()!=null){
+            dish.setIsVeg(dishUpdateRequest.getIsVeg());
+        }
+        if (dishUpdateRequest.getIsActive()!=null){
+            dish.setIsActive(dishUpdateRequest.getIsActive());
+        }
         return dish;
     }
 

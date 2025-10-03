@@ -65,13 +65,13 @@ public class RestaurantService {
         employeeRepository.save(employee);
     }
 
-    public Page<RestaurantDTO> getRestaurants(int page, int size, String restaurantStatus, String sortBy,
+    public Page<RestaurantDTO> getRestaurants(int page, int size, String restaurantStatus, String sortDir,String sortBy,
                                               String area, String city, String district, String state, String country,
                                               String restaurantName, LocalTime openingTime, LocalTime closingTime) {
         try {
             RestaurantStatus restaurantStatusEnum=null;
 
-            Sort sort = sortBy.equalsIgnoreCase("asc") ? Sort.by("restaurantName").ascending() : Sort.by("restaurantName").descending();
+            Sort sort = sortDir.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
             if (restaurantStatus==null) restaurantStatus="OPEN";
             restaurantStatusEnum=RestaurantStatus.fromDisplayName(restaurantStatus);
 

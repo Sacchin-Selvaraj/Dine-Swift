@@ -1,8 +1,8 @@
 package com.dineswift.userservice.kafka.service;
 
+import com.dineswift.notification_service.model.EmailVerificationDetail;
+import com.dineswift.notification_service.model.SmsVerificationDetail;
 import com.dineswift.userservice.exception.NotificationException;
-import com.dineswift.userservice.kafka.payload.EmailVerificationDetail;
-import com.dineswift.userservice.kafka.payload.SmsVerificationDetail;
 import com.dineswift.userservice.notification.service.EmailService;
 import com.dineswift.userservice.notification.service.SmsService;
 import lombok.RequiredArgsConstructor;
