@@ -60,20 +60,22 @@ public class DishController {
         return ResponseEntity.ok(dishDTOS);
     }
 
-    @PostMapping("upload-image/{dishId}")
+    @PostMapping("/upload-image/{dishId}")
     public CompletableFuture<ResponseEntity<String>> uploadRestaurantImage(@PathVariable UUID dishId,@RequestParam("imageFile") MultipartFile imageFile) throws ExecutionException, InterruptedException {
         CompletableFuture<Void> result = dishService.uploadRestaurantImage(dishId, imageFile);
-        return result.thenApply(res-> ResponseEntity.ok("Image uploaded successfully"));
+        return result.thenApply(res-> new ResponseEntity<>("Image uploaded successfully",HttpStatus.ACCEPTED));
     }
 
-    @DeleteMapping("delete-image/{imageId}")
+    @DeleteMapping("/delete-image/{imageId}")
     public CompletableFuture<ResponseEntity<String>> deleteRestaurantImage(@PathVariable UUID imageId) {
         CompletableFuture<Void> result = dishService.deleteRestaurantImage(imageId);
         return result.thenApply(res -> ResponseEntity.ok("Image deleted successfully"));
     }
 
-    @GetMapping("/get-images/{dishId}")
-    public ResponseEntity<?> getRestaurantImages(@PathVariable UUID dishId) {
-        return ResponseEntity.ok(dishService.getDishImages(dishId));
+    @PatchMapping("/rate-dish/{dishId}")
+    public ResponseEntity<Void> rateDish(@PathVariable UUID dishId, @RequestParam Double rating) {
+        dishService.addRating(dishId,rating);
+        return ResponseEntity.ok(null);
     }
+
 }

@@ -7,12 +7,14 @@ import com.dineswift.restaurant_service.service.RestaurantService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalTime;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 @RestController
@@ -67,15 +69,15 @@ public class RestaurantController {
     }
 
     @PostMapping("upload-image/{restaurantId}")
-    public ResponseEntity<String> uploadRestaurantImage(@PathVariable UUID restaurantId,@RequestParam("imageFile") MultipartFile imageFile) throws ExecutionException, InterruptedException {
-        restaurantService.uploadRestaurantImage(restaurantId, imageFile);
-        return ResponseEntity.ok("Image uploaded successfully");
+    public CompletableFuture<ResponseEntity<String>> uploadRestaurantImage(@PathVariable UUID restaurantId,@RequestParam("imageFile") MultipartFile imageFile) throws ExecutionException, InterruptedException {
+        CompletableFuture<Void> result = restaurantService.uploadRestaurantImage(restaurantId, imageFile);
+        return result.thenApply(res-> new ResponseEntity<>("Image uploaded successfully", HttpStatus.ACCEPTED));
     }
 
     @DeleteMapping("delete-image/{imageId}")
-    public ResponseEntity<String> deleteRestaurantImage(@PathVariable UUID imageId) {
-        restaurantService.deleteRestaurantImage(imageId);
-        return ResponseEntity.ok("Image deleted successfully");
+    public CompletableFuture<ResponseEntity<String>> deleteRestaurantImage(@PathVariable UUID imageId) {
+        CompletableFuture<Void> result = restaurantService.deleteRestaurantImage(imageId);
+        return result.thenApply(res -> ResponseEntity.ok("Image deleted successfully"));
     }
 
     @GetMapping("/get-images/{restaurantId}")

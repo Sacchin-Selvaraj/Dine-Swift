@@ -1,5 +1,6 @@
 package com.dineswift.restaurant_service.payload.response.dish;
 
+import com.dineswift.restaurant_service.model.DishImage;
 import jakarta.persistence.Column;
 import jakarta.validation.constraints.*;
 import lombok.Data;
@@ -8,6 +9,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Data
@@ -23,5 +25,6 @@ public class DishDTO {
     private String dishComments;
     private Boolean isVeg;
     private Boolean isActive;
+    private List<DishImageDTO> dishImages;
 
 }

@@ -53,7 +53,7 @@ public class Dish {
 
     @Min(value = 0, message = "Total rating cannot be negative")
     @Column(name = "dish_total_rating")
-    private Integer dishTotalRating = 0;
+    private Double dishTotalRating = 0.0;
 
     @Min(value = 0, message = "Rating count cannot be negative")
     @Column(name = "dish_total_rating_count")

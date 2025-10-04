@@ -42,7 +42,7 @@ public class ImageService {
         int attempt = 0;
         while (attempt < maxAttempts) {
             try {
-                if (file.isEmpty()) {
+                if (fileBytes.length == 0) {
                     throw new IllegalArgumentException("File is empty");
                 }
 

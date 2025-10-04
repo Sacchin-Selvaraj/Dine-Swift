@@ -19,7 +19,6 @@ import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.core.task.TaskExecutor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -47,7 +46,6 @@ public class RestaurantService {
     private final RestaurantMapper restaurantMapper;
     private final ImageService imageService;
     private final RestaurantImageRepository restaurantImageRepository;
-    private final TaskExecutor taskExecutor;
 
     public void createRestaurant(RestaurantCreateRequest restaurantCreateRequest, UUID employeeId) {
         if (restaurantCreateRequest==null || employeeId==null) {
@@ -141,20 +139,21 @@ public class RestaurantService {
         }
     }
 
-    public void uploadRestaurantImage(UUID restaurantId, MultipartFile imageFile) throws ExecutionException, InterruptedException {
+    public CompletableFuture<Void> uploadRestaurantImage(UUID restaurantId, MultipartFile imageFile) throws ExecutionException, InterruptedException {
         if (restaurantId == null || imageFile == null || imageFile.isEmpty()) {
             throw new RestaurantException("Invalid data for uploading Restaurant image");
         }
 
-       imageService.uploadImage(imageFile,"restaurant").thenApplyAsync( result-> {
+       return imageService.uploadImage(imageFile,"restaurant").thenAcceptAsync( result-> {
            if (result != null && (Boolean) result.get("isSuccessful")) {
+               log.info("Image uploaded successfully for restaurant id: {}", restaurantId);
                saveRestaurantImage(result, restaurantId);
            } else {
+               log.error("Image upload failed for restaurant id: {}. Error: {}", restaurantId, result.get("error"));
                throw new RestaurantException("Image upload failed");
            }
-           return result;
 
-       },taskExecutor).exceptionally(ex -> {
+       }).exceptionally(ex -> {
             Throwable cause = ex.getCause() != null ? ex.getCause() : ex;
             throw new CompletionException(new RestaurantException("Image upload failed" + cause));
         });
@@ -170,18 +169,20 @@ public class RestaurantService {
         restaurantImageRepository.save(imageEntity);
     }
 
-    public void deleteRestaurantImage(UUID imageId) {
+    public CompletableFuture<Void> deleteRestaurantImage(UUID imageId) {
         if (imageId == null) {
             throw new RestaurantException("Invalid Image Id");
         }
         RestaurantImage restaurantImage = restaurantImageRepository.findById(imageId)
                 .orElseThrow(() -> new ImageException("Restaurant Image not found with id: " + imageId));
-        imageService.deleteImage(restaurantImage.getPublicId()).thenApplyAsync(
+
+        return imageService.deleteImage(restaurantImage.getPublicId()).thenAcceptAsync(
                 result->{
+                    log.info("Image deletion Successful for image id: {}", imageId);
                     restaurantImageRepository.delete(restaurantImage);
-                    return null;
                 }
         ).exceptionally(throwable -> {
+            log.error("Image deletion failed for image id: {}. Error: {}", imageId, throwable.getMessage());
             throw new CompletionException(new ImageException("Image deletion failed: " + throwable.getMessage()));
         });
 
