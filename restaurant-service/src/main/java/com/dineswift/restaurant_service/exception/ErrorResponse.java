@@ -13,17 +13,14 @@ import java.util.List;
 public class ErrorResponse {
 
     private String errorMessage;
-    private HttpStatus httpStatus;
     private List<String> errors;
 
-    public ErrorResponse(String errorMessage, HttpStatus httpStatus) {
+    public ErrorResponse(String errorMessage) {
         this.errorMessage = errorMessage;
-        this.httpStatus = httpStatus;
     }
 
-    public ErrorResponse(String errorMessage, HttpStatus httpStatus, List<String> errors) {
+    public ErrorResponse(String errorMessage, List<String> errors) {
         this.errorMessage = errorMessage;
-        this.httpStatus = httpStatus;
         this.errors = errors;
     }
 }

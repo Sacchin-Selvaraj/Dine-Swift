@@ -3,6 +3,8 @@ package com.dineswift.restaurant_service.model;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.ZonedDateTime;
 import java.util.HashSet;
@@ -20,11 +22,6 @@ public class Menu {
     @Column(name = "menu_id", nullable = false, updatable = false)
     private UUID menuId;
 
-    @NotBlank(message = "Menu type is required")
-    @Size(min = 1, max = 20, message = "Menu type must be between 1 and 20 characters")
-    @Column(name = "menu_type", nullable = false, length = 20)
-    private MenuType menuType;
-
     @NotBlank(message = "Menu name is required")
     @Size(min = 1, max = 20, message = "Menu name must be between 1 and 20 characters")
     @Column(name = "menu_name", nullable = false, length = 20)
@@ -39,19 +36,24 @@ public class Menu {
     private Boolean isActive = true;
 
     @NotNull(message = "Created at timestamp is required")
-    @PastOrPresent(message = "Created at must be in the past or present")
+    @CreationTimestamp
     @Column(name = "created_at", nullable = false)
     private ZonedDateTime createdAt;
+
+    @NotNull(message = "Created by is required")
+    @Column(name = "created_by", nullable = false, updatable = false)
+    private UUID createdBy;
 
     @Column(name = "last_modified_by")
     private UUID lastModifiedBy;
 
     @PastOrPresent(message = "Last modified date must be in the past or present")
+    @UpdateTimestamp
     @Column(name = "last_modified_date")
     private ZonedDateTime lastModifiedDate;
 
     @NotNull(message = "Restaurant is required")
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY,cascade = {CascadeType.PERSIST,CascadeType.MERGE})
     @JoinColumn(name = "restaurant_id")
     private Restaurant restaurant;
 

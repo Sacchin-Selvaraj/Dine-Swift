@@ -3,3 +3,14 @@ values(gen_random_uuid(),'ROLE_USER')
 
 
 ALTER TABLE dishes ADD COLUMN is_active BOOLEAN DEFAULT true;
+
+
+ALTER TABLE dishes
+ALTER COLUMN dish_total_rating TYPE DECIMAL(3, 2);
+
+
+ALTER TABLE menu
+DROP COLUMN menu_type;
+
+ALTER TABLE menu
+ADD COLUMN created_by UUID;

@@ -18,34 +18,34 @@ public class ExceptionHandler {
     @org.springframework.web.bind.annotation.ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ErrorResponse> handleDataIntegrityViolation(DataIntegrityViolationException ex) {
 
-        ErrorResponse errorResponse = new ErrorResponse("DataIntegrity Violation ", HttpStatus.CONFLICT, List.of(ex.getMessage()));
+        ErrorResponse errorResponse = new ErrorResponse("DataIntegrity Violation ", List.of(ex.getMessage()));
         return new ResponseEntity<>(errorResponse, HttpStatus.CONFLICT);
     }
 
     @org.springframework.web.bind.annotation.ExceptionHandler(RestaurantException.class)
     public ResponseEntity<ErrorResponse> handleUserException(RestaurantException ex) {
-        ErrorResponse errorResponse = new ErrorResponse("Restaurant Details Not valid", HttpStatus.BAD_REQUEST,List.of(ex.getMessage()));
+        ErrorResponse errorResponse = new ErrorResponse("Restaurant Details Not valid",List.of(ex.getMessage()));
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
     @org.springframework.web.bind.annotation.ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidationErrors(MethodArgumentNotValidException ex) {
         List<String> errors = getErrors(ex);
-        ErrorResponse error = new ErrorResponse( "Method Argument failed",HttpStatus.BAD_REQUEST, errors);
+        ErrorResponse error = new ErrorResponse( "Method Argument failed", errors);
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
 
     @org.springframework.web.bind.annotation.ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ErrorResponse> handleMismatchException(MethodArgumentTypeMismatchException ex){
         List<String> strings= Collections.singletonList(ex.getParameter().toString());
-        ErrorResponse error = new ErrorResponse("Method Argument Mismatch ",HttpStatus.BAD_REQUEST,strings);
+        ErrorResponse error = new ErrorResponse("Method Argument Mismatch ",strings);
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
 
     @org.springframework.web.bind.annotation.ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponse> handleIllegalArgument(IllegalArgumentException ex){
         String errorMessage = ex.getLocalizedMessage();
-        ErrorResponse error = new ErrorResponse(errorMessage,HttpStatus.BAD_REQUEST);
+        ErrorResponse error = new ErrorResponse("Illegal Argument ",List.of(errorMessage));
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
 
@@ -60,26 +60,32 @@ public class ExceptionHandler {
 
     @org.springframework.web.bind.annotation.ExceptionHandler(EmployeeException.class)
     public ResponseEntity<ErrorResponse> handleEmployeeException(EmployeeException ex) {
-        ErrorResponse errorResponse = new ErrorResponse("Employee Details Not valid", HttpStatus.BAD_REQUEST,List.of(ex.getMessage()));
+        ErrorResponse errorResponse = new ErrorResponse("Employee Details Not valid",List.of(ex.getMessage()));
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
     @org.springframework.web.bind.annotation.ExceptionHandler(RoleException.class)
     public ResponseEntity<ErrorResponse> handleRoleException(RoleException ex) {
-        ErrorResponse errorResponse = new ErrorResponse("Role Details Not valid", HttpStatus.BAD_REQUEST,List.of(ex.getMessage()));
+        ErrorResponse errorResponse = new ErrorResponse("Role Details Not valid",List.of(ex.getMessage()));
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
     @org.springframework.web.bind.annotation.ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<ErrorResponse> handleConstraintException(ConstraintViolationException ex){
         ErrorResponse errorResponse=ErrorResponse.builder().errorMessage("Constraint Violation")
-                .httpStatus(HttpStatus.BAD_REQUEST).errors(List.of(ex.getMessage())).build();
+                .errors(List.of(ex.getMessage())).build();
         return new ResponseEntity<>(errorResponse,HttpStatus.BAD_REQUEST);
     }
 
     @org.springframework.web.bind.annotation.ExceptionHandler(DishException.class)
     public ResponseEntity<ErrorResponse> handleDishException(DishException ex) {
-        ErrorResponse errorResponse = new ErrorResponse("Dish Details Not valid", HttpStatus.BAD_REQUEST,List.of(ex.getMessage()));
+        ErrorResponse errorResponse = new ErrorResponse("Dish Details Not valid",List.of(ex.getMessage()));
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
+
+    @org.springframework.web.bind.annotation.ExceptionHandler(MenuException.class)
+    public ResponseEntity<ErrorResponse> handleMenuException(MenuException ex) {
+        ErrorResponse errorResponse = new ErrorResponse("Menu Details Not valid",List.of(ex.getMessage()));
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 }

@@ -2,6 +2,7 @@ package com.dineswift.restaurant_service.controller;
 
 import com.dineswift.restaurant_service.payload.request.dish.DishAddRequest;
 import com.dineswift.restaurant_service.payload.request.dish.DishUpdateRequest;
+import com.dineswift.restaurant_service.payload.response.MessageResponse;
 import com.dineswift.restaurant_service.payload.response.dish.DishDTO;
 import com.dineswift.restaurant_service.service.DishService;
 import jakarta.validation.Valid;
@@ -12,7 +13,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -67,9 +67,9 @@ public class DishController {
     }
 
     @DeleteMapping("/delete-image/{imageId}")
-    public CompletableFuture<ResponseEntity<String>> deleteRestaurantImage(@PathVariable UUID imageId) {
+    public CompletableFuture<ResponseEntity<MessageResponse>> deleteRestaurantImage(@PathVariable UUID imageId) {
         CompletableFuture<Void> result = dishService.deleteRestaurantImage(imageId);
-        return result.thenApply(res -> ResponseEntity.ok("Image deleted successfully"));
+        return result.thenApply(res -> ResponseEntity.ok(new MessageResponse("Image deleted successfully")));
     }
 
     @PatchMapping("/rate-dish/{dishId}")

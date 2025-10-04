@@ -12,7 +12,7 @@ public class ImageExceptionHandler {
 
     @ExceptionHandler(ImageException.class)
     public ResponseEntity<ErrorResponse> handleImageException(ImageException ex) {
-        ErrorResponse errorResponse = new ErrorResponse("IMAGE_ERROR", HttpStatus.INTERNAL_SERVER_ERROR, List.of(ex.getMessage()));
+        ErrorResponse errorResponse = new ErrorResponse("IMAGE_ERROR", List.of(ex.getMessage()));
         return ResponseEntity.internalServerError().body(errorResponse);
     }
 }

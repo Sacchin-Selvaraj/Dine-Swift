@@ -26,7 +26,7 @@ public class DishMapper {
     public Dish toEntity(DishAddRequest dishAddRequest) {
         Dish dish = mapper.map(dishAddRequest, Dish.class);
         dish.setDishStarRating(BigDecimal.valueOf(0.0));
-        dish.setDishTotalRating(0);
+        dish.setDishTotalRating(0.0);
         dish.setDishTotalRatingCount(0);
         return dish;
     }

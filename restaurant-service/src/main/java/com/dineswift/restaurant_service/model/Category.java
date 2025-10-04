@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.Instant;
 import java.util.HashSet;
@@ -38,12 +39,13 @@ public class Category {
     private Boolean isActive;
 
     @Column(name = "last_modified_date")
+    @UpdateTimestamp
     private Instant lastModifiedDate;
 
     @NotNull(message = "Restaurant Id is Required")
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "restaurant_id", nullable = false)
-    private Restaurant restaurantId;
+    private Restaurant restaurant;
 
     @ManyToMany(fetch = FetchType.LAZY,cascade = {CascadeType.PERSIST,CascadeType.MERGE})
     @JoinTable(name = "dish_category",
