@@ -14,6 +14,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 @RestController
@@ -60,19 +61,19 @@ public class DishController {
     }
 
     @PostMapping("upload-image/{dishId}")
-    public ResponseEntity<String> uploadRestaurantImage(@PathVariable UUID dishId,@RequestParam("imageFile") MultipartFile imageFile) throws ExecutionException, InterruptedException {
-        dishService.uploadRestaurantImage(dishId, imageFile);
-        return ResponseEntity.ok("Image uploaded successfully");
+    public CompletableFuture<ResponseEntity<String>> uploadRestaurantImage(@PathVariable UUID dishId,@RequestParam("imageFile") MultipartFile imageFile) throws ExecutionException, InterruptedException {
+        CompletableFuture<Void> result = dishService.uploadRestaurantImage(dishId, imageFile);
+        return result.thenApply(res-> ResponseEntity.ok("Image uploaded successfully"));
     }
 
     @DeleteMapping("delete-image/{imageId}")
-    public ResponseEntity<String> deleteRestaurantImage(@PathVariable UUID imageId) {
-        dishService.deleteRestaurantImage(imageId);
-        return ResponseEntity.ok("Image deleted successfully");
+    public CompletableFuture<ResponseEntity<String>> deleteRestaurantImage(@PathVariable UUID imageId) {
+        CompletableFuture<Void> result = dishService.deleteRestaurantImage(imageId);
+        return result.thenApply(res -> ResponseEntity.ok("Image deleted successfully"));
     }
 
     @GetMapping("/get-images/{dishId}")
     public ResponseEntity<?> getRestaurantImages(@PathVariable UUID dishId) {
-        return ResponseEntity.ok(dishService.getRestaurantImages(dishId));
+        return ResponseEntity.ok(dishService.getDishImages(dishId));
     }
 }

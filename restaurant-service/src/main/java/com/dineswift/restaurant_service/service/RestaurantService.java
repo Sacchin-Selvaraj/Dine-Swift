@@ -18,6 +18,7 @@ import com.dineswift.restaurant_service.repository.RestaurantRepository;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -38,6 +39,7 @@ import java.util.concurrent.ExecutionException;
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Slf4j
 public class RestaurantService {
 
     private final RestaurantRepository restaurantRepository;

@@ -27,6 +27,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 @RequiredArgsConstructor
@@ -102,7 +103,7 @@ public class DishService {
 
     }
 
-    public void uploadRestaurantImage(UUID dishId, MultipartFile imageFile) {
+    public CompletableFuture<Void> uploadRestaurantImage(UUID dishId, MultipartFile imageFile) {
         if (dishId == null || imageFile == null) {
             throw new DishException("Invalid request to upload image");
         }
@@ -114,14 +115,14 @@ public class DishService {
             }else {
                 String error = res != null ? (String) res.get("error") : "Unknown error";
                 log.error("Image upload failed for dish id: {}. Error: {}", dishId, error);
-                throw new DishException("Image upload failed: " + error);
+                throw new DishException(error);
             }
             return null;
         }).exceptionally(throwable -> {
             log.error("Image upload failed for dish id: {}. Error: {}", dishId, throwable.getMessage());
             throw new DishException("Image upload failed: " + throwable.getMessage());
         });
-
+        return CompletableFuture.completedFuture(null);
     }
 
     private void saveDishImageDetails(UUID dishId, Map<String, Object> res) {
@@ -129,5 +130,34 @@ public class DishService {
         log.info("Saving image details for dish: {}", dish.getDishName());
         DishImage dishImage = dishMapper.toImageEntity(res, dish);
         dishImageRepository.save(dishImage);
+    }
+
+    public CompletableFuture<Void> deleteRestaurantImage(UUID imageId) {
+        if (imageId == null) {
+            throw new DishException("Invalid request to delete image");
+        }
+        DishImage dishImage = dishImageRepository.findById(imageId).orElseThrow(() -> new DishException("Image not found with id: " + imageId));
+
+        imageService.deleteImage(dishImage.getPublicId()).thenApplyAsync(res -> {
+            if (res != null && (Boolean) res.get("isSuccessful")) {
+                dishImageRepository.delete(dishImage);
+                log.info("Image deleted successfully for image id: {}", imageId);
+            } else {
+                String error = res != null ? (String) res.get("error") : "Unknown error";
+                log.error("Image deletion failed for image id: {}. Error: {}", imageId, error);
+                throw new DishException(error);
+            }
+            return null;
+        }).exceptionally(throwable -> {
+            log.error("Image deletion failed for image id: {}. Error: {}", imageId, throwable.getMessage());
+            throw new DishException("Image deletion failed: " + throwable.getMessage());
+        });
+        return CompletableFuture.completedFuture(null);
+    }
+
+    public Page<?> getDishImages(UUID dishId) {
+        Dish dish = dishRepository.findById(dishId).orElseThrow(() -> new DishException("Dish not found with id: " + dishId));
+
+        return null;
     }
 }

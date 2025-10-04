@@ -5,7 +5,7 @@ import com.cloudinary.Transformation;
 import com.cloudinary.utils.ObjectUtils;
 import com.dineswift.restaurant_service.exception.ImageException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -17,6 +17,7 @@ import java.util.concurrent.CompletableFuture;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ImageService {
 
     private final Cloudinary cloudinary;
@@ -106,19 +107,22 @@ public class ImageService {
     }
 
     @Async
-    public CompletableFuture<Void> deleteImage(String publicId) {
+    public CompletableFuture<Map<String,Object>> deleteImage(String publicId) {
         try {
             Map<?, ?> result = cloudinary.uploader().destroy(publicId, ObjectUtils.emptyMap());
 
             String deletionResult = (String) result.get("result");
             if ("ok".equals(deletionResult)) {
-
+                log.info("Image deleted successfully from Cloudinary: {}", publicId);
+                return CompletableFuture.completedFuture(Map.of("isSuccessful", true));
             } else {
-                throw new ImageException("Failed to delete image from Cloudinary: " + deletionResult);
+                log.error("Failed to delete image from Cloudinary: {}. Result: {}", publicId, deletionResult);
+                return CompletableFuture.completedFuture(Map.of("isSuccessful", false, "error", "Deletion failed: " + deletionResult));
             }
         } catch (IOException e) {
-            throw new ImageException("Failed to delete image from Cloudinary " + e.getMessage());
+            log.error("Failed to delete image from Cloudinary: {}. Result: {}", publicId, e.getMessage());
+            String deletionResult = e.getMessage() != null ? e.getMessage() : "Unknown error";
+            return CompletableFuture.completedFuture(Map.of("isSuccessful", false, "error", "Deletion failed: " + deletionResult));
         }
-        return CompletableFuture.completedFuture(null);
     }
 }
