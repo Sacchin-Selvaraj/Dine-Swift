@@ -54,4 +54,10 @@ public class MenuController {
         menuService.removeDishFromMenu(menuId, dishId);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
+
+    @GetMapping("/get-menu-details/{menuId}")
+    public ResponseEntity<MenuDTO> getMenuDetails(@PathVariable UUID menuId) {
+        MenuDTO menuDTO = menuService.getMenuDetails(menuId);
+        return ResponseEntity.ok(menuDTO);
+    }
 }

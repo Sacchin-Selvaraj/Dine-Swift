@@ -35,13 +35,12 @@ public class Menu {
     @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;
 
-    @NotNull(message = "Created at timestamp is required")
-    @CreationTimestamp
     @Column(name = "created_at", nullable = false)
+    @CreationTimestamp
     private ZonedDateTime createdAt;
 
     @NotNull(message = "Created by is required")
-    @Column(name = "created_by", nullable = false, updatable = false)
+    @Column(name = "created_by", updatable = false)
     private UUID createdBy;
 
     @Column(name = "last_modified_by")

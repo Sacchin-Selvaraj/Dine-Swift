@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 
 import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.Set;
 import java.util.UUID;
 
@@ -13,10 +14,10 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class MenuDTO {
 
-    private UUID categoryId;
-    private String categoryName;
+    private UUID menuId;
+    private String menuName;
     private String description;
     private UUID lastModifiedBy;
-    private Instant lastModifiedDate;
+    private ZonedDateTime lastModifiedDate;
     private Set<DishDTO> dishes;
 }

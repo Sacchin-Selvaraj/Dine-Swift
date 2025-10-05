@@ -29,6 +29,8 @@ public class MenuService {
             throw new MenuException("menu name already exists");
         }
         Menu menu = menuMapper.toEntity(menuCreateRequest,restaurantId);
+        menu.setCreatedBy(restaurantId);
+        // After working with authentication, set the createdBy field to the authenticated user's ID
         menuRepository.save(menu);
         log.info("menu added successfully: {}", menu.getMenuId());
     }
@@ -83,5 +85,11 @@ public class MenuService {
         }
         menuRepository.save(menu);
         log.info("Dish {} removed from menu {}", dishId, menuId);
+    }
+
+    public MenuDTO getMenuDetails(UUID menuId) {
+        Menu menu = menuRepository.findByIdAndIsActive(menuId)
+                .orElseThrow(() -> new MenuException("menu not found with provided Id"));
+        return menuMapper.toDTO(menu);
     }
 }
