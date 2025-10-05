@@ -9,5 +9,4 @@ public enum TableStatus {
     OUT_OF_ORDER,
     NOT_AVAILABLE,
     BLOCKED
-
 }

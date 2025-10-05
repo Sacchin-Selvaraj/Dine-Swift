@@ -14,3 +14,9 @@ DROP COLUMN menu_type;
 
 ALTER TABLE menu
 ADD COLUMN created_by UUID;
+
+ALTER TABLE restaurant_table
+DROP COLUMN table_status
+
+ALTER TABLE restaurant_table
+ADD COLUMN created_by UUID;

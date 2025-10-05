@@ -96,6 +96,9 @@ public class TableBooking {
     @Column(name = "is_other_guest_allowed", nullable = false)
     private Boolean isOtherGuestAllowed = false;
 
+    @Column(name = "is_active", nullable = false)
+    private Boolean isActive = true;
+
     @NotNull(message = "Created by is required")
     @Column(name = "created_by", nullable = false)
     private UUID createdBy;

@@ -3,6 +3,8 @@ package com.dineswift.restaurant_service.model;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.ZonedDateTime;
 import java.util.UUID;
@@ -23,10 +25,6 @@ public class RestaurantTable {
     @Column(name = "table_number", nullable = false, length = 50)
     private String tableNumber;
 
-    @NotBlank(message = "Table status is required")
-    @Column(name = "table_status", nullable = false, length = 50)
-    private TableStatus tableStatus;
-
     @Size(max = 1000, message = "Table description cannot exceed 1000 characters")
     @Column(name = "table_description", columnDefinition = "TEXT")
     private String tableDescription;
@@ -40,12 +38,16 @@ public class RestaurantTable {
     @Column(name = "table_shape", length = 20)
     private String tableShape;
 
-    @NotNull(message = "Created date is required")
-    @PastOrPresent(message = "Created date must be in the past or present")
+    @CreationTimestamp
     @Column(name = "created_date", nullable = false)
     private ZonedDateTime createdDate;
 
+    @NotNull(message = "Created by is required")
+    @Column(name = "created_by", updatable = false)
+    private UUID createdBy;
+
     @PastOrPresent(message = "Last modified date must be in the past or present")
+    @UpdateTimestamp
     @Column(name = "last_modified_date")
     private ZonedDateTime lastModifiedDate;
 
