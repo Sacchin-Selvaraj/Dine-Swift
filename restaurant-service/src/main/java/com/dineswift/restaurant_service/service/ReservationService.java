@@ -126,6 +126,10 @@ public class ReservationService {
             startTime=bookingEndTime.plusMinutes(5);
 
         }
+        if (startTime.isBefore(endTime)){
+            AvailableTimeSlot availableTimeSlot = createAvailableTimeSlot(startTime, endTime, restaurantTable.getTotalNumberOfSeats());
+            availableTimeSlots.add(availableTimeSlot);
+        }
         return availableTimeSlots;
     }
 
