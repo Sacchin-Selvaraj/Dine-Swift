@@ -23,7 +23,6 @@ public class CheckAvailableSlots {
     @NotNull(message = "Number of guests cannot be null")
     private Integer numberOfGuests;
 
-    @NotNull(message = "Duration in Minutes cannot be null")
     private Long durationInMinutes;
 
 

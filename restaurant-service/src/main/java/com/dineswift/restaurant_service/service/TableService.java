@@ -86,4 +86,17 @@ public class TableService {
         return availableSlots;
 
     }
+
+    public AvailableSlots getAvailableSlot(UUID tableId, CheckAvailableSlots checkAvailableSlots) {
+        log.info("Fetching available slot for table with ID: {}", tableId);
+        RestaurantTable restaurantTable = tableRepository.findById(tableId)
+                .orElseThrow(() -> new IllegalArgumentException("Table not found with ID: " + tableId));
+        if (!restaurantTable.getIsActive()) {
+            log.warn("Table with ID: {} is not active", tableId);
+            throw new IllegalArgumentException("Table with ID: " + tableId + " is not active");
+        }
+        AvailableSlots availableSlot = reservationService.getAvailableSlot(restaurantTable, restaurantTable.getRestaurant(), checkAvailableSlots);
+        log.info("Fetched available slot for table with ID: {}", tableId);
+        return availableSlot;
+    }
 }

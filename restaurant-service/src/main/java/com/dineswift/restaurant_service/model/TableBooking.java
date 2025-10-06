@@ -7,6 +7,7 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.util.UUID;
 
@@ -24,7 +25,7 @@ public class TableBooking {
     @NotNull(message = "Dine in time is required")
     @Future(message = "Dine in time must be in the future")
     @Column(name = "dine_in_time", nullable = false)
-    private ZonedDateTime dineInTime;
+    private LocalDateTime dineInTime;
 
     @NotNull(message = "Duration is required")
     @Min(value = 1, message = "Duration must be at least 1 minute")
@@ -35,7 +36,7 @@ public class TableBooking {
     @NotNull(message = "Dine out time is required")
     @Future(message = "Dine out time must be in the future")
     @Column(name = "dine_out_time", nullable = false)
-    private ZonedDateTime dineOutTime;
+    private LocalDateTime dineOutTime;
 
     @NotNull(message = "Number of guests is required")
     @Min(value = 1, message = "Number of guests must be at least 1")
@@ -118,7 +119,7 @@ public class TableBooking {
     @NotNull(message = "Table is required")
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "table_id", nullable = false)
-    private RestaurantTable table;
+    private RestaurantTable restaurantTable;
 
     @NotNull(message = "Restaurant is required")
     @ManyToOne(fetch = FetchType.LAZY)

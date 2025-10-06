@@ -16,7 +16,7 @@ public class AvailableTimeSlot {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "HH:mm")
     private LocalTime endTime;
 
-    private Integer slotDurationMinutes;
+    private Long slotDurationMinutes;
 
     private Integer numberOfAvailableSeats;
 

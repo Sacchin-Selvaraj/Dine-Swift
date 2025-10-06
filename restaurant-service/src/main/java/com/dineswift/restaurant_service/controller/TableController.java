@@ -47,7 +47,7 @@ public class TableController {
     @GetMapping("/get-table/{restaurantId}" )
     public ResponseEntity<Page<RestaurantTableDTO>> getTable(@PathVariable UUID  restaurantId,
                                          @RequestParam(name = "page", defaultValue = "0") int page,
-                                         @RequestParam(name = "size", defaultValue = "10") int size) {
+                                         @RequestParam(name = "size", defaultValue = "6") int size) {
         log.info("Received request to get table with ID: {}", restaurantId);
         Page<RestaurantTableDTO> tables = tableService.getTablesByRestaurantId(restaurantId, page, size);
         return ResponseEntity.ok().body(tables);
@@ -58,5 +58,12 @@ public class TableController {
         log.info("Received request to get available slots for table with ID: {}", restaurantId);
         List<AvailableSlots> availableSlots = tableService.getAvailableSlots(restaurantId,checkAvailableSlots);
         return ResponseEntity.ok().body(availableSlots);
+    }
+
+    @GetMapping("/available-slot/{tableId}" )
+    public ResponseEntity<AvailableSlots> getAvailableSlot(@PathVariable UUID  tableId, @RequestBody CheckAvailableSlots checkAvailableSlots) {
+        log.info("Received request to get available slot for table with ID: {}", tableId);
+        AvailableSlots availableSlot = tableService.getAvailableSlot(tableId, checkAvailableSlots);
+        return ResponseEntity.ok().body(availableSlot);
     }
 }

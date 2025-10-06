@@ -20,3 +20,6 @@ DROP COLUMN table_status
 
 ALTER TABLE restaurant_table
 ADD COLUMN created_by UUID;
+
+ALTER TABLE table_bookings
+ADD COLUMN is_active BOOLEAN;
