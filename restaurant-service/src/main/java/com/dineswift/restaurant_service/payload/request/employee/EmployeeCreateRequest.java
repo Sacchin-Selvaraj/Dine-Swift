@@ -1,7 +1,6 @@
 package com.dineswift.restaurant_service.payload.request.employee;
 
 
-import com.dineswift.restaurant_service.payload.request.RoleRequest;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;

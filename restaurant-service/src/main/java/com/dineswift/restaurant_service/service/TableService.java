@@ -65,7 +65,7 @@ public class TableService {
         log.info("Fetching tables for restaurant with ID: {}", restaurantId);
 
         Pageable pageable = Pageable.ofSize(size).withPage(page);
-        Page<RestaurantTable> restaurantTables = tableRepository.findAll(pageable);
+        Page<RestaurantTable> restaurantTables = tableRepository.findAllAndIsActive(pageable);
         if (restaurantTables.isEmpty()) {
             log.warn("No tables found for restaurant with ID: {}", restaurantId);
             throw new IllegalArgumentException("No tables found for restaurant with ID: " + restaurantId);

@@ -5,7 +5,6 @@ import com.dineswift.restaurant_service.model.Employee;
 import com.dineswift.restaurant_service.model.Role;
 import com.dineswift.restaurant_service.model.RoleName;
 import com.dineswift.restaurant_service.payload.dto.EmployeeDTO;
-import com.dineswift.restaurant_service.payload.request.RoleRequest;
 import com.dineswift.restaurant_service.payload.request.employee.EmployeeCreateRequest;
 import com.dineswift.restaurant_service.payload.response.employee.RoleDTOResponse;
 import com.dineswift.restaurant_service.repository.RoleRepository;
