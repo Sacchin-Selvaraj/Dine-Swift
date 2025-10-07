@@ -43,9 +43,7 @@ public class ReservationService {
         }
 
         List<AvailableSlots> availableSlots = restaurantTables.stream().map(table->getAvailableSlot(table,restaurant,checkAvailableSlots)).toList();
-        if (availableSlots.isEmpty()){
-            throw new RestaurantException("No available slots found for the restaurant with provided Date: " + checkAvailableSlots.getReservationDate());
-        }
+        log.info("Available slots fetched for restaurant with ID: {}", restaurantId);
         return availableSlots;
     }
 
@@ -69,9 +67,30 @@ public class ReservationService {
         availableTimeSlots = getAvailableTimeSlots(restaurantTable,restaurant, activeBookingsForDate,checkAvailableSlots);
 
         AvailableSlots availableSlots = getEmptyAvailableSlots(restaurantTable);
-        availableSlots.setAvailableTimeSlots(availableTimeSlots);
+        if (checkAvailableSlots.getDurationInMinutes()==null)
+            availableSlots.setAvailableTimeSlots(availableTimeSlots);
+        else
+            availableSlots.setAvailableTimeSlots(divideSlotsByDuration(availableTimeSlots, checkAvailableSlots.getDurationInMinutes()));
         log.info("Available slots found for the table with ID: {}", restaurantTable.getTableId());
         return availableSlots;
+    }
+
+    private List<AvailableTimeSlot> divideSlotsByDuration(List<AvailableTimeSlot> availableTimeSlots, Long durationInMinutes) {
+        List<AvailableTimeSlot> dividedSlotsByDuration = new ArrayList<>();
+        for (AvailableTimeSlot slot : availableTimeSlots) {
+            LocalTime slotStartTime = slot.getStartTime();
+            LocalTime slotEndTime = slot.getEndTime();
+            while (!slotStartTime.plusMinutes(durationInMinutes).isAfter(slotEndTime)) {
+                LocalTime gapEndTime = slotStartTime.plusMinutes(durationInMinutes);
+                addDividedSlot( slot, slotStartTime, gapEndTime, dividedSlotsByDuration);
+                slotStartTime = gapEndTime;
+            }
+            LocalTime gapEndTime = slotStartTime.plusMinutes(durationInMinutes);
+            if (gapEndTime.isAfter(slotEndTime) && slotStartTime.isBefore(slotEndTime)) {
+                addDividedSlot( slot, slotStartTime, slotEndTime, dividedSlotsByDuration);
+            }
+        }
+        return dividedSlotsByDuration;
     }
 
     public List<AvailableTimeSlot> getAvailableTimeSlots(RestaurantTable restaurantTable, Restaurant restaurant, List<TableBooking> activeBookingsForDate, CheckAvailableSlots checkAvailableSlots) {
@@ -81,6 +100,7 @@ public class ReservationService {
 
         LocalTime startTime = getStartTime(restaurant, checkAvailableSlots);
         LocalTime endTime = restaurant.getClosingTime();
+        final int BUFFER_MINUTES = 5;
 
         List<AvailableTimeSlot> availableTimeSlots= new ArrayList<>();
         for (TableBooking booking : activeBookingsForDate) {
@@ -88,13 +108,13 @@ public class ReservationService {
             LocalTime bookingEndTime = booking.getDineOutTime().toLocalTime();
 
             if (startTime.isBefore(bookingStartTime)){
-                LocalTime slotEndTime = bookingStartTime.minusMinutes(5);
+                LocalTime slotEndTime = bookingStartTime.minusMinutes(BUFFER_MINUTES);
                 if (startTime.isBefore(slotEndTime)){
                 AvailableTimeSlot availableTimeSlot = createAvailableTimeSlot(startTime, slotEndTime, restaurantTable.getTotalNumberOfSeats());
                 availableTimeSlots.add(availableTimeSlot);
                 }
             }
-            startTime=bookingEndTime.plusMinutes(5);
+            startTime=bookingEndTime.plusMinutes(BUFFER_MINUTES);
 
         }
         if (startTime.isBefore(endTime)){
@@ -142,6 +162,15 @@ public class ReservationService {
         availableTimeSlot.setSlotDurationMinutes(durationMinutes);
         availableTimeSlot.setNumberOfAvailableSeats(totalNumberOfSeats);
         return availableTimeSlot;
+    }
+
+    private static void addDividedSlot(AvailableTimeSlot slot, LocalTime slotStartTime, LocalTime gapEndTime, List<AvailableTimeSlot> dividedSlotsByDuration) {
+        AvailableTimeSlot dividedSlot = new AvailableTimeSlot();
+        dividedSlot.setStartTime(slotStartTime);
+        dividedSlot.setEndTime(gapEndTime);
+        dividedSlot.setSlotDurationMinutes(Duration.between(slotStartTime,gapEndTime).toMinutes());
+        dividedSlot.setNumberOfAvailableSeats(slot.getNumberOfAvailableSeats());
+        dividedSlotsByDuration.add(dividedSlot);
     }
 
 }
