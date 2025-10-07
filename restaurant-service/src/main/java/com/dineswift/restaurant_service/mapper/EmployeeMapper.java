@@ -6,6 +6,7 @@ import com.dineswift.restaurant_service.model.Role;
 import com.dineswift.restaurant_service.model.RoleName;
 import com.dineswift.restaurant_service.payload.dto.EmployeeDTO;
 import com.dineswift.restaurant_service.payload.request.employee.EmployeeCreateRequest;
+import com.dineswift.restaurant_service.payload.request.employee.RoleNameRequest;
 import com.dineswift.restaurant_service.payload.response.employee.RoleDTOResponse;
 import com.dineswift.restaurant_service.repository.RoleRepository;
 import lombok.RequiredArgsConstructor;
@@ -49,9 +50,9 @@ public class EmployeeMapper {
         return employee;
     }
 
-    public Set<Role> getRoles(Set<RoleRequest> roles) {
+    public Set<Role> getRoles(Set<RoleNameRequest> roles) {
         Set<Role> roleSet = new HashSet<>();
-        for (RoleRequest tempRole : roles) {
+        for (RoleNameRequest tempRole : roles) {
             try {
                 RoleName roleName = RoleName.fromDisplayName(tempRole.getRoleName());
                 Role role = roleRepository.findByRoleName(roleName)

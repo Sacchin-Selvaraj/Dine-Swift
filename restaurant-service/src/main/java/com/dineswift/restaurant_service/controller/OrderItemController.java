@@ -1,6 +1,5 @@
 package com.dineswift.restaurant_service.controller;
 
-import com.dineswift.restaurant_service.model.OrderItem;
 import com.dineswift.restaurant_service.payload.response.orderItem.OrderItemDto;
 import com.dineswift.restaurant_service.service.OrderService;
 import lombok.RequiredArgsConstructor;

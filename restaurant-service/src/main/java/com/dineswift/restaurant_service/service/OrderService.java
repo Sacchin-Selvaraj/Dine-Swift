@@ -13,6 +13,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClient;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -31,13 +32,30 @@ public class OrderService {
     public void addItemToCart(UUID cartId, UUID dishId, Integer quantity) {
         log.info("Checking quantity: {}", quantity);
         checkQuantity(quantity);
+        checkCartIdIsValid(cartId);
 
         Dish dish = dishRepository.findByIdAndIsActive(dishId).orElseThrow(() -> new DishException("Dish not found or inactive"));
         log.info("Dish found: {}", dish.getDishName());
 
+        OrderItem existingOrderItem = orderItemRepository.findByCartIdAndDish(cartId, dish).orElse(null);
+        if (existingOrderItem != null) {
+            log.info("Existing OrderItem found, updating quantity: {}", existingOrderItem);
+            int newQuantity = existingOrderItem.getQuantity() + quantity;
+            checkQuantity(newQuantity);
+            existingOrderItem.setQuantity(newQuantity);
+            existingOrderItem.setTotalPrice(existingOrderItem.getPrice().multiply(BigDecimal.valueOf(existingOrderItem.getQuantity())));
+            orderItemRepository.save(existingOrderItem);
+            return;
+        }
+
         OrderItem updatedOrderItem = orderItemMapper.toEntity(cartId, dish, quantity);
         log.info("OrderItem created: {}", updatedOrderItem);
         orderItemRepository.save(updatedOrderItem);
+    }
+
+    private void checkCartIdIsValid(UUID cartId) {
+        log.info("Check whether the CartId is present in User Service or not: {}", cartId);
+        RestClient restClient = new RestClient();
     }
 
     public void updateItemQuantity(UUID orderItemId, Integer quantity) {

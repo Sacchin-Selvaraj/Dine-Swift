@@ -39,5 +39,5 @@ public class EmployeeCreateRequest {
     @NotBlank(message = "Phone Number is Required")
     private String phoneNumber;
 
-    private Set<RoleRequest> roles;
+    private Set<RoleNameRequest> roles;
 }
