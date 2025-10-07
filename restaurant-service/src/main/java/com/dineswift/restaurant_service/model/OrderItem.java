@@ -1,5 +1,6 @@
 package com.dineswift.restaurant_service.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.*;
@@ -51,5 +52,6 @@ public class OrderItem {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "table_booking_id")
+    @JsonIgnore
     private TableBooking tableBooking;
 }
