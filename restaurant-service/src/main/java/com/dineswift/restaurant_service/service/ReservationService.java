@@ -67,7 +67,7 @@ public class ReservationService {
         availableTimeSlots = getAvailableTimeSlots(restaurantTable,restaurant, activeBookingsForDate,checkAvailableSlots);
 
         AvailableSlots availableSlots = getEmptyAvailableSlots(restaurantTable);
-        if (checkAvailableSlots.getDurationInMinutes()==null)
+        if (checkAvailableSlots.getDurationInMinutes()<5)
             availableSlots.setAvailableTimeSlots(availableTimeSlots);
         else
             availableSlots.setAvailableTimeSlots(divideSlotsByDuration(availableTimeSlots, checkAvailableSlots.getDurationInMinutes()));
@@ -145,8 +145,15 @@ public class ReservationService {
         availableTimeSlot.setSlotDurationMinutes(durationMinutes);
         availableTimeSlot.setNumberOfAvailableSeats(restaurantTable.getTotalNumberOfSeats());
         List<AvailableTimeSlot> availableTimeSlots = new ArrayList<>();
-        availableTimeSlots.add(availableTimeSlot);
+
+        log.info("Table with ID: {} is fully available from {} to {}", restaurantTable.getTableId(), startTime, endTime);
+       if (checkAvailableSlots.getDurationInMinutes()==null)
+           availableTimeSlots.add(availableTimeSlot);
+       else
+              availableTimeSlots = divideSlotsByDuration(List.of(availableTimeSlot), checkAvailableSlots.getDurationInMinutes());
+
         availableSlots.setAvailableTimeSlots(availableTimeSlots);
+
         return availableSlots;
     }
 

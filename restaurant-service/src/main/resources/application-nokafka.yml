@@ -1,10 +1,9 @@
 server:
   port: 8081
 
-spring:
-  profiles:
-    active: nokafka
 
+
+spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/restaurant_db
     username: postgres
@@ -33,15 +32,17 @@ spring:
               sql:
                 BasicBinder: TRACE
 
+
+  config:
+    activate:
+      on-profile: nokafka
+
   kafka:
-    bootstrap-servers: localhost:9092
+    enabled: false
+    admin:
+      check-topic-existence: false
 
+    bootstrap-servers:
 
-app:
-  kafka:
-    topic:
-      email-verification-topic: email
-      sms-verification-topic: sms
-
-
-
+    listener:
+      auto-startup: false
