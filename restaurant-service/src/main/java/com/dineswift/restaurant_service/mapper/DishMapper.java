@@ -60,8 +60,11 @@ public class DishMapper {
     }
 
     public DishDTO toDTO(Dish updatedDish) {
-        List<DishImage> dishImages = dishImageRepository.findByDish(updatedDish);
+
         DishDTO dishDTO = mapper.map(updatedDish, DishDTO.class);
+        List<DishImage> dishImages = dishImageRepository.findByDish(updatedDish);
+        if (dishImages.isEmpty())
+            return dishDTO;
         dishDTO.setDishImages(dishImages.stream().map(this::toImageDTO).toList());
         return dishDTO;
     }

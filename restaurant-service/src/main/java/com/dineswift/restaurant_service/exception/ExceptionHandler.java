@@ -88,4 +88,10 @@ public class ExceptionHandler {
         ErrorResponse errorResponse = new ErrorResponse("Menu Details Not valid",List.of(ex.getMessage()));
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
+
+    @org.springframework.web.bind.annotation.ExceptionHandler(OrderItemException.class)
+    public ResponseEntity<ErrorResponse> handleOrderItemException(OrderItemException ex) {
+        ErrorResponse errorResponse = new ErrorResponse("Order Item Details Not valid",List.of(ex.getMessage()));
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
 }

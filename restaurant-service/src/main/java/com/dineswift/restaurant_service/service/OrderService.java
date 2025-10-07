@@ -2,9 +2,11 @@ package com.dineswift.restaurant_service.service;
 
 
 import com.dineswift.restaurant_service.exception.DishException;
+import com.dineswift.restaurant_service.exception.OrderItemException;
 import com.dineswift.restaurant_service.mapper.OrderItemMapper;
 import com.dineswift.restaurant_service.model.Dish;
 import com.dineswift.restaurant_service.model.OrderItem;
+import com.dineswift.restaurant_service.payload.response.orderItem.OrderItemDto;
 import com.dineswift.restaurant_service.repository.DishRepository;
 import com.dineswift.restaurant_service.repository.OrderItemRepository;
 import jakarta.transaction.Transactional;
@@ -13,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -40,7 +43,7 @@ public class OrderService {
     public void updateItemQuantity(UUID orderItemId, Integer quantity) {
 
         checkQuantity(quantity);
-        OrderItem orderItem = orderItemRepository.findById(orderItemId).orElseThrow(() -> new IllegalArgumentException("Order item not found"));
+        OrderItem orderItem = orderItemRepository.findById(orderItemId).orElseThrow(() -> new OrderItemException("Order item not found"));
         log.info("OrderItem found: {}", orderItem);
         orderItem.setQuantity(quantity);
         orderItem.setTotalPrice(orderItem.getPrice().multiply(BigDecimal.valueOf(quantity)));
@@ -53,11 +56,32 @@ public class OrderService {
         final int QUANTITY_MIN = 1;
         if (quantity > QUANTITY_LIMIT){
             log.error("Quantity {} exceeds the limit of {}", quantity, QUANTITY_LIMIT);
-            throw new IllegalArgumentException("Quantity exceeds the limit of " + QUANTITY_LIMIT);
+            throw new OrderItemException("Quantity exceeds the limit of " + QUANTITY_LIMIT);
         }
         if (quantity<QUANTITY_MIN){
             log.error("Quantity {} is below the minimum of {}", quantity, QUANTITY_MIN);
-            throw new IllegalArgumentException("Quantity must be at least " + QUANTITY_MIN);
+            throw new OrderItemException("Quantity must be at least " + QUANTITY_MIN);
         }
+    }
+
+    public void deleteItem(UUID orderItemId) {
+
+        OrderItem orderItem = orderItemRepository.findById(orderItemId).orElseThrow(
+                () -> new OrderItemException("Order item not found"));
+        log.info("OrderItem found for deletion: {}", orderItem);
+        orderItemRepository.delete(orderItem);
+    }
+
+    public List<OrderItemDto> getOrderItemsByCartId(UUID cartId) {
+
+        List<OrderItem> orderItems = orderItemRepository.findAllByCartId(cartId);
+        if (orderItems.isEmpty()){
+            log.error("No order items found for cartId: {}", cartId);
+            throw new OrderItemException("No order items found for the given cart ID");
+        }
+
+        List<OrderItemDto> orderItemDtos = orderItems.stream().map(orderItemMapper::toDto).toList();
+        log.info("Order items fetched for cartId {}: {}", cartId, orderItemDtos);
+        return orderItemDtos;
     }
 }
