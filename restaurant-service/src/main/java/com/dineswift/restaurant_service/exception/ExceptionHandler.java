@@ -94,4 +94,10 @@ public class ExceptionHandler {
         ErrorResponse errorResponse = new ErrorResponse("Order Item Details Not valid",List.of(ex.getMessage()));
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
+
+    @org.springframework.web.bind.annotation.ExceptionHandler(RemoteApiException.class)
+    public ResponseEntity<ErrorResponse> handleRemoteApiException(RemoteApiException ex) {
+        ErrorResponse errorResponse = new ErrorResponse("Remote API Error", List.of(ex.getMessage()));
+        return new ResponseEntity<>(errorResponse, HttpStatus.SERVICE_UNAVAILABLE);
+    }
 }

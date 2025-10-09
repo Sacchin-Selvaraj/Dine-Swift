@@ -72,4 +72,11 @@ public class ExceptionHandler {
         ErrorResponse error = new ErrorResponse(errorMessage,HttpStatus.INTERNAL_SERVER_ERROR);
         return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
     }
+
+    @org.springframework.web.bind.annotation.ExceptionHandler(RemoteApiException.class)
+    public ResponseEntity<ErrorResponse> handleRemoteApiException(RemoteApiException ex){
+        String errorMessage = ex.getLocalizedMessage();
+        ErrorResponse error = new ErrorResponse(errorMessage,HttpStatus.SERVICE_UNAVAILABLE);
+        return new ResponseEntity<>(error, HttpStatus.SERVICE_UNAVAILABLE);
+    }
 }

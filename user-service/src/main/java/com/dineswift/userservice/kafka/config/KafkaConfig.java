@@ -19,14 +19,17 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Configuration
-@EnableKafka
+//@EnableKafka
 public class KafkaConfig {
 
     @Value("${app.kafka.topic.email-verification-topic}")
-    public String emailVerificationTopic;
+    private String emailVerificationTopic;
 
     @Value("${app.kafka.topic.sms-verification-topic}")
-    public String smsVerificationTopic;
+    private String smsVerificationTopic;
+
+    @Value("${spring.kafka.bootstrap-servers}")
+    private String bootstrapServers;
 
     @Bean
     public NewTopic emailVerificationTopic(){
@@ -46,7 +49,7 @@ public class KafkaConfig {
 
     public ProducerFactory<String,Object> producerFactory(){
         Map<String,Object> configProps=new HashMap<>();
-        configProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,"localhost:9092");
+        configProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,bootstrapServers);
         configProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         configProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
         configProps.put(JsonSerializer.ADD_TYPE_INFO_HEADERS, true);
@@ -62,7 +65,7 @@ public class KafkaConfig {
     @Bean
     public ConsumerFactory<String, Object> kafkaGenericConsumerFactory() {
         Map<String, Object> props = new HashMap<>();
-        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         props.put(ConsumerConfig.GROUP_ID_CONFIG, "user-service-group-v1");
         props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
 

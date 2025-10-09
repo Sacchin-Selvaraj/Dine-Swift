@@ -1,11 +1,13 @@
 package com.dineswift.userservice.model.response;
 
 import com.dineswift.userservice.model.entites.CartStatus;
+import com.dineswift.userservice.model.response.restaurant_service.OrderItemDto;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Data
@@ -22,8 +24,6 @@ public class CartDTO {
 
     private CartStatus cartStatus;
 
-    private Boolean isGuestCart;
-
-    private Boolean isActive;
+    private List<OrderItemDto> orderItems;
 
 }

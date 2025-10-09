@@ -12,6 +12,7 @@ import com.dineswift.restaurant_service.repository.OrderItemRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
@@ -28,6 +29,7 @@ public class OrderService {
     private final OrderItemRepository orderItemRepository;
     private final DishRepository dishRepository;
     private final OrderItemMapper orderItemMapper;
+    private final RestClient cartServiceRestClient;
 
     public void addItemToCart(UUID cartId, UUID dishId, Integer quantity) {
         log.info("Checking quantity: {}", quantity);
@@ -55,7 +57,18 @@ public class OrderService {
 
     private void checkCartIdIsValid(UUID cartId) {
         log.info("Check whether the CartId is present in User Service or not: {}", cartId);
-        RestClient restClient = new RestClient();
+        ResponseEntity<Boolean> response = cartServiceRestClient.get()
+                .uri("/valid-cartId/{cartId}", cartId)
+                .retrieve().toEntity(Boolean.class);
+        if (response.getBody()==null || !response.getBody()) {
+            log.error("Invalid cartId: {}", cartId);
+            throw new OrderItemException("Invalid cart ID provided");
+        }
+        log.info("Valid cartId: {}", cartId);
+    }
+
+    private void updateCartTotalAmount(UUID cartId) {
+
     }
 
     public void updateItemQuantity(UUID orderItemId, Integer quantity) {

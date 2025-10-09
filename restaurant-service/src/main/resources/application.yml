@@ -1,6 +1,12 @@
 server:
   port: 8081
 
+dineswift:
+  user-service:
+    cart-service:
+      url: http://localhost:8080/cart
+
+
 spring:
   profiles:
     active: nokafka

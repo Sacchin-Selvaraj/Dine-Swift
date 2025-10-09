@@ -1,12 +1,19 @@
 package com.dineswift.userservice.service;
 
+import com.dineswift.userservice.mapper.CartMapper;
+import com.dineswift.userservice.model.entites.Cart;
+import com.dineswift.userservice.model.request.CartAmountUpdateRequest;
 import com.dineswift.userservice.model.response.CartDTO;
+import com.dineswift.userservice.model.response.restaurant_service.OrderItemDto;
 import com.dineswift.userservice.repository.CartRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClient;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -16,6 +23,8 @@ import java.util.UUID;
 public class CartService {
 
     private final CartRepository cartRepository;
+    private final CartMapper cartMapper;
+    private final RestClient orderItemServiceRestClient;
 
     public boolean isValidCartId(UUID cartId) {
         log.info("Checking if cartId is valid: {}", cartId);
@@ -25,6 +34,39 @@ public class CartService {
     }
 
     public CartDTO getCartDetails(UUID cartId) {
-        return null;
+        log.info("Fetching cart details for cartId={}", cartId);
+
+        Cart cart = cartRepository.findByIdAndIsActive(cartId)
+                .orElseThrow(() -> new IllegalArgumentException("Cart not found or inactive"));
+
+        CartDTO cartDto = cartMapper.toDto(cart);
+        log.info("Cart details fetched successfully for cartId={}: {}", cartId, cartDto);
+        List<OrderItemDto> orderItemDtos = fetchOrderItemsForCart(cartId);
+        cartDto.setOrderItems(orderItemDtos);
+        return cartDto;
+    }
+
+    private List<OrderItemDto> fetchOrderItemsForCart(UUID cartId) {
+        log.info("Fetching order items for cartId={}", cartId);
+        return orderItemServiceRestClient.get()
+                .uri("get-order-items/{cartId}",cartId)
+                .header("Content-Type", "application/json")
+                .retrieve()
+                .body(new ParameterizedTypeReference<List<OrderItemDto>>() {
+                });
+    }
+
+
+    public void updateCartTotalAmount(UUID cartId, CartAmountUpdateRequest cartAmountUpdateRequest) {
+        log.info("Updating cart total amount for cartId={} with request={}", cartId, cartAmountUpdateRequest);
+        Cart cart = cartRepository.findByIdAndIsActive(cartId)
+                .orElseThrow(() -> new IllegalArgumentException("Cart not found or inactive"));
+        if (cartAmountUpdateRequest.isRemoved())
+            cart.setGrandTotal(cart.getGrandTotal().subtract(cartAmountUpdateRequest.getTotalDishPrice()));
+        else
+            cart.setGrandTotal(cart.getGrandTotal().add(cartAmountUpdateRequest.getTotalDishPrice()));
+
+        cartRepository.save(cart);
+        log.info("Cart total amount updated successfully for cartId={}", cartId);
     }
 }

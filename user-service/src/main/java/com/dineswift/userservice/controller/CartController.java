@@ -1,15 +1,14 @@
 package com.dineswift.userservice.controller;
 
+import com.dineswift.userservice.model.request.CartAmountUpdateRequest;
 import com.dineswift.userservice.model.response.CartDTO;
 import com.dineswift.userservice.service.CartService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 @RestController
@@ -32,5 +31,13 @@ public class CartController {
         log.info("Fetching cart details for cartId={}", cartId);
         CartDTO cartDTO=cartService.getCartDetails(cartId);
         return ResponseEntity.ok(cartDTO);
+    }
+
+    @PatchMapping("/update-cart-amount/{cartId}" )
+    public ResponseEntity<Void> updateCartTotalAmount(@PathVariable UUID cartId,
+                                                     @RequestBody CartAmountUpdateRequest cartAmountUpdateRequest) {
+        log.info("Updating cart total amount: cartId={}, totalAmount={}", cartId, cartAmountUpdateRequest);
+        cartService.updateCartTotalAmount(cartId, cartAmountUpdateRequest);
+        return ResponseEntity.ok().build();
     }
 }
