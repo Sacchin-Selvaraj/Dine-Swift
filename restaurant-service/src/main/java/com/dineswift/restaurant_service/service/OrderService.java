@@ -6,6 +6,7 @@ import com.dineswift.restaurant_service.exception.OrderItemException;
 import com.dineswift.restaurant_service.mapper.OrderItemMapper;
 import com.dineswift.restaurant_service.model.Dish;
 import com.dineswift.restaurant_service.model.OrderItem;
+import com.dineswift.restaurant_service.payload.request.orderItem.CartAmountUpdateRequest;
 import com.dineswift.restaurant_service.payload.response.orderItem.OrderItemDto;
 import com.dineswift.restaurant_service.repository.DishRepository;
 import com.dineswift.restaurant_service.repository.OrderItemRepository;
@@ -19,6 +20,7 @@ import org.springframework.web.client.RestClient;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 @RequiredArgsConstructor
@@ -38,6 +40,11 @@ public class OrderService {
 
         Dish dish = dishRepository.findByIdAndIsActive(dishId).orElseThrow(() -> new DishException("Dish not found or inactive"));
         log.info("Dish found: {}", dish.getDishName());
+        CartAmountUpdateRequest amountUpdateRequest = new CartAmountUpdateRequest();
+        amountUpdateRequest.setRemoved(false);
+        amountUpdateRequest.setTotalDishPrice((dish.getDishPrice().multiply(BigDecimal.valueOf(quantity))));
+
+        updateCartTotalAmount(cartId, amountUpdateRequest);
 
         OrderItem existingOrderItem = orderItemRepository.findByCartIdAndDish(cartId, dish).orElse(null);
         if (existingOrderItem != null) {
@@ -67,8 +74,15 @@ public class OrderService {
         log.info("Valid cartId: {}", cartId);
     }
 
-    private void updateCartTotalAmount(UUID cartId) {
-
+    private void updateCartTotalAmount(UUID cartId, CartAmountUpdateRequest cartAmountUpdateRequest) {
+        log.info("Updating cart total amount: cartId={}, totalAmount={}", cartId, cartAmountUpdateRequest);
+        ResponseEntity<Void> response = cartServiceRestClient.patch()
+                .uri("/update-cart-amount/{cartId}",cartId)
+                .body(cartAmountUpdateRequest)
+                .header("Content-Type", "application/json")
+                .retrieve()
+                .toBodilessEntity();
+        log.info("Cart total amount updated successfully for cartId={}", cartId);
     }
 
     public void updateItemQuantity(UUID orderItemId, Integer quantity) {
@@ -76,10 +90,30 @@ public class OrderService {
         checkQuantity(quantity);
         OrderItem orderItem = orderItemRepository.findById(orderItemId).orElseThrow(() -> new OrderItemException("Order item not found"));
         log.info("OrderItem found: {}", orderItem);
+        CartAmountUpdateRequest amountUpdateRequest = getAmountUpdateRequest(quantity, orderItem);
+        log.info("Amount update request prepared: {} will be sent to User-Service", amountUpdateRequest);
+        updateCartTotalAmount(orderItem.getCartId(), amountUpdateRequest);
+
         orderItem.setQuantity(quantity);
-        orderItem.setTotalPrice(orderItem.getPrice().multiply(BigDecimal.valueOf(quantity)));
         orderItemRepository.save(orderItem);
 
+    }
+
+    private static CartAmountUpdateRequest getAmountUpdateRequest(Integer quantity, OrderItem orderItem) {
+        CartAmountUpdateRequest amountUpdateRequest = new CartAmountUpdateRequest();
+        BigDecimal amountDifference;
+        int quantityDifference = quantity - orderItem.getQuantity();
+        if (quantityDifference>=0) {
+            amountUpdateRequest.setRemoved(false);
+            amountDifference = orderItem.getPrice().multiply(BigDecimal.valueOf(quantityDifference));
+        }
+        else {
+            amountUpdateRequest.setRemoved(true);
+            amountDifference = orderItem.getPrice().multiply(BigDecimal.valueOf(Math.abs(quantityDifference)));
+        }
+
+        amountUpdateRequest.setTotalDishPrice(amountDifference);
+        return amountUpdateRequest;
     }
 
     public static void checkQuantity(Integer quantity) {

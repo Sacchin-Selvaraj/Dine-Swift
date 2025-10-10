@@ -37,6 +37,20 @@ public class OrderItem {
     @Column(name = "total_price", nullable = false, precision = 10, scale = 2)
     private BigDecimal totalPrice;
 
+    @DecimalMin(value = "0.01", inclusive = true, message = "Frozen Price must be greater than 0")
+    @Digits(integer = 8, fraction = 2, message = "Frozen Price must have up to 8 integer digits and 2 decimal places")
+    @Column(name = "frozen_price",  precision = 10, scale = 2)
+    private BigDecimal frozenPrice;
+
+    @DecimalMin(value = "0.01", inclusive = true, message = "Frozen Total price must be greater than 0")
+    @Digits(integer = 8, fraction = 2, message = "Frozen Total price must have up to 8 integer digits and 2 decimal places")
+    @Column(name = "frozen_total_price", precision = 10, scale = 2)
+    private BigDecimal frozenTotalPrice;
+
+    @NotNull(message = "isBooked flag is required")
+    @Column(name = "is_booked", nullable = false)
+    private boolean isBooked;
+
     @NotNull(message = "Restaurant is required")
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "restaurant_id")
@@ -54,4 +68,43 @@ public class OrderItem {
     @JoinColumn(name = "table_booking_id")
     @JsonIgnore
     private TableBooking tableBooking;
+
+
+    @PrePersist
+    @PreUpdate
+    @PostLoad
+    protected void refreshPrices(){
+        this.price=dish.getDishPrice();
+        this.totalPrice=this.price.multiply(BigDecimal.valueOf(this.quantity));
+    }
+
+    private void setFrozenValues(){
+        this.frozenPrice=this.price;
+        this.frozenTotalPrice=this.totalPrice;
+        this.isBooked=true;
+    }
+
+    public BigDecimal getPrice() {
+        return isBooked ? frozenPrice : price;
+    }
+
+    public BigDecimal getTotalPrice() {
+        return isBooked ? frozenTotalPrice : totalPrice;
+    }
+
+    public void setQuantity(int quantity) {
+        if (isBooked) {
+            throw new IllegalStateException("Cannot modify quantity after booking");
+        }
+        this.quantity = quantity;
+        refreshPrices();
+    }
+
+    public void setDish(Dish dish) {
+        if (isBooked) {
+            throw new IllegalStateException("Cannot modify dish after booking");
+        }
+        this.dish = dish;
+        refreshPrices();
+    }
 }

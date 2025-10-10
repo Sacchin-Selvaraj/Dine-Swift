@@ -32,8 +32,8 @@ public class OrderItemMapper {
         orderItemDto.setOrderItemsId(orderItem.getOrderItemsId());
         orderItemDto.setDish(dishMapper.toDTO(orderItem.getDish()));
         orderItemDto.setQuantity(orderItem.getQuantity());
-        orderItemDto.setPrice(orderItem.getPrice());
-        orderItemDto.setTotalPrice(orderItem.getTotalPrice());
+        orderItemDto.setPrice(orderItem.getDish().getDishPrice());
+        orderItemDto.setTotalPrice(orderItem.getDish().getDishPrice().multiply(BigDecimal.valueOf(orderItem.getQuantity())));
         return orderItemDto;
     }
 }
