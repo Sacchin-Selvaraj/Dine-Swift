@@ -93,18 +93,7 @@ public class OrderItem {
     }
 
     public void setQuantity(int quantity) {
-        if (isBooked) {
-            throw new IllegalStateException("Cannot modify quantity after booking");
-        }
         this.quantity = quantity;
-        refreshPrices();
-    }
-
-    public void setDish(Dish dish) {
-        if (isBooked) {
-            throw new IllegalStateException("Cannot modify dish after booking");
-        }
-        this.dish = dish;
         refreshPrices();
     }
 }

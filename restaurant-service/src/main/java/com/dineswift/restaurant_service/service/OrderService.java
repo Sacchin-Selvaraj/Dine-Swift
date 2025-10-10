@@ -52,7 +52,6 @@ public class OrderService {
             int newQuantity = existingOrderItem.getQuantity() + quantity;
             checkQuantity(newQuantity);
             existingOrderItem.setQuantity(newQuantity);
-            existingOrderItem.setTotalPrice(existingOrderItem.getPrice().multiply(BigDecimal.valueOf(existingOrderItem.getQuantity())));
             orderItemRepository.save(existingOrderItem);
             return;
         }
@@ -60,6 +59,55 @@ public class OrderService {
         OrderItem updatedOrderItem = orderItemMapper.toEntity(cartId, dish, quantity);
         log.info("OrderItem created: {}", updatedOrderItem);
         orderItemRepository.save(updatedOrderItem);
+    }
+
+
+    public void updateItemQuantity(UUID orderItemId, Integer quantity) {
+
+        checkQuantity(quantity);
+        OrderItem orderItem = orderItemRepository.findById(orderItemId).orElseThrow(() -> new OrderItemException("Order item not found"));
+        log.info("OrderItem found: {}", orderItem);
+        CartAmountUpdateRequest amountUpdateRequest = getAmountUpdateRequest(quantity, orderItem);
+        log.info("Amount update request prepared: {} will be sent to User-Service", amountUpdateRequest);
+        updateCartTotalAmount(orderItem.getCartId(), amountUpdateRequest);
+
+        orderItem.setQuantity(quantity);
+        orderItemRepository.save(orderItem);
+
+    }
+
+    public void deleteItem(UUID orderItemId) {
+
+        OrderItem orderItem = orderItemRepository.findById(orderItemId).orElseThrow(
+                () -> new OrderItemException("Order item not found"));
+        log.info("OrderItem found for deletion: {}", orderItem);
+        orderItemRepository.delete(orderItem);
+    }
+
+    public List<OrderItemDto> getOrderItemsByCartId(UUID cartId) {
+
+        List<OrderItem> orderItems = orderItemRepository.findAllByCartId(cartId);
+        if (orderItems.isEmpty()){
+            log.error("No order items found for cartId: {}", cartId);
+            throw new OrderItemException("No order items found for the given cart ID");
+        }
+
+        List<OrderItemDto> orderItemDtos = orderItems.stream().map(orderItemMapper::toDto).toList();
+        log.info("Order items fetched for cartId {}: {}", cartId, orderItemDtos);
+        return orderItemDtos;
+    }
+
+    private static void checkQuantity(Integer quantity) {
+        final int QUANTITY_LIMIT = 20;
+        final int QUANTITY_MIN = 1;
+        if (quantity > QUANTITY_LIMIT){
+            log.error("Quantity {} exceeds the limit of {}", quantity, QUANTITY_LIMIT);
+            throw new OrderItemException("Quantity exceeds the limit of " + QUANTITY_LIMIT);
+        }
+        if (quantity<QUANTITY_MIN){
+            log.error("Quantity {} is below the minimum of {}", quantity, QUANTITY_MIN);
+            throw new OrderItemException("Quantity must be at least " + QUANTITY_MIN);
+        }
     }
 
     private void checkCartIdIsValid(UUID cartId) {
@@ -85,20 +133,6 @@ public class OrderService {
         log.info("Cart total amount updated successfully for cartId={}", cartId);
     }
 
-    public void updateItemQuantity(UUID orderItemId, Integer quantity) {
-
-        checkQuantity(quantity);
-        OrderItem orderItem = orderItemRepository.findById(orderItemId).orElseThrow(() -> new OrderItemException("Order item not found"));
-        log.info("OrderItem found: {}", orderItem);
-        CartAmountUpdateRequest amountUpdateRequest = getAmountUpdateRequest(quantity, orderItem);
-        log.info("Amount update request prepared: {} will be sent to User-Service", amountUpdateRequest);
-        updateCartTotalAmount(orderItem.getCartId(), amountUpdateRequest);
-
-        orderItem.setQuantity(quantity);
-        orderItemRepository.save(orderItem);
-
-    }
-
     private static CartAmountUpdateRequest getAmountUpdateRequest(Integer quantity, OrderItem orderItem) {
         CartAmountUpdateRequest amountUpdateRequest = new CartAmountUpdateRequest();
         BigDecimal amountDifference;
@@ -116,37 +150,4 @@ public class OrderService {
         return amountUpdateRequest;
     }
 
-    public static void checkQuantity(Integer quantity) {
-        final int QUANTITY_LIMIT = 20;
-        final int QUANTITY_MIN = 1;
-        if (quantity > QUANTITY_LIMIT){
-            log.error("Quantity {} exceeds the limit of {}", quantity, QUANTITY_LIMIT);
-            throw new OrderItemException("Quantity exceeds the limit of " + QUANTITY_LIMIT);
-        }
-        if (quantity<QUANTITY_MIN){
-            log.error("Quantity {} is below the minimum of {}", quantity, QUANTITY_MIN);
-            throw new OrderItemException("Quantity must be at least " + QUANTITY_MIN);
-        }
-    }
-
-    public void deleteItem(UUID orderItemId) {
-
-        OrderItem orderItem = orderItemRepository.findById(orderItemId).orElseThrow(
-                () -> new OrderItemException("Order item not found"));
-        log.info("OrderItem found for deletion: {}", orderItem);
-        orderItemRepository.delete(orderItem);
-    }
-
-    public List<OrderItemDto> getOrderItemsByCartId(UUID cartId) {
-
-        List<OrderItem> orderItems = orderItemRepository.findAllByCartId(cartId);
-        if (orderItems.isEmpty()){
-            log.error("No order items found for cartId: {}", cartId);
-            throw new OrderItemException("No order items found for the given cart ID");
-        }
-
-        List<OrderItemDto> orderItemDtos = orderItems.stream().map(orderItemMapper::toDto).toList();
-        log.info("Order items fetched for cartId {}: {}", cartId, orderItemDtos);
-        return orderItemDtos;
-    }
 }
