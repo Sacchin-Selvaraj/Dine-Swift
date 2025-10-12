@@ -6,5 +6,4 @@ spring:
 
 dineswift:
   restaurant-service:
-    orderItem-service:
-      url: http://localhost:8081/order-items
+      url: ${ORDER_SERVICE_URL}

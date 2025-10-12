@@ -4,17 +4,14 @@ server:
 dineswift:
   user-service:
     cart-service:
-      url: http://localhost:8080/cart
+      url: ${CART_SERVICE_URL}
 
 
 spring:
-#  profiles:
-#    active: nokafka
-
   datasource:
-    url: jdbc:postgresql://localhost:5432/restaurant_db
-    username: postgres
-    password: Sacchin
+    url: ${DATABASE_URL}
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 10
@@ -40,7 +37,7 @@ spring:
                 BasicBinder: TRACE
 
   kafka:
-    bootstrap-servers: localhost:9092
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
 
 
 app:

@@ -36,5 +36,8 @@ RENAME COLUMN total_dish_amount TO pending_amount;
 
 
 SMTP Password
-
 jdaz ijgp wxxk gwpw
+
+
+ALTER TABLE payments
+ADD COLUMN order_id VARCHAR(100) UNIQUE;

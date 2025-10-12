@@ -19,8 +19,8 @@ import java.util.Arrays;
 @RequiredArgsConstructor
 public class RestClientConfig {
 
-    @Value("${dineswift.restaurant-service.orderItem-service.url}")
-    private String orderItemServiceUrl;
+    @Value("${dineswift.restaurant-service.url}")
+    private String restaurantServiceUrl;
 
     @Bean
     public RestClient.Builder genericRestClientBuilder(){
@@ -51,9 +51,9 @@ public class RestClientConfig {
 
 
        @Bean
-       public RestClient orderItemServiceRestClient(RestClient.Builder genericRestClientBuilder){
+       public RestClient restClient(RestClient.Builder genericRestClientBuilder){
            return genericRestClientBuilder
-                   .baseUrl(orderItemServiceUrl)
+                   .baseUrl(restaurantServiceUrl)
                    .build();
        }
 }

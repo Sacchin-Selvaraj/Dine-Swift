@@ -26,7 +26,7 @@ public class CartService {
 
     private final CartRepository cartRepository;
     private final CartMapper cartMapper;
-    private final RestClient orderItemServiceRestClient;
+    private final RestClient restClient;
 
     public boolean isValidCartId(UUID cartId) {
         log.info("Checking if cartId is valid: {}", cartId);
@@ -56,8 +56,8 @@ public class CartService {
 
     private List<OrderItemDto> fetchOrderItemsForCart(UUID cartId) {
         log.info("Fetching order items for cartId={}", cartId);
-        return orderItemServiceRestClient.get()
-                .uri("/get-order-items/{cartId}",cartId)
+        return restClient.get()
+                .uri("order-items/get-order-items/{cartId}",cartId)
                 .header("Content-Type", "application/json")
                 .retrieve()
                 .body(new ParameterizedTypeReference<List<OrderItemDto>>() {

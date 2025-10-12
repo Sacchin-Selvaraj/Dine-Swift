@@ -81,4 +81,11 @@ public class ExceptionHandler {
         ErrorResponse error = new ErrorResponse("User Service Remote API Exception",request.getRequestURI(), List.of(errorMessage));
         return new ResponseEntity<>(error, HttpStatus.SERVICE_UNAVAILABLE);
     }
+
+    @org.springframework.web.bind.annotation.ExceptionHandler(CartException.class)
+    public ResponseEntity<ErrorResponse> handleCartException(CartException ex, HttpServletRequest request){
+        String errorMessage = ex.getLocalizedMessage();
+        ErrorResponse error = new ErrorResponse("Cart Service Exception",request.getRequestURI(), List.of(errorMessage));
+        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+    }
 }

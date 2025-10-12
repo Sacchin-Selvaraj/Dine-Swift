@@ -1,6 +1,7 @@
 package com.dineswift.userservice.repository;
 
 import com.dineswift.userservice.model.entites.Cart;
+import org.apache.kafka.common.protocol.types.Field;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;

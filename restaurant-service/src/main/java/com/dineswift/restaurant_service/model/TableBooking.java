@@ -4,10 +4,13 @@ package com.dineswift.restaurant_service.model;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.ZonedDateTime;
 import java.util.UUID;
 
@@ -25,7 +28,7 @@ public class TableBooking {
     @NotNull(message = "Dine in time is required")
     @Future(message = "Dine in time must be in the future")
     @Column(name = "dine_in_time", nullable = false)
-    private LocalDateTime dineInTime;
+    private LocalTime dineInTime;
 
     @NotNull(message = "Duration is required")
     @Min(value = 1, message = "Duration must be at least 1 minute")
@@ -36,11 +39,11 @@ public class TableBooking {
     @NotNull(message = "Dine out time is required")
     @Future(message = "Dine out time must be in the future")
     @Column(name = "dine_out_time", nullable = false)
-    private LocalDateTime dineOutTime;
+    private LocalTime dineOutTime;
 
     @NotNull(message = "Number of guests is required")
     @Min(value = 1, message = "Number of guests must be at least 1")
-    @Max(value = 50, message = "Number of guests cannot exceed 50")
+    @Max(value = 20, message = "Number of guests cannot exceed 20")
     @Column(name = "no_of_guest", nullable = false)
     private Integer noOfGuest;
 
@@ -110,17 +113,19 @@ public class TableBooking {
     @NotNull(message = "Created at timestamp is required")
     @PastOrPresent(message = "Created at must be in the past or present")
     @Column(name = "created_at", nullable = false)
+    @CreationTimestamp
     private ZonedDateTime createdAt;
 
     @PastOrPresent(message = "Last modified date must be in the past or present")
     @Column(name = "last_modified_date")
+    @UpdateTimestamp
     private ZonedDateTime lastModifiedDate;
 
     @Column(name = "actual_dine_in_time")
-    private ZonedDateTime actualDineInTime;
+    private LocalTime actualDineInTime;
 
     @Column(name = "actual_dine_out_time")
-    private ZonedDateTime actualDineOutTime;
+    private LocalTime actualDineOutTime;
 
     @NotNull(message = "Table is required")
     @ManyToOne(fetch = FetchType.LAZY)
