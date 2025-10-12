@@ -9,7 +9,6 @@ import java.math.BigDecimal;
 
 @Data
 @RequiredArgsConstructor
-@Builder
 public class CartAmountUpdateRequest {
 
     @NotNull(message = "Total Dish Price cannot be null")

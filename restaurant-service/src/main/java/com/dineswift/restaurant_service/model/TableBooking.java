@@ -67,8 +67,8 @@ public class TableBooking {
     @NotNull(message = "Total dish amount is required")
     @DecimalMin(value = "0.0", inclusive = true, message = "Total dish amount must be greater than or equal to 0")
     @Digits(integer = 10, fraction = 2, message = "Total dish amount must have up to 10 integer digits and 2 decimal places")
-    @Column(name = "total_dish_amount", nullable = false, precision = 12, scale = 2)
-    private BigDecimal totalDishAmount;
+    @Column(name = "pending_amount", nullable = false, precision = 12, scale = 2)
+    private BigDecimal pendingAmount;
 
     @NotNull(message = "Upfront amount is required")
     @DecimalMin(value = "0.0", inclusive = true, message = "Upfront amount must be greater than or equal to 0")
@@ -116,6 +116,12 @@ public class TableBooking {
     @Column(name = "last_modified_date")
     private ZonedDateTime lastModifiedDate;
 
+    @Column(name = "actual_dine_in_time")
+    private ZonedDateTime actualDineInTime;
+
+    @Column(name = "actual_dine_out_time")
+    private ZonedDateTime actualDineOutTime;
+
     @NotNull(message = "Table is required")
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "table_id", nullable = false)
@@ -131,9 +137,5 @@ public class TableBooking {
     @JoinColumn(name = "guest_information_id", nullable = false)
     private GuestInformation guestInformation;
 
-    @Column(name = "actual_dine_in_time")
-    private ZonedDateTime actualDineInTime;
 
-    @Column(name = "actual_dine_out_time")
-    private ZonedDateTime actualDineOutTime;
 }

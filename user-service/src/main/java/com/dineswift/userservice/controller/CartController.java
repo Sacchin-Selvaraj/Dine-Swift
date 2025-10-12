@@ -8,7 +8,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigDecimal;
 import java.util.UUID;
 
 @RestController
@@ -21,7 +20,7 @@ public class CartController {
 
     @GetMapping("/valid-cartId/{cartId}")
     public ResponseEntity<Boolean> isValidCartId(@PathVariable UUID cartId) {
-        log.info("Validating cartId={}", cartId);
+        log.info("Received Request from the Restaurant Service to validate cartId: {}", cartId);
         boolean response = cartService.isValidCartId(cartId);
         return ResponseEntity.ok(response);
     }
@@ -36,7 +35,7 @@ public class CartController {
     @PatchMapping("/update-cart-amount/{cartId}" )
     public ResponseEntity<Void> updateCartTotalAmount(@PathVariable UUID cartId,
                                                      @RequestBody CartAmountUpdateRequest cartAmountUpdateRequest) {
-        log.info("Updating cart total amount: cartId={}, totalAmount={}", cartId, cartAmountUpdateRequest);
+        log.info("Request Received from the Restaurant Service to update cart total amount for cartId: {}", cartId);
         cartService.updateCartTotalAmount(cartId, cartAmountUpdateRequest);
         return ResponseEntity.ok().build();
     }

@@ -44,7 +44,7 @@ public class OrderItem {
 
     @DecimalMin(value = "0.01", inclusive = true, message = "Frozen Total price must be greater than 0")
     @Digits(integer = 8, fraction = 2, message = "Frozen Total price must have up to 8 integer digits and 2 decimal places")
-    @Column(name = "frozen_total_price", precision = 10, scale = 2)
+    @Column(name = "frozen_totalprice", precision = 10, scale = 2)
     private BigDecimal frozenTotalPrice;
 
     @NotNull(message = "isBooked flag is required")

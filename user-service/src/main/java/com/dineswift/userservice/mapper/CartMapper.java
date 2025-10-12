@@ -17,7 +17,6 @@ public class CartMapper {
 
     public CartDTO toDto(Cart cart) {
         log.info("Mapping Cart entity to CartDTO: {}", cart);
-        CartDTO cartDTO = modelMapper.map(cart, CartDTO.class);
-        return cartDTO;
+        return modelMapper.map(cart, CartDTO.class);
     }
 }

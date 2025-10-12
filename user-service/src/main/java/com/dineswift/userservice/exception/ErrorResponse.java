@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
@@ -11,17 +12,14 @@ import java.util.List;
 public class ErrorResponse {
 
     private String errorMessage;
-    private HttpStatus httpStatus;
+    private LocalDateTime timestamp = LocalDateTime.now();
+    private String path;
     private List<String> errors;
 
-    public ErrorResponse(String errorMessage, HttpStatus httpStatus) {
-        this.errorMessage = errorMessage;
-        this.httpStatus = httpStatus;
-    }
 
-    public ErrorResponse(String errorMessage, HttpStatus httpStatus, List<String> errors) {
+    public ErrorResponse(String errorMessage, String path, List<String> errors) {
         this.errorMessage = errorMessage;
-        this.httpStatus = httpStatus;
+        this.path = path;
         this.errors = errors;
     }
 }

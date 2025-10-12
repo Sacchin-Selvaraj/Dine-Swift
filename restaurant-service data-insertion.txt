@@ -23,3 +23,18 @@ ADD COLUMN created_by UUID;
 
 ALTER TABLE table_bookings
 ADD COLUMN is_active BOOLEAN;
+
+
+ALTER TABLE order_items
+ADD COLUMN frozen_price NUMERIC(10,2),
+ADD COLUMN frozen_totalprice NUMERIC(10,2),
+ADD COLUMN is_booked BOOLEAN DEFAULT FALSE;
+
+
+ALTER TABLE table_bookings
+RENAME COLUMN total_dish_amount TO pending_amount;
+
+
+SMTP Password
+
+jdaz ijgp wxxk gwpw

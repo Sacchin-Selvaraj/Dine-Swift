@@ -1,6 +1,8 @@
 package com.dineswift.userservice.exception;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -17,7 +19,7 @@ import java.util.List;
 public class ExceptionHandler {
 
     @org.springframework.web.bind.annotation.ExceptionHandler(DataIntegrityViolationException.class)
-    public ResponseEntity<ErrorResponse> handleDataIntegrityViolation(DataIntegrityViolationException ex) {
+    public ResponseEntity<ErrorResponse> handleDataIntegrityViolation(DataIntegrityViolationException ex, HttpServletRequest request) {
         String errorMessage = ex.getLocalizedMessage();
 
         if (ex.getMessage().contains("username")) {
@@ -26,34 +28,34 @@ public class ExceptionHandler {
             errorMessage = "Email already exists";
         }
 
-        ErrorResponse errorResponse = new ErrorResponse(errorMessage, HttpStatus.CONFLICT);
+        ErrorResponse errorResponse = new ErrorResponse("Data Integrity Exception", request.getRequestURI(), Collections.singletonList(errorMessage));
         return new ResponseEntity<>(errorResponse, HttpStatus.CONFLICT);
     }
 
     @org.springframework.web.bind.annotation.ExceptionHandler(UserException.class)
-    public ResponseEntity<ErrorResponse> handleUserException(UserException ex) {
-        ErrorResponse errorResponse = new ErrorResponse("User Details Not valid", HttpStatus.BAD_REQUEST,List.of(ex.getMessage()));
+    public ResponseEntity<ErrorResponse> handleUserException(UserException ex, HttpServletRequest request) {
+        ErrorResponse errorResponse = new ErrorResponse("User Details Not valid",request.getRequestURI() ,List.of(ex.getMessage()));
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
     @org.springframework.web.bind.annotation.ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorResponse> handleValidationErrors(MethodArgumentNotValidException ex) {
+    public ResponseEntity<ErrorResponse> handleValidationErrors(MethodArgumentNotValidException ex,HttpServletRequest request) {
         List<String> errors = getErrors(ex);
-        ErrorResponse error = new ErrorResponse( "Method Argument failed",HttpStatus.BAD_REQUEST, errors);
+        ErrorResponse error = new ErrorResponse( "Method Argument failed",request.getRequestURI(), errors);
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
 
     @org.springframework.web.bind.annotation.ExceptionHandler(MethodArgumentTypeMismatchException.class)
-    public ResponseEntity<ErrorResponse> handleMismatchException(MethodArgumentTypeMismatchException ex){
-        List<String> strings= Collections.singletonList(ex.getParameter().toString());
-        ErrorResponse error = new ErrorResponse("Method Argument Mismatch ",HttpStatus.BAD_REQUEST,strings);
+    public ResponseEntity<ErrorResponse> handleMismatchException(MethodArgumentTypeMismatchException ex,HttpServletRequest request){
+        List<String> errors= Collections.singletonList(ex.getParameter().toString());
+        ErrorResponse error = new ErrorResponse("Method Argument Mismatch ",request.getRequestURI(),errors);
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
 
     @org.springframework.web.bind.annotation.ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<ErrorResponse> handleIllegalArgument(IllegalArgumentException ex){
+    public ResponseEntity<ErrorResponse> handleIllegalArgument(IllegalArgumentException ex,HttpServletRequest request){
         String errorMessage = ex.getLocalizedMessage();
-        ErrorResponse error = new ErrorResponse(errorMessage,HttpStatus.BAD_REQUEST);
+        ErrorResponse error = new ErrorResponse("Illegal Argument Exception",request.getRequestURI(),List.of(errorMessage));
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
 
@@ -67,16 +69,16 @@ public class ExceptionHandler {
     }
 
     @org.springframework.web.bind.annotation.ExceptionHandler(NotificationException.class)
-    public ResponseEntity<ErrorResponse> handleNotificationException(NotificationException ex){
+    public ResponseEntity<ErrorResponse> handleNotificationException(NotificationException ex, HttpServletRequest request){
         String errorMessage = ex.getLocalizedMessage();
-        ErrorResponse error = new ErrorResponse(errorMessage,HttpStatus.INTERNAL_SERVER_ERROR);
+        ErrorResponse error = new ErrorResponse("Notification Service Exception",request.getRequestURI(), List.of(errorMessage));
         return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @org.springframework.web.bind.annotation.ExceptionHandler(RemoteApiException.class)
-    public ResponseEntity<ErrorResponse> handleRemoteApiException(RemoteApiException ex){
+    public ResponseEntity<ErrorResponse> handleRemoteApiException(RemoteApiException ex, HttpServletRequest request){
         String errorMessage = ex.getLocalizedMessage();
-        ErrorResponse error = new ErrorResponse(errorMessage,HttpStatus.SERVICE_UNAVAILABLE);
+        ErrorResponse error = new ErrorResponse("User Service Remote API Exception",request.getRequestURI(), List.of(errorMessage));
         return new ResponseEntity<>(error, HttpStatus.SERVICE_UNAVAILABLE);
     }
 }

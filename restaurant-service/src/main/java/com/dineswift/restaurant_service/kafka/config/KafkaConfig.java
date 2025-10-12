@@ -26,6 +26,9 @@ public class KafkaConfig {
     @Value("${app.kafka.topic.sms-verification-topic}")
     public String smsVerificationTopic;
 
+    @Value("${spring.kafka.bootstrap-servers}")
+    private String bootstrapServers;
+
     @Bean
     public NewTopic emailVerificationTopic(){
         return TopicBuilder.name(emailVerificationTopic)
@@ -44,7 +47,7 @@ public class KafkaConfig {
 
     public ProducerFactory<String,Object> producerFactory(){
         Map<String,Object> configProps=new HashMap<>();
-        configProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,"localhost:9092");
+        configProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,bootstrapServers);
         configProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         configProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
         configProps.put(JsonSerializer.ADD_TYPE_INFO_HEADERS, true);

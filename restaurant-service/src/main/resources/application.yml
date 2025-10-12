@@ -8,8 +8,8 @@ dineswift:
 
 
 spring:
-  profiles:
-    active: nokafka
+#  profiles:
+#    active: nokafka
 
   datasource:
     url: jdbc:postgresql://localhost:5432/restaurant_db

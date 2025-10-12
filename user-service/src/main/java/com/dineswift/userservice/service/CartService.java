@@ -10,9 +10,11 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
@@ -34,7 +36,6 @@ public class CartService {
     }
 
     public CartDTO getCartDetails(UUID cartId) {
-        log.info("Fetching cart details for cartId={}", cartId);
 
         Cart cart = cartRepository.findByIdAndIsActive(cartId)
                 .orElseThrow(() -> new IllegalArgumentException("Cart not found or inactive"));
@@ -42,14 +43,21 @@ public class CartService {
         CartDTO cartDto = cartMapper.toDto(cart);
         log.info("Cart details fetched successfully for cartId={}: {}", cartId, cartDto);
         List<OrderItemDto> orderItemDtos = fetchOrderItemsForCart(cartId);
+        BigDecimal grandTotalFromOrderItems = orderItemDtos.stream().map(OrderItemDto::getTotalPrice)
+                        .reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+        cartDto.setGrandTotal(grandTotalFromOrderItems);
         cartDto.setOrderItems(orderItemDtos);
+
+        cart.setGrandTotal(grandTotalFromOrderItems);
+        cartRepository.save(cart);
+        log.info("Cart grand total updated to {} for cartId={}", grandTotalFromOrderItems, cartId);
         return cartDto;
     }
 
     private List<OrderItemDto> fetchOrderItemsForCart(UUID cartId) {
         log.info("Fetching order items for cartId={}", cartId);
         return orderItemServiceRestClient.get()
-                .uri("get-order-items/{cartId}",cartId)
+                .uri("/get-order-items/{cartId}",cartId)
                 .header("Content-Type", "application/json")
                 .retrieve()
                 .body(new ParameterizedTypeReference<List<OrderItemDto>>() {
