@@ -1,8 +1,10 @@
 package com.dineswift.restaurant_service.model;
 
 public enum BookingStatus {
-    PENDING,
+    PAYMENT_PENDING,
     CONFIRMED,
+    UPFRONT_PAYMENT_PENDING,
+    UPFRONT_PAYMENT_COMPLETED,
     ORDER_COMPLETED,
     TABLE_RESERVED,
     WAITING_LIST,
@@ -15,4 +17,4 @@ public enum BookingStatus {
     ORDER_PLACED,
     DINING,
 
-    }
+}

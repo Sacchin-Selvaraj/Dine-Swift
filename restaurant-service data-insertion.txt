@@ -41,3 +41,16 @@ jdaz ijgp wxxk gwpw
 
 ALTER TABLE payments
 ADD COLUMN order_id VARCHAR(100) UNIQUE;
+
+ALTER TABLE bookings
+RENAME COLUMN booking_time TO booking_date;
+
+
+ALTER TABLE table_bookings
+ALTER COLUMN dine_in_time TYPE TIME WITHOUT TIME ZONE;
+
+ALTER TABLE table_bookings
+ALTER COLUMN dine_out_time TYPE TIME WITHOUT TIME ZONE;
+
+ALTER TABLE payments
+ALTER COLUMN payment_method DROP NOT NULL;

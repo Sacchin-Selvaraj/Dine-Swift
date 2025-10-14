@@ -78,7 +78,7 @@ public class OrderItem {
         this.totalPrice=this.price.multiply(BigDecimal.valueOf(this.quantity));
     }
 
-    private void setFrozenValues(){
+    public void setFrozenValues(){
         this.frozenPrice=this.price;
         this.frozenTotalPrice=this.totalPrice;
         this.isBooked=true;

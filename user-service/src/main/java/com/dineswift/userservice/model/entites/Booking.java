@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -27,9 +28,9 @@ public class Booking {
     @Column(name = "table_booking_id", nullable = false, unique = true)
     private UUID tableBookingId;
 
-    @NotNull(message = "Booking time is required")
-    @Column(name = "booking_time", nullable = false)
-    private LocalDateTime bookingTime;
+    @NotNull(message = "Booking Date is required")
+    @Column(name = "booking_date", nullable = false)
+    private LocalDate bookingDate;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "booking_status", length = 20)
@@ -43,7 +44,6 @@ public class Booking {
     @Column(name = "last_modified_at", nullable = false)
     private LocalDateTime lastModifiedAt;
 
-    @NotNull(message = "User is required")
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", referencedColumnName = "user_id", nullable = false)
     private User user;

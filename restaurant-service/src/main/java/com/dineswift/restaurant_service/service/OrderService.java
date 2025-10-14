@@ -30,7 +30,7 @@ public class OrderService {
     private final OrderItemRepository orderItemRepository;
     private final DishRepository dishRepository;
     private final OrderItemMapper orderItemMapper;
-    private final RestClient cartServiceRestClient;
+    private final RestClient restClient;
 
     public void addItemToCart(UUID cartId, UUID dishId, Integer quantity) {
         log.info("Checking quantity: {}", quantity);
@@ -111,8 +111,8 @@ public class OrderService {
 
     private void checkCartIdIsValid(UUID cartId) {
         log.info("Check whether the CartId is present in User Service or not: {}", cartId);
-        ResponseEntity<Boolean> response = cartServiceRestClient.get()
-                .uri("/valid-cartId/{cartId}", cartId)
+        ResponseEntity<Boolean> response = restClient.get()
+                .uri("cart/valid-cartId/{cartId}", cartId)
                 .retrieve().toEntity(Boolean.class);
         if (response.getBody()==null || !response.getBody()) {
             log.error("Invalid cartId: {}", cartId);
@@ -123,8 +123,8 @@ public class OrderService {
 
     private void updateCartTotalAmount(UUID cartId, CartAmountUpdateRequest cartAmountUpdateRequest) {
         log.info("Updating cart total amount: cartId={}, totalAmount={}", cartId, cartAmountUpdateRequest);
-        ResponseEntity<Void> response = cartServiceRestClient.patch()
-                .uri("/update-cart-amount/{cartId}",cartId)
+        ResponseEntity<Void> response = restClient.patch()
+                .uri("cart/update-cart-amount/{cartId}",cartId)
                 .body(cartAmountUpdateRequest)
                 .header("Content-Type", "application/json")
                 .retrieve()

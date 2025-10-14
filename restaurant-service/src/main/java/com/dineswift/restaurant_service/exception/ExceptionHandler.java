@@ -100,4 +100,16 @@ public class ExceptionHandler {
         ErrorResponse errorResponse = new ErrorResponse("Remote API Error", List.of(ex.getMessage()));
         return new ResponseEntity<>(errorResponse, HttpStatus.SERVICE_UNAVAILABLE);
     }
+
+    @org.springframework.web.bind.annotation.ExceptionHandler(TableBookingException.class)
+    public ResponseEntity<ErrorResponse> handleTableBookingException(TableBookingException ex) {
+        ErrorResponse errorResponse = new ErrorResponse("Table Booking Details Not valid",List.of(ex.getMessage()));
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
+
+    @org.springframework.web.bind.annotation.ExceptionHandler(PaymentException.class)
+    public ResponseEntity<ErrorResponse> handlePaymentException(PaymentException ex) {
+        ErrorResponse errorResponse = new ErrorResponse("Payment Details Not valid",List.of(ex.getMessage()));
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
 }

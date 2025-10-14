@@ -9,14 +9,16 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Slf4j
 @Configuration
 @RequiredArgsConstructor
 public class RestClientConfig {
 
-    @Value("${dineswift.user-service.cart-service.url}")
-    private String cartServiceUrl;
+    @Value("${dineswift.user-service.url}")
+    private String userServiceUrl;
 
     @Bean
     public RestClient.Builder genericRestClientBuilder(){
@@ -42,10 +44,25 @@ public class RestClientConfig {
 
 
        @Bean
-       public RestClient cartServiceRestClient(RestClient.Builder genericRestClientBuilder){
+       public RestClient restClient(RestClient.Builder genericRestClientBuilder){
            return genericRestClientBuilder
-                   .baseUrl(cartServiceUrl)
+                   .baseUrl(userServiceUrl)
                    .build();
        }
+
+    @Bean
+    public WebMvcConfigurer webMvcConfigurer() {
+        return new WebMvcConfigurer() {
+            @Override
+            public void addCorsMappings(CorsRegistry registry) {
+                registry
+                        .addMapping("/**")
+                        .allowedOrigins("*")
+                        .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH")
+                        .allowedHeaders("*")
+                        .allowCredentials(false);
+            }
+        };
+    }
 }
 

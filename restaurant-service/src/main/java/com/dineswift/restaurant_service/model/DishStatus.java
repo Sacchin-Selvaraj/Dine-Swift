@@ -6,5 +6,6 @@ public enum DishStatus {
     CONFIRMED,
     REJECTED,
     PENDING,
+    FAILED,
     CANCELLED
 }

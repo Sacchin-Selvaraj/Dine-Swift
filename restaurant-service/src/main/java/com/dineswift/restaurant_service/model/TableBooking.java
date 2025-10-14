@@ -1,6 +1,7 @@
 package com.dineswift.restaurant_service.model;
 
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.*;
@@ -26,8 +27,8 @@ public class TableBooking {
     private UUID tableBookingId;
 
     @NotNull(message = "Dine in time is required")
-    @Future(message = "Dine in time must be in the future")
     @Column(name = "dine_in_time", nullable = false)
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "HH:mm")
     private LocalTime dineInTime;
 
     @NotNull(message = "Duration is required")
@@ -37,8 +38,8 @@ public class TableBooking {
     private Integer duration;
 
     @NotNull(message = "Dine out time is required")
-    @Future(message = "Dine out time must be in the future")
     @Column(name = "dine_out_time", nullable = false)
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "HH:mm")
     private LocalTime dineOutTime;
 
     @NotNull(message = "Number of guests is required")
@@ -47,7 +48,7 @@ public class TableBooking {
     @Column(name = "no_of_guest", nullable = false)
     private Integer noOfGuest;
 
-    @NotBlank(message = "Booking status is required")
+    @NotNull(message = "Booking status is required")
     @Enumerated(EnumType.STRING)
     @Column(name = "booking_status", nullable = false, length = 50)
     private BookingStatus bookingStatus;
@@ -63,19 +64,16 @@ public class TableBooking {
 
     @NotNull(message = "Grand total is required")
     @DecimalMin(value = "0.0", inclusive = true, message = "Grand total must be greater than or equal to 0")
-    @Digits(integer = 10, fraction = 2, message = "Grand total must have up to 10 integer digits and 2 decimal places")
     @Column(name = "grand_total", nullable = false, precision = 12, scale = 2)
     private BigDecimal grandTotal;
 
     @NotNull(message = "Total dish amount is required")
     @DecimalMin(value = "0.0", inclusive = true, message = "Total dish amount must be greater than or equal to 0")
-    @Digits(integer = 10, fraction = 2, message = "Total dish amount must have up to 10 integer digits and 2 decimal places")
     @Column(name = "pending_amount", nullable = false, precision = 12, scale = 2)
     private BigDecimal pendingAmount;
 
     @NotNull(message = "Upfront amount is required")
     @DecimalMin(value = "0.0", inclusive = true, message = "Upfront amount must be greater than or equal to 0")
-    @Digits(integer = 10, fraction = 2, message = "Upfront amount must have up to 10 integer digits and 2 decimal places")
     @Column(name = "upfront_amount", nullable = false, precision = 12, scale = 2)
     private BigDecimal upfrontAmount;
 
@@ -110,13 +108,10 @@ public class TableBooking {
     @Column(name = "last_modified_by")
     private UUID lastModifiedBy;
 
-    @NotNull(message = "Created at timestamp is required")
-    @PastOrPresent(message = "Created at must be in the past or present")
     @Column(name = "created_at", nullable = false)
     @CreationTimestamp
     private ZonedDateTime createdAt;
 
-    @PastOrPresent(message = "Last modified date must be in the past or present")
     @Column(name = "last_modified_date")
     @UpdateTimestamp
     private ZonedDateTime lastModifiedDate;
@@ -138,9 +133,8 @@ public class TableBooking {
     private Restaurant restaurant;
 
     @NotNull(message = "Guest information is required")
-    @OneToOne(fetch = FetchType.LAZY)
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinColumn(name = "guest_information_id", nullable = false)
     private GuestInformation guestInformation;
-
 
 }

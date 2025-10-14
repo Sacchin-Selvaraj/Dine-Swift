@@ -67,7 +67,7 @@ public class ReservationService {
         availableTimeSlots = getAvailableTimeSlots(restaurantTable,restaurant, activeBookingsForDate,checkAvailableSlots);
 
         AvailableSlots availableSlots = getEmptyAvailableSlots(restaurantTable);
-        if (checkAvailableSlots.getDurationInMinutes()<5)
+        if (checkAvailableSlots.getDurationInMinutes()!=null && checkAvailableSlots.getDurationInMinutes()<5)
             availableSlots.setAvailableTimeSlots(availableTimeSlots);
         else
             availableSlots.setAvailableTimeSlots(divideSlotsByDuration(availableTimeSlots, checkAvailableSlots.getDurationInMinutes()));
@@ -102,10 +102,10 @@ public class ReservationService {
         LocalTime endTime = restaurant.getClosingTime();
         final int BUFFER_MINUTES = 5;
 
-        List<AvailableTimeSlot> availableTimeSlots= new ArrayList<>();
+        List<AvailableTimeSlot> availableTimeSlots=new ArrayList<>();
         for (TableBooking booking : activeBookingsForDate) {
-            LocalTime bookingStartTime = booking.getDineInTime().toLocalTime();
-            LocalTime bookingEndTime = booking.getDineOutTime().toLocalTime();
+            LocalTime bookingStartTime = booking.getDineInTime();
+            LocalTime bookingEndTime = booking.getDineOutTime();
 
             if (startTime.isBefore(bookingStartTime)){
                 LocalTime slotEndTime = bookingStartTime.minusMinutes(BUFFER_MINUTES);

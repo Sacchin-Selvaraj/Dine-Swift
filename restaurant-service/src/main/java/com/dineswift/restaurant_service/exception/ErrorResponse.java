@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
@@ -13,6 +14,7 @@ import java.util.List;
 public class ErrorResponse {
 
     private String errorMessage;
+    private final LocalDateTime timeStamp = LocalDateTime.now();
     private List<String> errors;
 
     public ErrorResponse(String errorMessage) {

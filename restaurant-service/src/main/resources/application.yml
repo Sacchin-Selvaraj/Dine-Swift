@@ -3,7 +3,6 @@ server:
 
 dineswift:
   user-service:
-    cart-service:
       url: ${CART_SERVICE_URL}
 
 

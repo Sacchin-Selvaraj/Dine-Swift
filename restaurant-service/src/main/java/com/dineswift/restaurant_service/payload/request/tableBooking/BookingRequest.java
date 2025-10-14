@@ -1,4 +1,4 @@
-package com.dineswift.userservice.model.request;
+package com.dineswift.restaurant_service.payload.request.tableBooking;
 
 import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.Max;

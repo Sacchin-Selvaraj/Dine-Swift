@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
@@ -20,4 +21,7 @@ public interface TableRepository extends JpaRepository<RestaurantTable, UUID> {
 
     @Query("SELECT rt FROM RestaurantTable rt WHERE rt.isActive = true")
     Page<RestaurantTable> findAllAndIsActive(Pageable pageable);
+
+    @Query("SELECT rt FROM RestaurantTable rt WHERE rt.tableId = :tableId AND rt.isActive = true")
+    Optional<RestaurantTable> findByIdAndIsActive(UUID tableId);
 }

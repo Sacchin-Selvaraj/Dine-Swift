@@ -3,6 +3,7 @@ package com.dineswift.restaurant_service.model;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.math.BigDecimal;
 import java.time.ZonedDateTime;
@@ -26,31 +27,34 @@ public class Payment {
 
     @NotNull(message = "Amount is required")
     @DecimalMin(value = "0.01", inclusive = true, message = "Amount must be greater than 0")
-    @Digits(integer = 10, fraction = 2, message = "Amount must have up to 10 integer digits and 2 decimal places")
     @Column(name = "amount", nullable = false, precision = 12, scale = 2)
     private BigDecimal amount;
 
-    @NotBlank(message = "Payment method is required")
     @Enumerated(EnumType.STRING)
     @Column(name = "payment_method", nullable = false, length = 50)
     private PaymentMethod paymentMethod;
 
-    @NotBlank(message = "Payment status is required")
+    @NotNull(message = "Payment status is required")
     @Enumerated(EnumType.STRING)
     @Column(name = "payment_status", nullable = false, length = 50)
     private PaymentStatus paymentStatus;
 
     @PastOrPresent(message = "Payment date must be in the past or present")
     @Column(name = "payment_date")
+    @CreationTimestamp
     private ZonedDateTime paymentDate;
 
     @Size(max = 100, message = "Transaction ID cannot exceed 100 characters")
     @Column(name = "transaction_id", length = 100, unique = true)
     private String transactionId;
 
-    @NotNull(message = "Created at timestamp is required")
+    @NotNull(message = "Order ID is required")
+    @Column(name = "order_id", length = 100, unique = true)
+    private String orderId;
+
     @PastOrPresent(message = "Created at must be in the past or present")
     @Column(name = "created_at", nullable = false)
+    @CreationTimestamp
     private ZonedDateTime createdAt;
 
     @Size(max = 1000, message = "Failure reason cannot exceed 1000 characters")
@@ -58,7 +62,7 @@ public class Payment {
     private String failureReason;
 
     @NotNull(message = "Table booking is required")
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY,cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinColumn(
             name = "table_booking_id",
             nullable = false,

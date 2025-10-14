@@ -13,5 +13,6 @@ public enum BookingStatus {
     ARRIVED,
     SEATED,
     ORDER_PLACED,
+    ORDER_CREATED,
     DINING;
 }
