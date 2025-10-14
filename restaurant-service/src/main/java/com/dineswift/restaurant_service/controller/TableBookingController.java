@@ -2,6 +2,7 @@ package com.dineswift.restaurant_service.controller;
 
 
 import com.dineswift.restaurant_service.payload.request.tableBooking.BookingRequest;
+import com.dineswift.restaurant_service.payload.request.tableBooking.CancellationDetails;
 import com.dineswift.restaurant_service.payload.response.tableBooking.PaymentCreateResponse;
 import com.dineswift.restaurant_service.service.TableBookingService;
 import lombok.RequiredArgsConstructor;
@@ -25,4 +26,13 @@ public class TableBookingController {
         log.info("Order created successfully for cartId: {}", cartId);
         return ResponseEntity.ok(paymentCreateResponse);
     }
+
+    @DeleteMapping("/cancel-booking/{tableBookingId}")
+    public ResponseEntity<Void> cancelBooking(@PathVariable UUID tableBookingId,@RequestBody CancellationDetails cancellationDetails){
+        tableBookingService.cancelBooking(tableBookingId, cancellationDetails);
+        log.info("Booking cancelled successfully for bookingId: {}", tableBookingId);
+        return ResponseEntity.noContent().build();
+    }
+
+
 }

@@ -3,6 +3,7 @@ package com.dineswift.restaurant_service.service;
 import com.dineswift.restaurant_service.exception.TableBookingException;
 import com.dineswift.restaurant_service.model.*;
 import com.dineswift.restaurant_service.payload.request.tableBooking.BookingRequest;
+import com.dineswift.restaurant_service.payload.request.tableBooking.CancellationDetails;
 import com.dineswift.restaurant_service.payload.response.tableBooking.PaymentCreateResponse;
 import com.dineswift.restaurant_service.payment.service.PaymentService;
 import com.dineswift.restaurant_service.repository.OrderItemRepository;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalTime;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -124,9 +126,19 @@ public class TableBookingService {
 
     private void checkSlotAvailability(BookingRequest bookingRequest, RestaurantTable bookingTable) {
 
-        List<TableBooking> existingBookings = tableBookingRepository.findByRestaurantTableAndIsActiveAndBookingDate(bookingTable,bookingRequest.getBookingDate());
+        log.info("Checking Availability for tableId: {} on date: {} at time: {}", bookingTable.getTableId(), bookingRequest.getBookingDate(), bookingRequest.getDineInTime());
         LocalTime bookingStartTime = bookingRequest.getDineInTime().toLocalTime();
         LocalTime bookingEndTime = bookingRequest.getDineInTime().plusMinutes(bookingRequest.getDuration()).toLocalTime();
+
+        LocalTime restaurantOpeningTime = bookingTable.getRestaurant().getOpeningTime();
+        LocalTime restaurantClosingTime = bookingTable.getRestaurant().getClosingTime();
+        if (bookingStartTime.isBefore(restaurantOpeningTime) || bookingEndTime.isAfter(restaurantClosingTime)){
+            log.error("Booking time {} - {} is outside restaurant operating hours {} - {}", bookingStartTime, bookingEndTime, restaurantOpeningTime, restaurantClosingTime);
+            throw new TableBookingException("The booking time is outside the restaurant's operating hours.");
+        }
+
+        List<TableBooking> existingBookings = tableBookingRepository.findByRestaurantTableAndIsActiveAndBookingDate(bookingTable,bookingRequest.getBookingDate());
+
         long TABLE_CLEANUP_BUFFER_MINUTES = 5L;
         for (TableBooking existingBooking : existingBookings) {
             LocalTime existingStartTime = existingBooking.getDineInTime().minusMinutes(TABLE_CLEANUP_BUFFER_MINUTES);
@@ -137,5 +149,28 @@ public class TableBookingService {
             if (conflict)
                 throw new TableBookingException("The selected time slot is not available. Please choose a different time.");
         }
+    }
+
+    public void cancelBooking(UUID tableBookingId, CancellationDetails cancellationDetails) {
+        log.info("Cancelling booking with ID: {}", tableBookingId);
+        TableBooking existingBooking = tableBookingRepository.findByIdAndIsActive(tableBookingId)
+                .orElseThrow(() -> new TableBookingException("Booking not found with ID: " + tableBookingId));
+        existingBooking.setBookingStatus(BookingStatus.CANCELLED_BY_CUSTOMER);
+        existingBooking.setDishStatus(DishStatus.CANCELLED);
+        existingBooking.setIsActive(false);
+        existingBooking.setLastModifiedBy(UUID.randomUUID());// Placeholder for actual user ID
+
+        GuestInformation guestInformation = existingBooking.getGuestInformation();
+        guestInformation.setCancellationFee(existingBooking.getUpfrontAmount());
+        log.info("Cancellation fee set to: {}", existingBooking.getUpfrontAmount());
+        if (cancellationDetails.getCancellationReason()!=null)
+            guestInformation.setCancellationReason(cancellationDetails.getCancellationReason());
+        else
+            guestInformation.setCancellationReason("Not Specified by User");
+
+        guestInformation.setCancellationTime(ZonedDateTime.now());
+
+        tableBookingRepository.save(existingBooking);
+        log.info("Booking cancelled successfully with ID: {}", tableBookingId);
     }
 }
