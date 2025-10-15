@@ -6,6 +6,7 @@ import jakarta.validation.constraints.*;
 import lombok.*;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.UUID;
 
 @Entity
@@ -74,7 +75,9 @@ public class OrderItem {
     @PreUpdate
     @PostLoad
     protected void refreshPrices(){
-        this.price=dish.getDishPrice();
+        BigDecimal discountRate = dish.getDiscount().divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP);
+        BigDecimal discountAmount = dish.getDishPrice().multiply(discountRate);
+        this.price = dish.getDishPrice().subtract(discountAmount);
         this.totalPrice=this.price.multiply(BigDecimal.valueOf(this.quantity));
     }
 

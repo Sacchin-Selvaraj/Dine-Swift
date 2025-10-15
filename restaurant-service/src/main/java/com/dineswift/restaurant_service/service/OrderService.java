@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 import java.util.UUID;
 
@@ -41,7 +42,17 @@ public class OrderService {
         log.info("Dish found: {}", dish.getDishName());
         CartAmountUpdateRequest amountUpdateRequest = new CartAmountUpdateRequest();
         amountUpdateRequest.setRemoved(false);
-        amountUpdateRequest.setTotalDishPrice((dish.getDishPrice().multiply(BigDecimal.valueOf(quantity))));
+        BigDecimal finalDishPrice = dish.getDishPrice().subtract(
+                dish.getDishPrice()
+                        .multiply(dish.getDiscount())
+                        .divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP)
+        );
+
+        finalDishPrice = finalDishPrice.setScale(2, RoundingMode.HALF_UP);
+        BigDecimal finalTotalPrice = finalDishPrice.multiply(BigDecimal.valueOf(quantity))
+                .setScale(2, RoundingMode.HALF_UP);
+
+        amountUpdateRequest.setTotalDishPrice(finalTotalPrice);
 
         updateCartTotalAmount(cartId, amountUpdateRequest);
 

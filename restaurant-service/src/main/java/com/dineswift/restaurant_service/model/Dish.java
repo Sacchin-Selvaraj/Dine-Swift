@@ -42,7 +42,6 @@ public class Dish {
 
     @DecimalMin(value = "0.00", inclusive = true, message = "Discount must be greater than or equal to 0")
     @DecimalMax(value = "100.00", inclusive = true, message = "Discount cannot exceed 100")
-    @Digits(integer = 3, fraction = 2, message = "Discount must have up to 3 integer digits and 2 decimal places")
     @Column(name = "discount", precision = 5, scale = 2)
     private BigDecimal discount = BigDecimal.ZERO;
 

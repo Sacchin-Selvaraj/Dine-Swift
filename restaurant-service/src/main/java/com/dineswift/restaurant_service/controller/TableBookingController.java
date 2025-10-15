@@ -34,5 +34,4 @@ public class TableBookingController {
         return ResponseEntity.noContent().build();
     }
 
-
 }

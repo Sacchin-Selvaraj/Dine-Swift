@@ -10,7 +10,6 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
@@ -43,8 +42,10 @@ public class CartService {
         CartDTO cartDto = cartMapper.toDto(cart);
         log.info("Cart details fetched successfully for cartId={}: {}", cartId, cartDto);
         List<OrderItemDto> orderItemDtos = fetchOrderItemsForCart(cartId);
+        log.info("Calculating Grand Total for cartId={}", cartId);
         BigDecimal grandTotalFromOrderItems = orderItemDtos.stream().map(OrderItemDto::getTotalPrice)
-                        .reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+                .reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+
         cartDto.setGrandTotal(grandTotalFromOrderItems);
         cartDto.setOrderItems(orderItemDtos);
 
@@ -63,7 +64,6 @@ public class CartService {
                 .body(new ParameterizedTypeReference<List<OrderItemDto>>() {
                 });
     }
-
 
     public void updateCartTotalAmount(UUID cartId, CartAmountUpdateRequest cartAmountUpdateRequest) {
         log.info("Updating cart total amount for cartId={} with request={}", cartId, cartAmountUpdateRequest);
