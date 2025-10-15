@@ -52,5 +52,7 @@ app:
     topic:
       email-verification-topic: email
       sms-verification-topic: sms
+      email-forgot-password-topic: email-forgot-password
+      sms-forgot-password-topic: sms-forgot-password
 
 

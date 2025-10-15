@@ -3,6 +3,7 @@ package com.dineswift.userservice.controller;
 import com.dineswift.userservice.model.request.EmailUpdateRequest;
 import com.dineswift.userservice.model.request.PhoneNumberUpdateRequest;
 import com.dineswift.userservice.model.request.VerifyTokenRequest;
+import com.dineswift.userservice.model.response.MessageResponse;
 import com.dineswift.userservice.service.VerificationService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -44,6 +45,12 @@ public class VerificationController {
     public ResponseEntity<String> verifyPhoneNumber(@PathVariable UUID userId, @Valid @RequestBody VerifyTokenRequest verifyPhoneNumberRequest){
         verificationService.verifyPhoneNumber(userId,verifyPhoneNumberRequest);
         return ResponseEntity.ok("PhoneNumber have been updated Successfully");
+    }
+
+    @PostMapping("forget-password/{userId}" )
+    public ResponseEntity<MessageResponse> forgetPassword(@PathVariable UUID userId,@RequestParam String typeOfVerification) {
+        String response=verificationService.forgetPassword(userId,typeOfVerification);
+        return ResponseEntity.ok(MessageResponse.builder().message(response).build());
     }
 
 

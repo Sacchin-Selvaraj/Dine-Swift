@@ -20,10 +20,8 @@ public class UserCommonService {
 
     public User findValidUser(UUID userId){
 
-        User user=userRepository.findById(userId).orElseThrow(
+        return userRepository.findById(userId).orElseThrow(
                 () -> new UserException("User not found with ID: " + userId));
-
-        return user;
     }
 
     public String generateNumericCode(int length) {

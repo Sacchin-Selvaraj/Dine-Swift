@@ -17,6 +17,7 @@ import com.dineswift.userservice.repository.VerificationRepository;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -26,6 +27,7 @@ import java.util.concurrent.CompletableFuture;
 @Service
 @Transactional
 @RequiredArgsConstructor
+@Slf4j
 public class VerificationService {
 
     private final UserCommonService userCommonService;
@@ -144,5 +146,46 @@ public class VerificationService {
         verificationToken.setWasUsed(true);
         verificationToken.setTokenStatus(TokenStatus.VERIFIED);
         verificationRepository.save(verificationToken);
+    }
+
+    public String forgetPassword(UUID userId, String typeOfVerification) {
+        log.info("Initiating forget password process for userId: {}", userId);
+        User user=userCommonService.findValidUser(userId);
+
+        String token = userCommonService.generateNumericCode(6);
+        VerificationToken verificationToken = setVerificationToken(token,user,TokenType.FORGOT_PASSWORD);
+
+        log.info("Generated verification token for userId: {}", userId);
+        verificationRepository.save(verificationToken);
+
+        if (typeOfVerification.equalsIgnoreCase("Email")){
+            kafkaService.sendEmailForForgotPassword(user.getEmail(),token,user.getUsername()).thenApply(status->{
+                if (!status){
+                    verificationToken.setTokenStatus(TokenStatus.FAILED);
+                    throw new NotificationException("Failed to send Email");
+                }else {
+                    verificationToken.setTokenStatus(TokenStatus.SENT);
+                }
+                return verificationRepository.save(verificationToken);
+            });
+            log.info("Sent forget password email to userId: {}", userId);
+        }else {
+            if (user.getPhoneNumber()==null){
+                throw new UserException("User does not have a phone number associated");
+            }
+            CompletableFuture<Boolean> smsStatus = kafkaService.sendSmsForForgotPassword(user.getPhoneNumber(), token, user.getUsername());
+            smsStatus.thenApply(status->{
+                if (!status){
+                    verificationToken.setTokenStatus(TokenStatus.FAILED);
+                    throw new NotificationException("Failed to send SMS");
+                }else {
+                    verificationToken.setTokenStatus(TokenStatus.SENT);
+                }
+                return verificationRepository.save(verificationToken);
+            });
+            log.info("Sent forget password SMS to userId: {}", userId);
+        }
+
+        return "Verification code sent via " + typeOfVerification.toLowerCase();
     }
 }
