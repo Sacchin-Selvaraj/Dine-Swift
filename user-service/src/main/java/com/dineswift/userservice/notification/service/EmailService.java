@@ -61,7 +61,7 @@ public class EmailService {
 
 
 // forgot-password
-// context.setVariable("userName", userName);
+//            context.setVariable("userName", userName);
 //            context.setVariable("companyName", companyName);
 //            context.setVariable("companyDomain", companyDomain);
 //            context.setVariable("resetLink", resetLink);

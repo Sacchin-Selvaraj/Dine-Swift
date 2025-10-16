@@ -28,8 +28,17 @@ public class KafkaConfig {
     @Value("${app.kafka.topic.sms-verification-topic}")
     private String smsVerificationTopic;
 
+    @Value("${app.kafka.topic.email-forgot-password-topic}")
+    private String emailForgotPasswordTopic;
+
+    @Value("${app.kafka.topic.sms-forgot-password-topic}")
+    private String smsForgotPasswordTopic;
+
     @Value("${spring.kafka.bootstrap-servers}")
     private String bootstrapServers;
+
+    @Value("${spring.kafka.consumer.group-id}")
+    private String groupId;
 
     @Bean
     public NewTopic emailVerificationTopic(){
@@ -42,6 +51,22 @@ public class KafkaConfig {
     @Bean
     public NewTopic smsVerificationTopic(){
         return TopicBuilder.name(smsVerificationTopic)
+                .partitions(2)
+                .replicas(1)
+                .build();
+    }
+
+    @Bean
+    public NewTopic emailForgotPasswordTopic(){
+        return TopicBuilder.name(emailForgotPasswordTopic)
+                .partitions(2)
+                .replicas(1)
+                .build();
+    }
+
+    @Bean
+    public NewTopic smsForgotPasswordTopic(){
+        return TopicBuilder.name(smsForgotPasswordTopic)
                 .partitions(2)
                 .replicas(1)
                 .build();
@@ -66,7 +91,7 @@ public class KafkaConfig {
     public ConsumerFactory<String, Object> kafkaGenericConsumerFactory() {
         Map<String, Object> props = new HashMap<>();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-        props.put(ConsumerConfig.GROUP_ID_CONFIG, "user-service-group-v1");
+        props.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
         props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
 
         props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
