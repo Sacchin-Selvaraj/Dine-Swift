@@ -60,7 +60,7 @@ public class VerificationToken {
     @UpdateTimestamp
     private LocalDateTime createdAt;
 
-    @ManyToOne(cascade = CascadeType.ALL,fetch = FetchType.LAZY)
+    @ManyToOne(cascade = {CascadeType.PERSIST,CascadeType.MERGE,CascadeType.REFRESH},fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id",nullable = false)
     private User user;
 }

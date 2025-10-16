@@ -1,10 +1,11 @@
 package com.dineswift.notification_service.model;
 
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 
 @Data
-@RequiredArgsConstructor
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 public class SmsVerificationDetail {
 
     private String userName;

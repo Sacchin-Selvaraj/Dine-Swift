@@ -1,13 +1,18 @@
 package com.dineswift.notification_service.model;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
-import lombok.RequiredArgsConstructor;
+import lombok.NoArgsConstructor;
 
 @Data
-@RequiredArgsConstructor
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 public class EmailVerificationDetail {
 
     private String email;
     private String token;
     private String userName;
+    private String templateType;
 }

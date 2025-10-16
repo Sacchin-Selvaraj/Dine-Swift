@@ -7,7 +7,6 @@ import com.dineswift.userservice.notification.service.EmailService;
 import com.dineswift.userservice.notification.service.SmsService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Service;
@@ -43,8 +42,8 @@ public class KafkaConsumerService {
 
             emailService.sendMail(
                     message.getEmail(),
-                    "Email Verification Code from DineSwift",
-                    "email-verification",
+                    "Verification Code from DineSwift",
+                    message.getTemplateType(),
                     modal
             );
             log.info("Email verification sent to: {}", message.getEmail());
@@ -77,63 +76,5 @@ public class KafkaConsumerService {
             throw new NotificationException("Failed to process SMS verification message: " + e.getMessage());
         }
     }
-
-
-    @KafkaListener(
-            topics = "${app.kafka.topic.email-forgot-password-topic}" ,
-            groupId = "forget-password-group"
-           )
-    public void listenEmailVerificationForForgotPassword(@Payload EmailVerificationDetail message) {
-
-        try {
-            if (message==null || message.getEmail()==null || message.getToken()==null || message.getUserName()==null){
-                log.error("Invalid message received in email verification topic: {}", message);
-                return;
-            }
-
-            Map<String,Object> modal = new HashMap<>();
-            modal.put("userName", message.getUserName());
-            modal.put("companyName", "DineSwift");
-            modal.put("verificationCode", message.getToken());
-            modal.put("expiryTime", 10);
-
-            emailService.sendMail(
-                    message.getEmail(),
-                    "Email Verification Code from DineSwift",
-                    "forget-password",
-                    modal
-            );
-            log.info("Email verification sent to: {}", message.getEmail());
-        } catch (Exception e) {
-            log.error("Error processing email verification message: {}", e.getMessage());
-            throw new NotificationException("Failed to process email verification message: " + e.getMessage());
-        }
-
-    }
-
-    @KafkaListener(
-            topics = "${app.kafka.topic.sms-forgot-password-topic}",
-            groupId = "forget-password-group")
-    public void listenSmsForgetPassword(@Payload SmsVerificationDetail message) {
-        if (message==null || message.getPhoneNumber()==null || message.getToken()==null || message.getUserName()==null){
-            log.error("Invalid message received in SMS verification topic: {}", message);
-            return;
-        }
-        try {
-            String smsContent = String.format(
-                    Locale.ENGLISH,
-                    "Hello %s, your verification code is %s. It will expire in 10 minutes. - DineSwift",
-                    message.getUserName(),
-                    message.getToken()
-            );
-
-            smsService.sendSms(message.getPhoneNumber(), smsContent);
-            log.info("SMS verification sent to: {}", message.getPhoneNumber());
-        } catch (Exception e) {
-            log.error("Error processing SMS verification message: {}", e.getMessage());
-            throw new NotificationException("Failed to process SMS verification message: " + e.getMessage());
-        }
-    }
-
 
 }

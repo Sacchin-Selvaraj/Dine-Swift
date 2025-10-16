@@ -9,6 +9,7 @@ import com.dineswift.userservice.model.entites.TokenType;
 import com.dineswift.userservice.model.entites.User;
 import com.dineswift.userservice.model.entites.VerificationToken;
 import com.dineswift.userservice.model.request.EmailUpdateRequest;
+import com.dineswift.userservice.model.request.PasswordChangeRequest;
 import com.dineswift.userservice.model.request.PhoneNumberUpdateRequest;
 import com.dineswift.userservice.model.request.VerifyTokenRequest;
 import com.dineswift.userservice.notification.service.SmsService;
@@ -51,7 +52,7 @@ public class VerificationService {
 
         verificationRepository.save(verificationToken);
 
-        kafkaService.sendEmailVerification(emailUpdateRequest.getEmail(),token,user.getUsername()).thenApply(status->{
+        kafkaService.sendEmailVerification(emailUpdateRequest.getEmail(),token,user.getUsername(),"email-verification").thenApply(status->{
             if (!status){
                 verificationToken.setTokenStatus(TokenStatus.FAILED);
                 throw new NotificationException("Failed to send Email");
@@ -159,7 +160,7 @@ public class VerificationService {
         verificationRepository.save(verificationToken);
 
         if (typeOfVerification.equalsIgnoreCase("Email")){
-            kafkaService.sendEmailForForgotPassword(user.getEmail(),token,user.getUsername()).thenApply(status->{
+            kafkaService.sendEmailVerification(user.getEmail(),token,user.getUsername(),"forget-password").thenApply(status->{
                 if (!status){
                     verificationToken.setTokenStatus(TokenStatus.FAILED);
                     throw new NotificationException("Failed to send Email");
@@ -173,7 +174,7 @@ public class VerificationService {
             if (user.getPhoneNumber()==null){
                 throw new UserException("User does not have a phone number associated");
             }
-            CompletableFuture<Boolean> smsStatus = kafkaService.sendSmsForForgotPassword(user.getPhoneNumber(), token, user.getUsername());
+            CompletableFuture<Boolean> smsStatus = kafkaService.sendSmsVerification(user.getPhoneNumber(), token, user.getUsername());
             smsStatus.thenApply(status->{
                 if (!status){
                     verificationToken.setTokenStatus(TokenStatus.FAILED);
@@ -187,5 +188,37 @@ public class VerificationService {
         }
 
         return "Verification code sent via " + typeOfVerification.toLowerCase();
+    }
+
+    public String verifyForgetPassword(UUID userId, PasswordChangeRequest passwordChangeRequest) {
+
+        log.info("Verifying forget password token for userId: {}", userId);
+        if (!passwordChangeRequest.getNewPassword().equals(passwordChangeRequest.getConfirmPassword())){
+            throw new UserException("New Password and Confirm Password do not match");
+        }
+
+        VerificationToken verificationToken=verificationRepository.findByToken(passwordChangeRequest.getToken())
+                .orElseThrow(()->new TokenException("Verification Token was invalid"));
+
+        if(verificationToken.getTokenType()!=TokenType.FORGOT_PASSWORD){
+            throw new TokenException("Invalid Token Type");
+        }
+        if (verificationToken.getTokenExpiryDate().isBefore(LocalDateTime.now())){
+            throw new TokenException("Verification Token was expired");
+        }
+        User user=verificationToken.getUser();
+        if (!user.getUserId().equals(userId)){
+            throw new UserException("Invalid Verification Token for the user");
+        }
+
+       // need to encode the password
+        user.setPassword(passwordChangeRequest.getNewPassword());
+
+        verificationToken.setWasUsed(true);
+        verificationToken.setTokenStatus(TokenStatus.VERIFIED);
+        verificationRepository.save(verificationToken);
+        log.info("Password updated successfully for userId: {}", userId);
+        return "Password updated successfully";
+
     }
 }

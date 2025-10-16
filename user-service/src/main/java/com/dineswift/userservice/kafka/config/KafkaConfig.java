@@ -19,7 +19,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Configuration
-//@EnableKafka
+@EnableKafka
 public class KafkaConfig {
 
     @Value("${app.kafka.topic.email-verification-topic}")
@@ -27,12 +27,6 @@ public class KafkaConfig {
 
     @Value("${app.kafka.topic.sms-verification-topic}")
     private String smsVerificationTopic;
-
-    @Value("${app.kafka.topic.email-forgot-password-topic}")
-    private String emailForgotPasswordTopic;
-
-    @Value("${app.kafka.topic.sms-forgot-password-topic}")
-    private String smsForgotPasswordTopic;
 
     @Value("${spring.kafka.bootstrap-servers}")
     private String bootstrapServers;
@@ -51,22 +45,6 @@ public class KafkaConfig {
     @Bean
     public NewTopic smsVerificationTopic(){
         return TopicBuilder.name(smsVerificationTopic)
-                .partitions(2)
-                .replicas(1)
-                .build();
-    }
-
-    @Bean
-    public NewTopic emailForgotPasswordTopic(){
-        return TopicBuilder.name(emailForgotPasswordTopic)
-                .partitions(2)
-                .replicas(1)
-                .build();
-    }
-
-    @Bean
-    public NewTopic smsForgotPasswordTopic(){
-        return TopicBuilder.name(smsForgotPasswordTopic)
                 .partitions(2)
                 .replicas(1)
                 .build();

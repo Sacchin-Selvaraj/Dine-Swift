@@ -28,10 +28,11 @@ public class KafkaService {
     public CompletableFuture<Boolean> sendEmailVerification(String toEmail, String token, String userName) {
 
         try {
-            EmailVerificationDetail message = new EmailVerificationDetail();
-            message.setEmail(toEmail);
-            message.setToken(token);
-            message.setUserName(userName);
+            EmailVerificationDetail message = EmailVerificationDetail.builder()
+                    .email(toEmail)
+                    .token(token)
+                    .userName(userName)
+                    .build();
 
             CompletableFuture<SendResult<String, Object>> result = kafkaTemplate.send(emailVerificationTopic, message);
 
@@ -56,10 +57,11 @@ public class KafkaService {
             if (toPhoneNumber == null || token == null || userName == null) {
                 return CompletableFuture.completedFuture(false);
             }
-            SmsVerificationDetail smsVerificationDetail=new SmsVerificationDetail();
-            smsVerificationDetail.setPhoneNumber(toPhoneNumber);
-            smsVerificationDetail.setToken(token);
-            smsVerificationDetail.setUserName(userName);
+            SmsVerificationDetail smsVerificationDetail= SmsVerificationDetail.builder()
+                    .phoneNumber(toPhoneNumber)
+                    .token(token)
+                    .userName(userName)
+                    .build();
 
             return kafkaTemplate.send(smsVerificationTopic,smsVerificationDetail).thenApply(res->{
                 log.info("SMS Message Published Successfully....");
