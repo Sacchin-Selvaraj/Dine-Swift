@@ -51,7 +51,7 @@ public class TableBookingService {
         TableBooking newBooking = bookTable(bookingRequest, bookingTable, orderItems);
 
         log.info("Initiating payment for booking ID: {}", newBooking.getTableBookingId());
-        PaymentCreateResponse paymentResponse = paymentService.initiatePayment(newBooking);
+        PaymentCreateResponse paymentResponse = paymentService.initiatePayment(newBooking,"Upfront Payment",newBooking.getUpfrontAmount());
         log.info("Payment initiated successfully for booking ID: {}", newBooking.getTableBookingId());
         return paymentResponse;
     }
@@ -155,6 +155,8 @@ public class TableBookingService {
         log.info("Cancelling booking with ID: {}", tableBookingId);
         TableBooking existingBooking = tableBookingRepository.findByIdAndIsActive(tableBookingId)
                 .orElseThrow(() -> new TableBookingException("Booking not found with ID: " + tableBookingId));
+        log.info("Is booking eligible for cancellation check");
+        checkIsPaymentDone(existingBooking);
         existingBooking.setBookingStatus(BookingStatus.CANCELLED_BY_CUSTOMER);
         existingBooking.setDishStatus(DishStatus.CANCELLED);
         existingBooking.setIsActive(false);
@@ -172,5 +174,8 @@ public class TableBookingService {
 
         tableBookingRepository.save(existingBooking);
         log.info("Booking cancelled successfully with ID: {}", tableBookingId);
+    }
+
+    private void checkIsPaymentDone(TableBooking existingBooking) {
     }
 }

@@ -72,6 +72,10 @@ public class TableBooking {
     @Column(name = "pending_amount", nullable = false, precision = 12, scale = 2)
     private BigDecimal pendingAmount;
 
+    @NotNull(message = "Pending amount paid status is required")
+    @Column(name = "is_pending_amount_paid", nullable = false)
+    private Boolean isPendingAmountPaid = false;
+
     @NotNull(message = "Upfront amount is required")
     @DecimalMin(value = "0.0", inclusive = true, message = "Upfront amount must be greater than or equal to 0")
     @Column(name = "upfront_amount", nullable = false, precision = 12, scale = 2)
@@ -123,12 +127,12 @@ public class TableBooking {
     private LocalTime actualDineOutTime;
 
     @NotNull(message = "Table is required")
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY,cascade = {CascadeType.PERSIST,CascadeType.MERGE})
     @JoinColumn(name = "table_id", nullable = false)
     private RestaurantTable restaurantTable;
 
     @NotNull(message = "Restaurant is required")
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY,cascade = {CascadeType.PERSIST,CascadeType.MERGE})
     @JoinColumn(name = "restaurant_id", nullable = false)
     private Restaurant restaurant;
 

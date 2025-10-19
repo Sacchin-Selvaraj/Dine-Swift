@@ -54,3 +54,6 @@ ALTER COLUMN dine_out_time TYPE TIME WITHOUT TIME ZONE;
 
 ALTER TABLE payments
 ALTER COLUMN payment_method DROP NOT NULL;
+
+ALTER TABLE table_bookings
+ADD COLUMN is_pending_amount_paid BOOLEAN;

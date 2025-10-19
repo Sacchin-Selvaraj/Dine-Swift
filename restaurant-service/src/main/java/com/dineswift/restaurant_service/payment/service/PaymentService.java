@@ -20,6 +20,7 @@ import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.math.BigDecimal;
 import java.security.MessageDigest;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -35,17 +36,17 @@ public class PaymentService {
     private String secretKey;
 
 
-    public PaymentCreateResponse initiatePayment(TableBooking newBooking) {
+    public PaymentCreateResponse initiatePayment(TableBooking newBooking,String paymentName, BigDecimal amount) {
 
         Payment newPayment = new Payment();
-        newPayment.setPaymentName("Table Booking Payment");
-        newPayment.setAmount(newBooking.getUpfrontAmount());
+        newPayment.setPaymentName(paymentName);
+        newPayment.setAmount(amount);
         newPayment.setPaymentStatus(PaymentStatus.CREATED);
         newPayment.setTableBooking(newBooking);
 
         log.info("Create orderId using Razorpay");
         String contactEmail = newBooking.getGuestInformation().getContactEmail();
-        String createdOrderId = createRazorpayOrder(newBooking.getUpfrontAmount(), "INR",contactEmail);
+        String createdOrderId = createRazorpayOrder(amount, "INR",contactEmail);
 
         newPayment.setOrderId(createdOrderId);
         Payment savedPayment = paymentRepository.save(newPayment);
@@ -53,7 +54,7 @@ public class PaymentService {
         return PaymentCreateResponse.builder()
                 .orderId(savedPayment.getOrderId())
                 .amount(savedPayment.getAmount())
-                .paymentName("Table Booking Payment")
+                .paymentName(paymentName)
                 .description("Payment for table booking ID: " + newBooking.getTableBookingId())
                 .email(contactEmail)
                 .tableBookingId(newBooking.getTableBookingId())
@@ -173,7 +174,7 @@ public class PaymentService {
 
         TableBooking booking = payment.getTableBooking();
         if (!booking.getIsUpfrontPaid()) {
-            booking.setBookingStatus(BookingStatus.UPFRONT_PAYMENT_COMPLETED);
+            booking.setBookingStatus(BookingStatus.PAYMENT_PENDING);
             booking.setIsUpfrontPaid(true);
         }
         else
@@ -225,5 +226,23 @@ public class PaymentService {
             log.error("Error fetching payment details from Razorpay: " + e.getMessage());
             throw new PaymentException("Error fetching payment details from Razorpay");
         }
+    }
+
+    public PaymentCreateResponse generatePayNow(UUID tableBookingId) {
+        log.info("Generating pay-now link for bookingId: {}", tableBookingId);
+        TableBooking existingBooking = tableBookingRepository.findByIdAndIsActive(tableBookingId)
+                .orElseThrow(() -> new PaymentException("Invalid table booking ID: " + tableBookingId));
+
+        PaymentCreateResponse paymentResponse=null;
+        if (!existingBooking.getIsUpfrontPaid()){
+            log.info("Generating upfront payment link for bookingId: {}", tableBookingId);
+            paymentResponse = initiatePayment(existingBooking,"Upfront Payment",existingBooking.getUpfrontAmount());
+        }else {
+            log.info("Generating final payment link for bookingId: {}", tableBookingId);
+            paymentResponse = initiatePayment(existingBooking,"Pending Payment",existingBooking.getPendingAmount());
+        }
+
+        log.info("Pay-now link generated successfully for bookingId: {}", tableBookingId);
+        return paymentResponse;
     }
 }
