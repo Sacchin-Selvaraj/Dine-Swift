@@ -4,13 +4,12 @@ import com.dineswift.restaurant_service.model.Restaurant;
 import com.dineswift.restaurant_service.model.RestaurantTable;
 import com.dineswift.restaurant_service.payload.request.table.TableCreateRequest;
 import com.dineswift.restaurant_service.payload.request.table.TableUpdateRequest;
-import com.dineswift.restaurant_service.payload.response.table.RestaurantTableDTO;
+import com.dineswift.restaurant_service.payload.response.table.RestaurantTableDto;
 import com.dineswift.restaurant_service.repository.RestaurantRepository;
 import com.dineswift.restaurant_service.repository.TableRepository;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Component;
-import org.springframework.ui.ModelMap;
 
 import java.util.UUID;
 
@@ -46,8 +45,8 @@ public class TableMapper {
 
     }
 
-    public RestaurantTableDTO toDto(RestaurantTable savedTable) {
-        return modelMapper.map(savedTable, RestaurantTableDTO.class);
+    public RestaurantTableDto toDto(RestaurantTable savedTable) {
+        return modelMapper.map(savedTable, RestaurantTableDto.class);
     }
 
     public RestaurantTable toUpdateEntity(RestaurantTable table, TableUpdateRequest tableUpdateRequest) {

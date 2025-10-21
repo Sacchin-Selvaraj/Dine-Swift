@@ -67,8 +67,7 @@ public class KafkaConsumerService {
     @RetryableTopic(
             attempts = "4",
             backoff = @Backoff(delay = 2000, multiplier = 2),
-            exclude = {RuntimeException.class},
-            dltTopicSuffix = "-sms-verification-dlt"
+            dltTopicSuffix = "-verification-dlt"
     )
     @KafkaListener(topics = "${app.kafka.topic.sms-verification-topic}", groupId = "user-service-group",
             containerFactory = "kafkaListenerContainerFactory")

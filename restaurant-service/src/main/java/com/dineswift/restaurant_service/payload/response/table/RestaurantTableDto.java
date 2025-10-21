@@ -1,18 +1,14 @@
 package com.dineswift.restaurant_service.payload.response.table;
 
-import jakarta.persistence.Column;
-import jakarta.validation.constraints.*;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.ZonedDateTime;
 import java.util.UUID;
 
 @Data
 @RequiredArgsConstructor
-public class RestaurantTableDTO {
+public class RestaurantTableDto {
 
     private UUID tableId;
 

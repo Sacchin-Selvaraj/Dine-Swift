@@ -19,6 +19,7 @@ import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -36,6 +37,7 @@ public class VerificationService {
     private final KafkaService kafkaService;
     private final UserRepository userRepository;
     private final SmsService smsService;
+    private final BCryptPasswordEncoder passwordEncoder;
 
 
     public String updateEmail(UUID userId, EmailUpdateRequest emailUpdateRequest) {
@@ -212,7 +214,7 @@ public class VerificationService {
         }
 
        // need to encode the password
-        user.setPassword(passwordChangeRequest.getNewPassword());
+        user.setPassword(passwordEncoder.encode(passwordChangeRequest.getNewPassword()));
 
         verificationToken.setWasUsed(true);
         verificationToken.setTokenStatus(TokenStatus.VERIFIED);

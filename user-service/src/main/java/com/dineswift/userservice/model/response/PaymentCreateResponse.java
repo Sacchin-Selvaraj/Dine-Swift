@@ -1,5 +1,6 @@
 package com.dineswift.userservice.model.response;
 
+import com.dineswift.userservice.model.entites.BookingStatus;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 
@@ -17,4 +18,5 @@ public class PaymentCreateResponse {
     private String description;
     private String email;
     private UUID tableBookingId;
+    private BookingStatus bookingStatus;
 }

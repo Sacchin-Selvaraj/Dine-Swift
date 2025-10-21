@@ -31,7 +31,7 @@ public class PaymentController {
         }
     }
 
-    @GetMapping("/pay-now/{tableBookingId}")
+    @PostMapping("/pay-now/{tableBookingId}")
     public ResponseEntity<PaymentCreateResponse> payBill(@PathVariable UUID tableBookingId) {
         PaymentCreateResponse paymentCreateDetails = paymentService.generatePayNow(tableBookingId);
         log.info("Generated pay-now link for bookingId: {}", tableBookingId);

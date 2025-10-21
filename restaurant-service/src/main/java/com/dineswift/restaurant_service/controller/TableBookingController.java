@@ -4,6 +4,7 @@ package com.dineswift.restaurant_service.controller;
 import com.dineswift.restaurant_service.payload.request.tableBooking.BookingRequest;
 import com.dineswift.restaurant_service.payload.request.tableBooking.CancellationDetails;
 import com.dineswift.restaurant_service.payload.response.tableBooking.PaymentCreateResponse;
+import com.dineswift.restaurant_service.payload.response.tableBooking.TableBookingDto;
 import com.dineswift.restaurant_service.service.TableBookingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,6 +33,13 @@ public class TableBookingController {
         tableBookingService.cancelBooking(tableBookingId, cancellationDetails);
         log.info("Booking cancelled successfully for bookingId: {}", tableBookingId);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/view-booking/{tableBookingId}")
+    public ResponseEntity<TableBookingDto> viewBooking(@PathVariable UUID tableBookingId) {
+        TableBookingDto bookingDetails = tableBookingService.viewBooking(tableBookingId);
+        log.info("Fetched booking details for bookingId: {}", tableBookingId);
+        return ResponseEntity.ok(bookingDetails);
     }
 
 }

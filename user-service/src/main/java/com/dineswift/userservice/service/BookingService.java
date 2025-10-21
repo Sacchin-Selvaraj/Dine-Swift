@@ -6,6 +6,7 @@ import com.dineswift.userservice.model.entites.BookingStatus;
 import com.dineswift.userservice.model.entites.User;
 import com.dineswift.userservice.model.request.BookingRequest;
 import com.dineswift.userservice.model.response.PaymentCreateResponse;
+import com.dineswift.userservice.model.response.TableBookingDto;
 import com.dineswift.userservice.repository.BookingRepository;
 import com.dineswift.userservice.repository.CartRepository;
 import com.dineswift.userservice.repository.UserRepository;
@@ -49,7 +50,10 @@ public class BookingService {
         Booking newBooking = new Booking();
         newBooking.setTableBookingId(paymentCreateResponse.getTableBookingId());
         newBooking.setBookingDate(bookingRequest.getBookingDate());
-        newBooking.setBookingStatus(BookingStatus.ORDER_CREATED);
+        newBooking.setBookingStatus(paymentCreateResponse.getBookingStatus());
+
+        // need to get the user from the authentication context in real scenario
+
         User bookedUser = userRepository.findById(UUID.fromString("2594390c-d0a7-4144-b784-4f98112574f7")).get();
         newBooking.setUser(bookedUser);
         bookingRepository.save(newBooking);
@@ -70,4 +74,32 @@ public class BookingService {
     }
 
 
+    public PaymentCreateResponse generatePayNow(UUID bookingId) {
+        log.info("Generating pay-now link for bookingId: {}", bookingId);
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new CartException("Booking not found with ID: " + bookingId));
+
+        ResponseEntity<PaymentCreateResponse> responseEntity = restClient.post()
+                .uri("/payments/pay-now/{tableBookingId}", booking.getTableBookingId())
+                .retrieve()
+                .toEntity(PaymentCreateResponse.class);
+
+        log.info("Pay-now link generated successfully for bookingId: {}", bookingId);
+        return responseEntity.getBody();
+
+    }
+
+    public TableBookingDto viewTableBooking(UUID bookingId) {
+        log.info("Fetching booking details for bookingId: {}", bookingId);
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new CartException("Booking not found with ID: " + bookingId));
+
+        ResponseEntity<TableBookingDto> tableBookingDto = restClient.get()
+                .uri("/table-booking/view-booking/{tableBookingId}", booking.getTableBookingId())
+                .retrieve()
+                .toEntity(TableBookingDto.class);
+
+        log.info("Fetched booking details successfully for bookingId: {}", bookingId);
+        return tableBookingDto.getBody();
+    }
 }

@@ -1,7 +1,7 @@
-package com.dineswift.restaurant_service.payload.dto;
+package com.dineswift.userservice.model.response.booking;
 
-import com.dineswift.restaurant_service.model.RestaurantStatus;
-import jakarta.validation.constraints.*;
+import com.dineswift.userservice.model.entites.RestaurantStatus;
+import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 
@@ -12,7 +12,7 @@ import java.util.UUID;
 
 @Data
 @RequiredArgsConstructor
-public class RestaurantDTO {
+public class RestaurantDto {
 
     private UUID restaurantId;
 
@@ -55,6 +55,6 @@ public class RestaurantDTO {
 
     private Boolean isActive;
 
-    private List<RestaurantImageDTO> restaurantImages;
+    private List<RestaurantImageDto> restaurantImages;
 
 }

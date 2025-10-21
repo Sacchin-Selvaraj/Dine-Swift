@@ -6,7 +6,7 @@ import com.dineswift.restaurant_service.payload.request.table.CheckAvailableSlot
 import com.dineswift.restaurant_service.payload.request.table.TableCreateRequest;
 import com.dineswift.restaurant_service.payload.request.table.TableUpdateRequest;
 import com.dineswift.restaurant_service.payload.response.table.AvailableSlots;
-import com.dineswift.restaurant_service.payload.response.table.RestaurantTableDTO;
+import com.dineswift.restaurant_service.payload.response.table.RestaurantTableDto;
 import com.dineswift.restaurant_service.repository.TableRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -28,7 +28,7 @@ public class TableService {
     private final TableMapper tableMapper;
     private final ReservationService reservationService;
 
-    public RestaurantTableDTO addTableToRestaurant(UUID restaurantId, TableCreateRequest tableCreateRequest) {
+    public RestaurantTableDto addTableToRestaurant(UUID restaurantId, TableCreateRequest tableCreateRequest) {
         log.info("Adding table to restaurant with ID: {}", restaurantId);
         RestaurantTable restaurantTable=tableMapper.toEntity(tableCreateRequest,restaurantId);
         restaurantTable.setCreatedBy(restaurantId);
@@ -48,7 +48,7 @@ public class TableService {
         log.info("Table deleted with ID: {}", tableId);
     }
 
-    public RestaurantTableDTO updateTable(UUID tableId, TableUpdateRequest tableUpdateRequest) {
+    public RestaurantTableDto updateTable(UUID tableId, TableUpdateRequest tableUpdateRequest) {
         log.info("Updating table with ID:{}", tableId);
         RestaurantTable table = tableRepository.findById(tableId)
                 .orElseThrow(() -> new IllegalArgumentException("Table not found with ID: " + tableId));
@@ -61,7 +61,7 @@ public class TableService {
         return tableMapper.toDto(savedTable);
     }
 
-    public Page<RestaurantTableDTO> getTablesByRestaurantId(UUID restaurantId, int page, int size) {
+    public Page<RestaurantTableDto> getTablesByRestaurantId(UUID restaurantId, int page, int size) {
         log.info("Fetching tables for restaurant with ID: {}", restaurantId);
 
         Pageable pageable = Pageable.ofSize(size).withPage(page);

@@ -4,7 +4,7 @@ import com.dineswift.restaurant_service.payload.request.table.CheckAvailableSlot
 import com.dineswift.restaurant_service.payload.request.table.TableCreateRequest;
 import com.dineswift.restaurant_service.payload.request.table.TableUpdateRequest;
 import com.dineswift.restaurant_service.payload.response.table.AvailableSlots;
-import com.dineswift.restaurant_service.payload.response.table.RestaurantTableDTO;
+import com.dineswift.restaurant_service.payload.response.table.RestaurantTableDto;
 import com.dineswift.restaurant_service.service.TableService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,9 +24,9 @@ public class TableController {
     private final TableService tableService;
 
     @PostMapping("/add-table/{restaurantId}" )
-    public ResponseEntity<RestaurantTableDTO> addTableToRestaurant(@PathVariable UUID  restaurantId, @RequestBody TableCreateRequest tableCreateRequest) {
+    public ResponseEntity<RestaurantTableDto> addTableToRestaurant(@PathVariable UUID  restaurantId, @RequestBody TableCreateRequest tableCreateRequest) {
         log.info("Received request to add table to restaurant with ID: {}", restaurantId);
-        RestaurantTableDTO createdTable = tableService.addTableToRestaurant(restaurantId, tableCreateRequest);
+        RestaurantTableDto createdTable = tableService.addTableToRestaurant(restaurantId, tableCreateRequest);
         return ResponseEntity.ok(createdTable);
     }
 
@@ -38,18 +38,18 @@ public class TableController {
     }
 
     @PatchMapping("/update-table/{tableId}" )
-    public ResponseEntity<RestaurantTableDTO> updateTable(@PathVariable UUID  tableId, @RequestBody TableUpdateRequest tableUpdateRequest) {
+    public ResponseEntity<RestaurantTableDto> updateTable(@PathVariable UUID  tableId, @RequestBody TableUpdateRequest tableUpdateRequest) {
         log.info("Received request to update table with ID: {}", tableId);
-        RestaurantTableDTO updatedTable = tableService.updateTable(tableId, tableUpdateRequest);
+        RestaurantTableDto updatedTable = tableService.updateTable(tableId, tableUpdateRequest);
         return ResponseEntity.ok().body(updatedTable);
     }
 
     @GetMapping("/get-table/{restaurantId}" )
-    public ResponseEntity<Page<RestaurantTableDTO>> getTable(@PathVariable UUID  restaurantId,
-                                         @RequestParam(name = "page", defaultValue = "0") int page,
-                                         @RequestParam(name = "size", defaultValue = "6") int size) {
+    public ResponseEntity<Page<RestaurantTableDto>> getTable(@PathVariable UUID  restaurantId,
+                                                             @RequestParam(name = "page", defaultValue = "0") int page,
+                                                             @RequestParam(name = "size", defaultValue = "6") int size) {
         log.info("Received request to get table with ID: {}", restaurantId);
-        Page<RestaurantTableDTO> tables = tableService.getTablesByRestaurantId(restaurantId, page, size);
+        Page<RestaurantTableDto> tables = tableService.getTablesByRestaurantId(restaurantId, page, size);
         return ResponseEntity.ok().body(tables);
     }
 

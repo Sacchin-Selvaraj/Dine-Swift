@@ -4,24 +4,20 @@ import com.dineswift.restaurant_service.model.Employee;
 import com.dineswift.restaurant_service.model.Restaurant;
 import com.dineswift.restaurant_service.model.RestaurantImage;
 import com.dineswift.restaurant_service.model.RestaurantStatus;
-import com.dineswift.restaurant_service.payload.dto.RestaurantDTO;
-import com.dineswift.restaurant_service.payload.dto.RestaurantImageDTO;
+import com.dineswift.restaurant_service.payload.dto.RestaurantDto;
+import com.dineswift.restaurant_service.payload.dto.RestaurantImageDto;
 import com.dineswift.restaurant_service.payload.request.restaurant.RestaurantCreateRequest;
 import com.dineswift.restaurant_service.payload.request.restaurant.RestaurantUpdateRequest;
 import com.dineswift.restaurant_service.repository.RestaurantImageRepository;
 import com.dineswift.restaurant_service.repository.RestaurantRepository;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Propagation;
 
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -74,8 +70,8 @@ public class RestaurantMapper {
         return restaurant;
     }
 
-    public RestaurantDTO toDTO(Restaurant restaurant) {
-        RestaurantDTO restaurantDTO = mapper.map(restaurant, RestaurantDTO.class);
+    public RestaurantDto toDTO(Restaurant restaurant) {
+        RestaurantDto restaurantDTO = mapper.map(restaurant, RestaurantDto.class);
         List<RestaurantImage> restaurantImages = restaurantImageRepository.findByRestaurant(restaurant);
         if (!restaurantImages.isEmpty())
             restaurantDTO.setRestaurantImages(restaurantImages.stream().map(this::toImageDTO).toList());
@@ -97,7 +93,7 @@ public class RestaurantMapper {
         return restaurantImage;
     }
 
-    public RestaurantImageDTO toImageDTO(RestaurantImage image) {
-        return mapper.map(image, RestaurantImageDTO.class);
+    public RestaurantImageDto toImageDTO(RestaurantImage image) {
+        return mapper.map(image, RestaurantImageDto.class);
     }
 }

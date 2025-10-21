@@ -4,7 +4,7 @@ import com.dineswift.restaurant_service.exception.RoleException;
 import com.dineswift.restaurant_service.model.Employee;
 import com.dineswift.restaurant_service.model.Role;
 import com.dineswift.restaurant_service.model.RoleName;
-import com.dineswift.restaurant_service.payload.dto.EmployeeDTO;
+import com.dineswift.restaurant_service.payload.dto.EmployeeDto;
 import com.dineswift.restaurant_service.payload.request.employee.EmployeeCreateRequest;
 import com.dineswift.restaurant_service.payload.request.employee.RoleNameRequest;
 import com.dineswift.restaurant_service.payload.response.employee.RoleDTOResponse;
@@ -24,8 +24,8 @@ public class EmployeeMapper {
     private final ModelMapper mapper;
     private final RoleRepository roleRepository;
 
-    public EmployeeDTO toDTO(Employee employee){
-        EmployeeDTO employeeDTO=mapper.map(employee, EmployeeDTO.class);
+    public EmployeeDto toDTO(Employee employee){
+        EmployeeDto employeeDTO=mapper.map(employee, EmployeeDto.class);
         employeeDTO.setRoles(employee.getRoles().stream()
                 .map(this::toRoleDTO).collect(Collectors.toSet()));
 

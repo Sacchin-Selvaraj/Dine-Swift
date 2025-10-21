@@ -1,4 +1,4 @@
-package com.dineswift.restaurant_service.payload.dto;
+package com.dineswift.userservice.model.response.booking;
 
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -8,7 +8,7 @@ import java.util.UUID;
 
 @Data
 @RequiredArgsConstructor
-public class RestaurantImageDTO {
+public class RestaurantImageDto {
 
     private UUID imageId;
 

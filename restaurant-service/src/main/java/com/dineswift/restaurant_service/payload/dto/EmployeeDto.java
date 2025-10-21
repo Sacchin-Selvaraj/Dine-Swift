@@ -1,6 +1,5 @@
 package com.dineswift.restaurant_service.payload.dto;
 
-import com.dineswift.restaurant_service.model.Role;
 import com.dineswift.restaurant_service.payload.response.employee.RoleDTOResponse;
 import jakarta.validation.constraints.*;
 import lombok.Data;
@@ -11,7 +10,7 @@ import java.util.UUID;
 
 @Data
 @RequiredArgsConstructor
-public class EmployeeDTO {
+public class EmployeeDto {
 
     private UUID employeeId;
 

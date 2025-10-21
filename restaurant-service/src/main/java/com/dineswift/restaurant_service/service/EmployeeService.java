@@ -9,7 +9,7 @@ import com.dineswift.restaurant_service.model.Restaurant;
 import com.dineswift.restaurant_service.model.Role;
 import com.dineswift.restaurant_service.model.RoleName;
 import com.dineswift.restaurant_service.payload.request.employee.EmployeeCreateRequest;
-import com.dineswift.restaurant_service.payload.dto.EmployeeDTO;
+import com.dineswift.restaurant_service.payload.dto.EmployeeDto;
 import com.dineswift.restaurant_service.payload.request.employee.EmployeeNameRequest;
 import com.dineswift.restaurant_service.payload.request.employee.PasswordChangeRequest;
 import com.dineswift.restaurant_service.payload.request.employee.RoleRequest;
@@ -37,7 +37,7 @@ public class EmployeeService {
     private final RestaurantRepository restaurantRepository;
 
 
-    public EmployeeDTO createEmployee(EmployeeCreateRequest employeeCreateRequest) {
+    public EmployeeDto createEmployee(EmployeeCreateRequest employeeCreateRequest) {
 
         verifyUser(employeeCreateRequest);
 
@@ -64,7 +64,7 @@ public class EmployeeService {
         }
     }
 
-    public EmployeeDTO getEmployee(UUID employeeId) {
+    public EmployeeDto getEmployee(UUID employeeId) {
         Employee employee=employeeRepository.findByIdAndIsActive(employeeId).orElseThrow(() -> new EmployeeException("Employee not found"));
         return employeeMapper.toDTO(employee);
     }
@@ -140,7 +140,7 @@ public class EmployeeService {
         return employee.getEmployeeName();
     }
 
-    public EmployeeDTO removeRolesFromEmployee(UUID employeeId, RoleRequest roleRemovalRequest) {
+    public EmployeeDto removeRolesFromEmployee(UUID employeeId, RoleRequest roleRemovalRequest) {
         if (employeeId == null || roleRemovalRequest == null || roleRemovalRequest.getRoleIds().isEmpty()) {
             throw new EmployeeException("Invalid request to remove roles from employee");
         }
@@ -163,7 +163,7 @@ public class EmployeeService {
     }
 
 
-    public EmployeeDTO addRolesToEmployee(UUID employeeId, RoleRequest roleAddRequest) {
+    public EmployeeDto addRolesToEmployee(UUID employeeId, RoleRequest roleAddRequest) {
         if (employeeId==null || roleAddRequest==null || roleAddRequest.getRoleIds().isEmpty()){
             throw new EmployeeException("Invalid request to add roles to employee");
         }

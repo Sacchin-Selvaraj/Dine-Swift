@@ -1,5 +1,6 @@
 package com.dineswift.restaurant_service.payload.response.tableBooking;
 
+import com.dineswift.restaurant_service.model.BookingStatus;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -18,5 +19,6 @@ public class PaymentCreateResponse {
     private String description;
     private String email;
     private UUID tableBookingId;
+    private BookingStatus bookingStatus;
 
 }

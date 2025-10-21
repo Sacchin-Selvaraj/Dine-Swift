@@ -8,8 +8,8 @@ import com.dineswift.restaurant_service.model.Employee;
 import com.dineswift.restaurant_service.model.Restaurant;
 import com.dineswift.restaurant_service.model.RestaurantImage;
 import com.dineswift.restaurant_service.model.RestaurantStatus;
-import com.dineswift.restaurant_service.payload.dto.RestaurantDTO;
-import com.dineswift.restaurant_service.payload.dto.RestaurantImageDTO;
+import com.dineswift.restaurant_service.payload.dto.RestaurantDto;
+import com.dineswift.restaurant_service.payload.dto.RestaurantImageDto;
 import com.dineswift.restaurant_service.payload.request.restaurant.RestaurantCreateRequest;
 import com.dineswift.restaurant_service.payload.request.restaurant.RestaurantUpdateRequest;
 import com.dineswift.restaurant_service.repository.EmployeeRepository;
@@ -65,7 +65,7 @@ public class RestaurantService {
         employeeRepository.save(employee);
     }
 
-    public Page<RestaurantDTO> getRestaurants(int page, int size, String restaurantStatus, String sortDir,String sortBy,
+    public Page<RestaurantDto> getRestaurants(int page, int size, String restaurantStatus, String sortDir, String sortBy,
                                               String area, String city, String district, String state, String country,
                                               String restaurantName, LocalTime openingTime, LocalTime closingTime) {
         try {
@@ -101,7 +101,7 @@ public class RestaurantService {
         }
     }
 
-    public RestaurantDTO editRestaurantDetails(UUID restaurantId, @Valid RestaurantUpdateRequest restaurantUpdateRequest) {
+    public RestaurantDto editRestaurantDetails(UUID restaurantId, @Valid RestaurantUpdateRequest restaurantUpdateRequest) {
         if (restaurantId == null || restaurantUpdateRequest == null) {
             throw new RestaurantException("Invalid Restaurant Update data");
         }
@@ -188,7 +188,7 @@ public class RestaurantService {
 
     }
 
-    public List<RestaurantImageDTO> getRestaurantImages(UUID restaurantId) {
+    public List<RestaurantImageDto> getRestaurantImages(UUID restaurantId) {
         if (restaurantId == null) {
             throw new RestaurantException("Invalid Restaurant Id");
         }

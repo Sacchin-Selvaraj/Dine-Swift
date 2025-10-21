@@ -1,10 +1,12 @@
 package com.dineswift.restaurant_service.service;
 
 import com.dineswift.restaurant_service.exception.TableBookingException;
+import com.dineswift.restaurant_service.mapper.TableBookingMapper;
 import com.dineswift.restaurant_service.model.*;
 import com.dineswift.restaurant_service.payload.request.tableBooking.BookingRequest;
 import com.dineswift.restaurant_service.payload.request.tableBooking.CancellationDetails;
 import com.dineswift.restaurant_service.payload.response.tableBooking.PaymentCreateResponse;
+import com.dineswift.restaurant_service.payload.response.tableBooking.TableBookingDto;
 import com.dineswift.restaurant_service.payment.service.PaymentService;
 import com.dineswift.restaurant_service.repository.OrderItemRepository;
 import com.dineswift.restaurant_service.repository.TableBookingRepository;
@@ -30,6 +32,7 @@ public class TableBookingService {
     private final TableRepository tableRepository;
     private final OrderItemRepository orderItemRepository;
     private final PaymentService paymentService;
+    private final TableBookingMapper tableBookingMapper;
 
 
     public PaymentCreateResponse createOrder(UUID cartId, BookingRequest bookingRequest) {
@@ -177,5 +180,16 @@ public class TableBookingService {
     }
 
     private void checkIsPaymentDone(TableBooking existingBooking) {
+    }
+
+
+    public TableBookingDto viewBooking(UUID tableBookingId) {
+        log.info("Viewing booking with ID: {}", tableBookingId);
+        TableBooking existingBooking = tableBookingRepository.findByIdAndIsActive(tableBookingId)
+                .orElseThrow(() -> new TableBookingException("Booking not found with ID: " + tableBookingId));
+
+        TableBookingDto bookingDto = tableBookingMapper.toDto(existingBooking);
+        log.info("Fetched booking details successfully for ID: {}", tableBookingId);
+        return bookingDto;
     }
 }

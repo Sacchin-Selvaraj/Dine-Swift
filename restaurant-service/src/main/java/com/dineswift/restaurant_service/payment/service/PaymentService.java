@@ -1,5 +1,6 @@
 package com.dineswift.restaurant_service.payment.service;
 
+import com.dineswift.restaurant_service.exception.BookingException;
 import com.dineswift.restaurant_service.exception.PaymentException;
 import com.dineswift.restaurant_service.model.*;
 import com.dineswift.restaurant_service.payload.response.tableBooking.PaymentCreateResponse;
@@ -58,6 +59,7 @@ public class PaymentService {
                 .description("Payment for table booking ID: " + newBooking.getTableBookingId())
                 .email(contactEmail)
                 .tableBookingId(newBooking.getTableBookingId())
+                .bookingStatus(newBooking.getBookingStatus())
                 .currency("INR")
                 .build();
     }
@@ -237,9 +239,11 @@ public class PaymentService {
         if (!existingBooking.getIsUpfrontPaid()){
             log.info("Generating upfront payment link for bookingId: {}", tableBookingId);
             paymentResponse = initiatePayment(existingBooking,"Upfront Payment",existingBooking.getUpfrontAmount());
-        }else {
+        }else if (!existingBooking.getIsPendingAmountPaid()) {
             log.info("Generating final payment link for bookingId: {}", tableBookingId);
             paymentResponse = initiatePayment(existingBooking,"Pending Payment",existingBooking.getPendingAmount());
+        } else {
+            throw new BookingException("All payments are already completed for booking ID: " + tableBookingId);
         }
 
         log.info("Pay-now link generated successfully for bookingId: {}", tableBookingId);

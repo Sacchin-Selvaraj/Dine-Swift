@@ -1,6 +1,6 @@
 package com.dineswift.restaurant_service.controller;
 
-import com.dineswift.restaurant_service.payload.dto.RestaurantDTO;
+import com.dineswift.restaurant_service.payload.dto.RestaurantDto;
 import com.dineswift.restaurant_service.payload.request.restaurant.RestaurantCreateRequest;
 import com.dineswift.restaurant_service.payload.request.restaurant.RestaurantUpdateRequest;
 import com.dineswift.restaurant_service.service.RestaurantService;
@@ -31,13 +31,13 @@ public class RestaurantController {
     }
 
     @PatchMapping("/edit-details/{restaurantId}")
-    public ResponseEntity<RestaurantDTO> editRestaurantDetails(@PathVariable UUID restaurantId, @Valid @RequestBody RestaurantUpdateRequest restaurantUpdateRequest) {
-        RestaurantDTO updatedRestaurant = restaurantService.editRestaurantDetails(restaurantId, restaurantUpdateRequest);
+    public ResponseEntity<RestaurantDto> editRestaurantDetails(@PathVariable UUID restaurantId, @Valid @RequestBody RestaurantUpdateRequest restaurantUpdateRequest) {
+        RestaurantDto updatedRestaurant = restaurantService.editRestaurantDetails(restaurantId, restaurantUpdateRequest);
         return ResponseEntity.ok(updatedRestaurant);
     }
 
     @GetMapping("/get-restaurants")
-    public ResponseEntity<Page<RestaurantDTO>> getRestaurants(
+    public ResponseEntity<Page<RestaurantDto>> getRestaurants(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "asc") String sortDir,
@@ -52,7 +52,7 @@ public class RestaurantController {
             @RequestParam(required = false)LocalTime openingTime,
             @RequestParam(required = false)LocalTime closingTime
             ) {
-        Page<RestaurantDTO> restaurants = restaurantService.getRestaurants(page, size, restaurantStatus, sortDir,sortBy, area, city, district, state, country, restaurantName, openingTime, closingTime);
+        Page<RestaurantDto> restaurants = restaurantService.getRestaurants(page, size, restaurantStatus, sortDir,sortBy, area, city, district, state, country, restaurantName, openingTime, closingTime);
         return ResponseEntity.ok(restaurants);
     }
 
