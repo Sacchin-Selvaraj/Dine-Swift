@@ -35,7 +35,7 @@ public class TableBookingService {
     private final TableBookingMapper tableBookingMapper;
 
 
-    public PaymentCreateResponse createOrder(UUID cartId, BookingRequest bookingRequest) {
+    public TableBookingDto createOrder(UUID cartId, BookingRequest bookingRequest) {
 
         log.info("Creating order for cartId: {}", cartId);
         UUID tableId = bookingRequest.getTableId();
@@ -53,10 +53,7 @@ public class TableBookingService {
         log.info("Slot available. Proceeding with booking for cartId: {}", cartId);
         TableBooking newBooking = bookTable(bookingRequest, bookingTable, orderItems);
 
-        log.info("Initiating payment for booking ID: {}", newBooking.getTableBookingId());
-        PaymentCreateResponse paymentResponse = paymentService.initiatePayment(newBooking,"Upfront Payment",newBooking.getUpfrontAmount());
-        log.info("Payment initiated successfully for booking ID: {}", newBooking.getTableBookingId());
-        return paymentResponse;
+        return tableBookingMapper.toDto(newBooking,orderItems);
     }
 
     private TableBooking bookTable(BookingRequest bookingRequest, RestaurantTable bookingTable, List<OrderItem> orderItems) {

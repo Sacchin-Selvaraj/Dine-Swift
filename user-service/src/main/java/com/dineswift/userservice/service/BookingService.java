@@ -2,11 +2,10 @@ package com.dineswift.userservice.service;
 
 import com.dineswift.userservice.exception.CartException;
 import com.dineswift.userservice.model.entites.Booking;
-import com.dineswift.userservice.model.entites.BookingStatus;
 import com.dineswift.userservice.model.entites.User;
 import com.dineswift.userservice.model.request.BookingRequest;
 import com.dineswift.userservice.model.response.PaymentCreateResponse;
-import com.dineswift.userservice.model.response.TableBookingDto;
+import com.dineswift.userservice.model.response.booking.TableBookingDto;
 import com.dineswift.userservice.repository.BookingRepository;
 import com.dineswift.userservice.repository.CartRepository;
 import com.dineswift.userservice.repository.UserRepository;
@@ -18,7 +17,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
-import javax.smartcardio.CardException;
 import java.util.UUID;
 
 @Service
@@ -33,24 +31,24 @@ public class BookingService {
     private final RestClient restClient;
 
 
-    public PaymentCreateResponse bookTable(UUID cartId, BookingRequest bookingRequest) {
+    public TableBookingDto bookTable(UUID cartId, BookingRequest bookingRequest) {
         log.info("Processing booking for cartId: {}", cartId);
         boolean isValidCart=cartRepository.existsByIdAndIsActive(cartId);
         if (!isValidCart)
             throw new CartException("Invalid or inactive cart ID: " + cartId);
 
-        PaymentCreateResponse paymentCreateResponse = createPaymentResponse(cartId, bookingRequest);
+        TableBookingDto tableBookingDto = createBookingResponse(cartId, bookingRequest);
         log.info("Booking processed successfully for cartId: {}", cartId);
-        createBookingRecord(cartId, bookingRequest, paymentCreateResponse);
-        return paymentCreateResponse;
+        createBookingRecord(cartId, bookingRequest, tableBookingDto);
+        return tableBookingDto;
     }
 
-    private void createBookingRecord(UUID cartId, BookingRequest bookingRequest, PaymentCreateResponse paymentCreateResponse) {
+    private void createBookingRecord(UUID cartId, BookingRequest bookingRequest, TableBookingDto tableBookingDto) {
         log.info("Creating booking record for cartId: {}", cartId);
         Booking newBooking = new Booking();
-        newBooking.setTableBookingId(paymentCreateResponse.getTableBookingId());
+        newBooking.setTableBookingId(tableBookingDto.getTableBookingId());
         newBooking.setBookingDate(bookingRequest.getBookingDate());
-        newBooking.setBookingStatus(paymentCreateResponse.getBookingStatus());
+        newBooking.setBookingStatus(tableBookingDto.getBookingStatus());
 
         // need to get the user from the authentication context in real scenario
 
@@ -60,33 +58,38 @@ public class BookingService {
         log.info("Booking record created successfully with ID: {}", newBooking.getBookingId());
     }
 
-    private PaymentCreateResponse createPaymentResponse(UUID cartId, BookingRequest bookingRequest) {
+    private TableBookingDto createBookingResponse(UUID cartId, BookingRequest bookingRequest) {
         log.info("Sending Booking Request to Restaurant Service for cartId: {}", cartId);
 
-        PaymentCreateResponse paymentCreateResponse = restClient.post()
+        TableBookingDto tableBookingDto = restClient.post()
                 .uri("/table-booking/create-order/{cartId}",cartId)
                 .body(bookingRequest)
                 .contentType(MediaType.APPLICATION_JSON)
                 .retrieve()
-                .body(PaymentCreateResponse.class);
-        log.info("Received PaymentCreateResponse from Restaurant Service for cartId: {}", cartId);
-        return paymentCreateResponse;
+                .body(TableBookingDto.class);
+        log.info("Received tableBookingDto from Restaurant Service for cartId: {}", cartId);
+        return tableBookingDto;
     }
 
 
-    public PaymentCreateResponse generatePayNow(UUID bookingId) {
+    public PaymentCreateResponse generateBill(UUID bookingId) {
         log.info("Generating pay-now link for bookingId: {}", bookingId);
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new CartException("Booking not found with ID: " + bookingId));
 
+        log.info("Fetching pay-now link from Restaurant Service for bookingId: {}", bookingId);
+        return getPaymentCreateResponse(booking.getTableBookingId());
+
+    }
+
+    public PaymentCreateResponse getPaymentCreateResponse(UUID tableBookingId) {
         ResponseEntity<PaymentCreateResponse> responseEntity = restClient.post()
-                .uri("/payments/pay-now/{tableBookingId}", booking.getTableBookingId())
+                .uri("/payments/pay-now/{tableBookingId}", tableBookingId)
                 .retrieve()
                 .toEntity(PaymentCreateResponse.class);
 
-        log.info("Pay-now link generated successfully for bookingId: {}", bookingId);
+        log.info("Pay-now link generated successfully for bookingId: {}", tableBookingId);
         return responseEntity.getBody();
-
     }
 
     public TableBookingDto viewTableBooking(UUID bookingId) {

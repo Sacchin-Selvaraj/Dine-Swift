@@ -2,7 +2,7 @@ package com.dineswift.userservice.controller;
 
 import com.dineswift.userservice.model.request.BookingRequest;
 import com.dineswift.userservice.model.response.PaymentCreateResponse;
-import com.dineswift.userservice.model.response.TableBookingDto;
+import com.dineswift.userservice.model.response.booking.TableBookingDto;
 import com.dineswift.userservice.service.BookingService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -21,17 +21,25 @@ public class BookingController {
     private final BookingService bookingService;
 
     @PostMapping("/book-table/{cartId}")
-    public ResponseEntity<PaymentCreateResponse> bookTable(@PathVariable UUID cartId,@Valid @RequestBody BookingRequest bookingRequest){
+    public ResponseEntity<TableBookingDto> bookTable(@PathVariable UUID cartId,@Valid @RequestBody BookingRequest bookingRequest){
         log.info("Received booking request for cartId: {}", cartId);
-        PaymentCreateResponse response = bookingService.bookTable(cartId, bookingRequest);
+        TableBookingDto tableBookingDto = bookingService.bookTable(cartId, bookingRequest);
         log.info("Booking successful for cartId: {}", cartId);
+        return ResponseEntity.ok(tableBookingDto);
+    }
+
+    @PostMapping("/pay-now/{tableBookingId}")
+    public ResponseEntity<PaymentCreateResponse> payNow(@PathVariable UUID tableBookingId) {
+        log.info("Received pay-now request for tableBookingId: {}", tableBookingId);
+        PaymentCreateResponse response = bookingService.getPaymentCreateResponse(tableBookingId);
+        log.info("Pay-now link generated for tableBookingId: {}", tableBookingId);
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/pay-now/{bookingId}")
-    public ResponseEntity<PaymentCreateResponse> payNow(@PathVariable UUID bookingId) {
+    @PostMapping("/pay-bill/{bookingId}")
+    public ResponseEntity<PaymentCreateResponse> payBill(@PathVariable UUID bookingId) {
         log.info("Received pay-now request for tableBookingId: {}", bookingId);
-        PaymentCreateResponse response = bookingService.generatePayNow(bookingId);
+        PaymentCreateResponse response = bookingService.generateBill(bookingId);
         log.info("Pay-now link generated for tableBookingId: {}", bookingId);
         return ResponseEntity.ok(response);
     }

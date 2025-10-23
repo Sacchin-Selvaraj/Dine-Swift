@@ -17,7 +17,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Configuration
-@EnableKafka
+//@EnableKafka
 public class KafkaConfig {
 
     @Value("${app.kafka.topic.email-verification-topic}")

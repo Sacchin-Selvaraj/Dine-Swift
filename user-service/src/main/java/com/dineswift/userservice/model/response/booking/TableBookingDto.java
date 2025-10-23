@@ -1,10 +1,8 @@
-package com.dineswift.userservice.model.response;
+package com.dineswift.userservice.model.response.booking;
 
 import com.dineswift.userservice.model.entites.BookingStatus;
 import com.dineswift.userservice.model.entites.DishStatus;
-import com.dineswift.userservice.model.response.booking.GuestInformationDto;
-import com.dineswift.userservice.model.response.booking.RestaurantDto;
-import com.dineswift.userservice.model.response.booking.RestaurantTableDto;
+import com.dineswift.userservice.model.response.restaurant_service.OrderItemDto;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -12,6 +10,7 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.List;
 import java.util.UUID;
 
 @Data
@@ -33,6 +32,7 @@ public class TableBookingDto {
     private Boolean isUpfrontPaid;
     private LocalTime actualDineInTime;
     private LocalTime actualDineOutTime;
+    private List<OrderItemDto> orderItems;
     private RestaurantTableDto restaurantTableDto;
     private RestaurantDto restaurantDto;
     private GuestInformationDto guestInformationDto;

@@ -34,4 +34,13 @@ public class OrderItemMapper {
         orderItemDto.setTotalPrice(orderItem.getTotalPrice());
         return orderItemDto;
     }
+    public OrderItemDto toDtoAfterBooking(OrderItem orderItem) {
+        OrderItemDto orderItemDto = new OrderItemDto();
+        orderItemDto.setOrderItemsId(orderItem.getOrderItemsId());
+        orderItemDto.setDish(dishMapper.toDTO(orderItem.getDish()));
+        orderItemDto.setQuantity(orderItem.getQuantity());
+        orderItemDto.setPrice(orderItem.getFrozenPrice());
+        orderItemDto.setTotalPrice(orderItem.getFrozenTotalPrice());
+        return orderItemDto;
+    }
 }

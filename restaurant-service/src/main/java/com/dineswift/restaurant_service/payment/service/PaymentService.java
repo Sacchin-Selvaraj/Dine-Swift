@@ -183,6 +183,7 @@ public class PaymentService {
             booking.setBookingStatus(BookingStatus.ORDER_COMPLETED);
 
         // remove the cart for the user as payment is completed
+        // take the CartId from orderItem and based on that delete the cart
 
         paymentRepository.save(payment);
 

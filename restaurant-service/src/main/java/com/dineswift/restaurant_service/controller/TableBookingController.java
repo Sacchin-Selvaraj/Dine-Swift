@@ -22,10 +22,10 @@ public class TableBookingController {
     private final TableBookingService tableBookingService;
 
     @PostMapping("/create-order/{cartId}")
-    public ResponseEntity<PaymentCreateResponse> bookTable(@PathVariable UUID cartId, @RequestBody BookingRequest bookingRequest){
-        PaymentCreateResponse paymentCreateResponse = tableBookingService.createOrder(cartId, bookingRequest);
+    public ResponseEntity<TableBookingDto> bookTable(@PathVariable UUID cartId, @RequestBody BookingRequest bookingRequest){
+        TableBookingDto bookingDto = tableBookingService.createOrder(cartId, bookingRequest);
         log.info("Order created successfully for cartId: {}", cartId);
-        return ResponseEntity.ok(paymentCreateResponse);
+        return ResponseEntity.ok(bookingDto);
     }
 
     @DeleteMapping("/cancel-booking/{tableBookingId}")

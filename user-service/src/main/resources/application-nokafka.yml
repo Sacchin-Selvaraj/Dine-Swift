@@ -60,6 +60,7 @@ spring:
       enabled: false
     consumer:
       enabled: false
+      group-id: user-service-group-v1
     producer:
       enabled: false
 
