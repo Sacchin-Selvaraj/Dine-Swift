@@ -11,6 +11,7 @@ import com.dineswift.restaurant_service.payload.request.tableBooking.Cancellatio
 import com.dineswift.restaurant_service.payload.request.tableBooking.QuantityUpdateRequest;
 import com.dineswift.restaurant_service.payload.response.orderItem.OrderItemDto;
 import com.dineswift.restaurant_service.payload.response.tableBooking.TableBookingDto;
+import com.dineswift.restaurant_service.payment.service.PaymentService;
 import com.dineswift.restaurant_service.repository.DishRepository;
 import com.dineswift.restaurant_service.repository.OrderItemRepository;
 import com.dineswift.restaurant_service.repository.TableBookingRepository;
@@ -21,9 +22,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
 @Service
@@ -38,6 +42,7 @@ public class TableBookingService {
     private final TableBookingMapper tableBookingMapper;
     private final OrderItemMapper orderItemMapper;
     private final DishRepository dishRepository;
+    private final PaymentService paymentService;
 
 
     public TableBookingDto createOrder(UUID cartId, BookingRequest bookingRequest) {
@@ -159,12 +164,12 @@ public class TableBookingService {
         }
     }
 
-    public void cancelBooking(UUID tableBookingId, CancellationDetails cancellationDetails) {
+    public String cancelBooking(UUID tableBookingId, CancellationDetails cancellationDetails) {
         log.info("Cancelling booking with ID: {}", tableBookingId);
         TableBooking existingBooking = tableBookingRepository.findByIdAndIsActive(tableBookingId)
                 .orElseThrow(() -> new TableBookingException("Booking not found with ID: " + tableBookingId));
         log.info("Is booking eligible for cancellation check");
-        checkIsPaymentDone(existingBooking);
+        String refundStatus = checkIsPaymentDone(existingBooking);
         existingBooking.setBookingStatus(BookingStatus.CANCELLED_BY_CUSTOMER);
         existingBooking.setDishStatus(DishStatus.CANCELLED);
         existingBooking.setIsActive(false);
@@ -182,9 +187,25 @@ public class TableBookingService {
 
         tableBookingRepository.save(existingBooking);
         log.info("Booking cancelled successfully with ID: {}", tableBookingId);
+        return "Booking cancelled successfully. " + refundStatus;
     }
 
-    private void checkIsPaymentDone(TableBooking existingBooking) {
+    private String checkIsPaymentDone(TableBooking existingBooking) {
+        LocalDateTime dineInDateTime = existingBooking.getBookingDate().atTime(existingBooking.getDineInTime());
+        LocalDateTime refundDeadLine = dineInDateTime.minusHours(24);
+        LocalDateTime currentDateTime = ZonedDateTime.now().toLocalDateTime();
+        if (currentDateTime.isBefore(refundDeadLine)){
+            if (existingBooking.getIsPendingAmountPaid()){
+                paymentService.processRefund(existingBooking);
+                return "Refund is being processed for booking ID: " + existingBooking.getTableBookingId();
+            }else {
+                log.info("No payment done yet. No refund applicable for booking ID: {}", existingBooking.getTableBookingId());
+                return "No payment done yet. No refund applicable.";
+            }
+        }else {
+            log.info("Cancellation request is on or after booking date. No refund applicable for booking ID: {}", existingBooking.getTableBookingId());
+            return "Cancellation request is on or after booking date. No refund applicable.";
+        }
     }
 
 

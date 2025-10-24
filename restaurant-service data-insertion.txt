@@ -60,3 +60,11 @@ ADD COLUMN is_pending_amount_paid BOOLEAN;
 
 ALTER TABLE bookings
 ALTER COLUMN booking_status TYPE VARCHAR(40);
+
+ALTER TABLE order_items
+ALTER COLUMN cart_id DROP NOT NULL;
+
+ALTER TABLE payment_refund
+ADD CONSTRAINT fk_table_booking
+FOREIGN KEY (table_booking_id)
+REFERENCES table_bookings (table_booking_id);

@@ -50,7 +50,7 @@ public class OrderItemController {
         return ResponseEntity.ok(orderItems);
     }
 
-    @GetMapping("get-order-items-booking/{tableBookingId}")
+    @GetMapping("/get-order-items-booking/{tableBookingId}")
     public ResponseEntity<Page<OrderItemDto>> getOrderItemsByTableBookingId(
             @PathVariable UUID tableBookingId,
             @RequestParam(value = "page") Integer pageNo,

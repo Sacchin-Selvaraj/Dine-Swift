@@ -250,4 +250,7 @@ public class PaymentService {
         log.info("Pay-now link generated successfully for bookingId: {}", tableBookingId);
         return paymentResponse;
     }
+
+    public void processRefund(TableBooking existingBooking) {
+    }
 }

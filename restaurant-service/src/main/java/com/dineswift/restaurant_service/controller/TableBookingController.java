@@ -5,6 +5,7 @@ import com.dineswift.restaurant_service.payload.request.tableBooking.AddOrderIte
 import com.dineswift.restaurant_service.payload.request.tableBooking.BookingRequest;
 import com.dineswift.restaurant_service.payload.request.tableBooking.CancellationDetails;
 import com.dineswift.restaurant_service.payload.request.tableBooking.QuantityUpdateRequest;
+import com.dineswift.restaurant_service.payload.response.MessageResponse;
 import com.dineswift.restaurant_service.payload.response.orderItem.OrderItemDto;
 import com.dineswift.restaurant_service.payload.response.tableBooking.PaymentCreateResponse;
 import com.dineswift.restaurant_service.payload.response.tableBooking.TableBookingDto;
@@ -32,10 +33,10 @@ public class TableBookingController {
     }
 
     @DeleteMapping("/cancel-booking/{tableBookingId}")
-    public ResponseEntity<Void> cancelBooking(@PathVariable UUID tableBookingId,@RequestBody CancellationDetails cancellationDetails){
-        tableBookingService.cancelBooking(tableBookingId, cancellationDetails);
+    public ResponseEntity<MessageResponse> cancelBooking(@PathVariable UUID tableBookingId, @RequestBody CancellationDetails cancellationDetails){
+        String response = tableBookingService.cancelBooking(tableBookingId, cancellationDetails);
         log.info("Booking cancelled successfully for bookingId: {}", tableBookingId);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(new MessageResponse(response));
     }
 
     @GetMapping("/view-booking/{tableBookingId}")
@@ -52,7 +53,7 @@ public class TableBookingController {
         return ResponseEntity.ok(updatedItem);
     }
 
-    @PatchMapping("/remove-order-item/{orderItemsId}")
+    @DeleteMapping("/remove-order-item/{orderItemsId}")
     public ResponseEntity<Void> removeOrderItem(@PathVariable UUID orderItemsId) {
         tableBookingService.removeOrderItem(orderItemsId);
         log.info("Removed order item successfully for orderItemId: {}", orderItemsId);

@@ -20,5 +20,6 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, UUID>, J
     @Query("SELECT r FROM Restaurant r where restaurantId=:restaurantId AND isActive=true")
     Optional<Restaurant> findByIdAndIsActive(@Param("restaurantId") UUID restaurantId);
 
+    @Query("SELECT CASE WHEN COUNT(r) > 0 THEN true ELSE false END FROM Restaurant r WHERE r.restaurantId = :restaurantId AND r.isActive = true")
     boolean existsByIdAndIsActive(UUID restaurantId);
 }
