@@ -88,8 +88,8 @@ public class DishService {
                     and(DishSpecification.hasDishMinRating(minRating)).
                     and(DishSpecification.hasDishMaxRating(maxRating)).
                     and(DishSpecification.hasDiscount(discount)).
-                    and(DishSpecification.isVeg(isVeg))
-                    .and(DishSpecification.isActive(true));
+                    and(DishSpecification.isVeg(isVeg)).
+                    and(DishSpecification.isActive(true));
 
             Page<Dish> dishes = dishRepository.findAll(spec, pageable);
 
@@ -164,5 +164,43 @@ public class DishService {
         dish.setDishStarRating(BigDecimal.valueOf(dish.getDishTotalRating()/dish.getDishTotalRatingCount()));
         dishRepository.save(dish);
         log.info("Rating added successfully for dish id: {}", dishId);
+    }
+
+    public Page<DishDTO> searchDishesByRestaurant(UUID restaurantId, Integer pageNo, Integer pageSize,
+                                                  String sortBy, String sortDir, String dishName,
+                                                  Double minPrice, Double maxPrice, Double minRating,
+                                                  Double maxRating, Double discount, Boolean isVeg) {
+        boolean restaurantExists = restaurantRepository.existsByIdAndIsActive(restaurantId);
+        if (!restaurantExists) {
+            throw new RestaurantException("Restaurant not found with id: " + restaurantId);
+        }
+
+        try {
+            Sort sort = sortDir.equalsIgnoreCase("asc")?Sort.by(sortBy).ascending():Sort.by(sortBy).descending();
+
+            Pageable pageable = PageRequest.of(pageNo,pageSize,sort);
+
+            Specification<Dish> spec = Specification.<Dish>allOf().
+                    and(DishSpecification.hasDishName(dishName)).
+                    and(DishSpecification.hasMinPrice(minPrice).
+                    and(DishSpecification.hasMaxPrice(maxPrice))).
+                    and(DishSpecification.hasDishMinRating(minRating)).
+                    and(DishSpecification.hasDishMaxRating(maxRating)).
+                    and(DishSpecification.hasDiscount(discount)).
+                    and(DishSpecification.isVeg(isVeg)).
+                    and(DishSpecification.isActive(true));
+
+            Page<Dish> dishes = dishRepository.findAllByRestaurant(spec, pageable,restaurantId);
+
+            if (dishes.getContent().isEmpty()){
+                return Page.empty();
+            }else {
+                return dishes.map(dishMapper::toDTO);
+            }
+        } catch (Exception e) {
+            throw new DishException("Dish retrieval failed: " + e.getMessage());
+        }
+
+
     }
 }

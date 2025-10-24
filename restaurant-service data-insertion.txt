@@ -57,3 +57,6 @@ ALTER COLUMN payment_method DROP NOT NULL;
 
 ALTER TABLE table_bookings
 ADD COLUMN is_pending_amount_paid BOOLEAN;
+
+ALTER TABLE bookings
+ALTER COLUMN booking_status TYPE VARCHAR(40);

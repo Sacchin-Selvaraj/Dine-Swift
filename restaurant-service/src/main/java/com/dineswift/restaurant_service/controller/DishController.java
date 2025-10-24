@@ -78,4 +78,23 @@ public class DishController {
         return ResponseEntity.ok(null);
     }
 
+    @GetMapping("/search-dish-restaurant/{restaurantId}")
+    public ResponseEntity<Page<DishDTO>> searchDishByRestaurant(
+            @PathVariable UUID restaurantId,
+            @RequestParam(value = "page") Integer pageNo,
+            @RequestParam(value = "size") Integer pageSize,
+            @RequestParam(value = "sortBy", required = false, defaultValue = "dishName") String sortBy,
+            @RequestParam(value = "sortDir", required = false, defaultValue = "asc") String sortDir,
+            @RequestParam(value = "dishName", required = false) String dishName,
+            @RequestParam(value = "minPrice", required = false) Double minPrice,
+            @RequestParam(value = "maxPrice", required = false) Double maxPrice,
+            @RequestParam(value = "minRating", required = false) Double minRating,
+            @RequestParam(value = "maxRating", required = false) Double maxRating,
+            @RequestParam(value = "discount", required = false) Double discount,
+            @RequestParam(value = "isVeg", required = false) Boolean isVeg
+    ){
+        Page<DishDTO> dishDTOS = dishService.searchDishesByRestaurant(restaurantId,pageNo, pageSize, sortBy, sortDir, dishName, minPrice, maxPrice, minRating, maxRating, discount, isVeg);
+        return ResponseEntity.ok(dishDTOS);
+    }
+
 }

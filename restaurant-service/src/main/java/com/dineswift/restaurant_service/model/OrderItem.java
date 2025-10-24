@@ -57,11 +57,11 @@ public class OrderItem {
     @Column(name = "cart_id", nullable = false)
     private UUID cartId;
 
-    @OneToOne(fetch = FetchType.LAZY)
+    @OneToOne(fetch = FetchType.LAZY,cascade = {CascadeType.PERSIST,CascadeType.MERGE})
     @JoinColumn(name = "dish_id", nullable = false)
     private Dish dish;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY,cascade = {CascadeType.PERSIST,CascadeType.MERGE})
     @JoinColumn(name = "table_booking_id")
     @JsonIgnore
     private TableBooking tableBooking;
