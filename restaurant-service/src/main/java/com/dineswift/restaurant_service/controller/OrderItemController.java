@@ -4,6 +4,7 @@ import com.dineswift.restaurant_service.payload.response.orderItem.OrderItemDto;
 import com.dineswift.restaurant_service.service.OrderService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -46,6 +47,17 @@ public class OrderItemController {
     public ResponseEntity<List<OrderItemDto>> getOrderItemsByCartId(@PathVariable UUID cartId) {
         log.info("Fetching order items for cartId={}", cartId);
         List<OrderItemDto> orderItems = orderService.getOrderItemsByCartId(cartId);
+        return ResponseEntity.ok(orderItems);
+    }
+
+    @GetMapping("get-order-items-booking/{tableBookingId}")
+    public ResponseEntity<Page<OrderItemDto>> getOrderItemsByTableBookingId(
+            @PathVariable UUID tableBookingId,
+            @RequestParam(value = "page") Integer pageNo,
+            @RequestParam(value = "size") Integer pageSize
+    ) {
+        log.info("Fetching order items for tableBookingId={}", tableBookingId);
+        Page<OrderItemDto> orderItems = orderService.getOrderItemsByTableBookingId(tableBookingId, pageNo, pageSize);
         return ResponseEntity.ok(orderItems);
     }
 }

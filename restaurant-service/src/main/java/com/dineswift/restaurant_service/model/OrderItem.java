@@ -53,8 +53,7 @@ public class OrderItem {
     @JoinColumn(name = "restaurant_id")
     private Restaurant restaurant;
 
-    @NotNull(message = "Cart is required")
-    @Column(name = "cart_id", nullable = false)
+    @Column(name = "cart_id")
     private UUID cartId;
 
     @OneToOne(fetch = FetchType.LAZY,cascade = {CascadeType.PERSIST,CascadeType.MERGE})

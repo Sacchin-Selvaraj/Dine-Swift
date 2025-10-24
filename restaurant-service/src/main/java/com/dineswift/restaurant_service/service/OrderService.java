@@ -13,6 +13,9 @@ import com.dineswift.restaurant_service.repository.OrderItemRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
@@ -40,20 +43,9 @@ public class OrderService {
 
         Dish dish = dishRepository.findByIdAndIsActive(dishId).orElseThrow(() -> new DishException("Dish not found or inactive"));
         log.info("Dish found: {}", dish.getDishName());
-        CartAmountUpdateRequest amountUpdateRequest = new CartAmountUpdateRequest();
-        amountUpdateRequest.setRemoved(false);
-        BigDecimal finalDishPrice = dish.getDishPrice().subtract(
-                dish.getDishPrice()
-                        .multiply(dish.getDiscount())
-                        .divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP)
-        );
+        CartAmountUpdateRequest amountUpdateRequest = getCartAmountUpdateRequest(quantity, dish);
 
-        finalDishPrice = finalDishPrice.setScale(2, RoundingMode.HALF_UP);
-        BigDecimal finalTotalPrice = finalDishPrice.multiply(BigDecimal.valueOf(quantity))
-                .setScale(2, RoundingMode.HALF_UP);
-
-        amountUpdateRequest.setTotalDishPrice(finalTotalPrice);
-
+        log.info("API Call to User-Service to update the cart total amount");
         updateCartTotalAmount(cartId, amountUpdateRequest);
 
         OrderItem existingOrderItem = orderItemRepository.findByCartIdAndDish(cartId, dish).orElse(null);
@@ -69,6 +61,24 @@ public class OrderService {
         OrderItem updatedOrderItem = orderItemMapper.toEntity(cartId, dish, quantity);
         log.info("OrderItem created: {}", updatedOrderItem);
         orderItemRepository.save(updatedOrderItem);
+    }
+
+    private static CartAmountUpdateRequest getCartAmountUpdateRequest(Integer quantity, Dish dish) {
+        log.info("Calculating the total price and sending to user service to update the cart total amount");
+        CartAmountUpdateRequest amountUpdateRequest = new CartAmountUpdateRequest();
+        amountUpdateRequest.setRemoved(false);
+        BigDecimal finalDishPrice = dish.getDishPrice().subtract(
+                dish.getDishPrice()
+                        .multiply(dish.getDiscount())
+                        .divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP)
+        );
+
+        finalDishPrice = finalDishPrice.setScale(2, RoundingMode.HALF_UP);
+        BigDecimal finalTotalPrice = finalDishPrice.multiply(BigDecimal.valueOf(quantity))
+                .setScale(2, RoundingMode.HALF_UP);
+
+        amountUpdateRequest.setTotalDishPrice(finalTotalPrice);
+        return amountUpdateRequest;
     }
 
 
@@ -160,4 +170,17 @@ public class OrderService {
         return amountUpdateRequest;
     }
 
+    public Page<OrderItemDto> getOrderItemsByTableBookingId(UUID tableBookingId, Integer pageNo, Integer pageSize) {
+        log.info("Fetching order items for tableBookingId: {}", tableBookingId);
+        Pageable pageable = PageRequest.of(pageNo, pageSize);
+        Page<OrderItem> orderItemsPage = orderItemRepository.findAllByTableBookingId(tableBookingId, pageable);
+        if (orderItemsPage.isEmpty()) {
+            log.error("No order items found for tableBookingId: {}", tableBookingId);
+            throw new OrderItemException("No order items found for the given table booking ID");
+        }
+        Page<OrderItemDto> orderItemDtos = orderItemsPage.map(orderItemMapper::toDtoAfterBooking);
+        log.info("Order items fetched for tableBookingId {}: {}", tableBookingId, orderItemDtos);
+        return orderItemDtos;
+
+    }
 }

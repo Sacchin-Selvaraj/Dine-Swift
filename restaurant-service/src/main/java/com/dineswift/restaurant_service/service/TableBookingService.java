@@ -1,13 +1,17 @@
 package com.dineswift.restaurant_service.service;
 
+import com.dineswift.restaurant_service.exception.DishException;
 import com.dineswift.restaurant_service.exception.TableBookingException;
+import com.dineswift.restaurant_service.mapper.OrderItemMapper;
 import com.dineswift.restaurant_service.mapper.TableBookingMapper;
 import com.dineswift.restaurant_service.model.*;
+import com.dineswift.restaurant_service.payload.request.tableBooking.AddOrderItemRequest;
 import com.dineswift.restaurant_service.payload.request.tableBooking.BookingRequest;
 import com.dineswift.restaurant_service.payload.request.tableBooking.CancellationDetails;
-import com.dineswift.restaurant_service.payload.response.tableBooking.PaymentCreateResponse;
+import com.dineswift.restaurant_service.payload.request.tableBooking.QuantityUpdateRequest;
+import com.dineswift.restaurant_service.payload.response.orderItem.OrderItemDto;
 import com.dineswift.restaurant_service.payload.response.tableBooking.TableBookingDto;
-import com.dineswift.restaurant_service.payment.service.PaymentService;
+import com.dineswift.restaurant_service.repository.DishRepository;
 import com.dineswift.restaurant_service.repository.OrderItemRepository;
 import com.dineswift.restaurant_service.repository.TableBookingRepository;
 import com.dineswift.restaurant_service.repository.TableRepository;
@@ -31,8 +35,9 @@ public class TableBookingService {
     private final TableBookingRepository tableBookingRepository;
     private final TableRepository tableRepository;
     private final OrderItemRepository orderItemRepository;
-    private final PaymentService paymentService;
     private final TableBookingMapper tableBookingMapper;
+    private final OrderItemMapper orderItemMapper;
+    private final DishRepository dishRepository;
 
 
     public TableBookingDto createOrder(UUID cartId, BookingRequest bookingRequest) {
@@ -52,6 +57,9 @@ public class TableBookingService {
 
         log.info("Slot available. Proceeding with booking for cartId: {}", cartId);
         TableBooking newBooking = bookTable(bookingRequest, bookingTable, orderItems);
+
+        log.info("Set table booking to order items so that they are linked");
+        orderItems.forEach(item -> item.setTableBooking(newBooking));
 
         return tableBookingMapper.toDto(newBooking,orderItems);
     }
@@ -188,5 +196,90 @@ public class TableBookingService {
         TableBookingDto bookingDto = tableBookingMapper.toDto(existingBooking);
         log.info("Fetched booking details successfully for ID: {}", tableBookingId);
         return bookingDto;
+    }
+
+    public OrderItemDto updateOrderItem(UUID orderItemsId, QuantityUpdateRequest quantityUpdateRequest) {
+        log.info("Updating order item with ID: {}", orderItemsId);
+        OrderItem existingItem = orderItemRepository.findById(orderItemsId)
+                .orElseThrow(() -> new TableBookingException("Order item not found with ID: " + orderItemsId));
+
+        if (existingItem.getTableBooking().getDishStatus().equals(DishStatus.PREPARING) ||
+                existingItem.getTableBooking().getDishStatus().equals(DishStatus.PREPARED)) {
+            throw new TableBookingException("Cannot update item as the dish is already being prepared or preparing.");
+        }
+
+       int newQuantity = quantityUpdateRequest.getNewQuantity() - existingItem.getQuantity();
+       if (newQuantity<0) {
+            BigDecimal priceChange = existingItem.getFrozenPrice().multiply(BigDecimal.valueOf(Math.abs(newQuantity)));
+            BigDecimal newTotalPrice = existingItem.getFrozenTotalPrice().subtract(priceChange);
+            TableBooking tableBooking = existingItem.getTableBooking();
+            tableBooking.setGrandTotal(tableBooking.getGrandTotal().subtract(priceChange));
+            tableBooking.setPendingAmount(tableBooking.getPendingAmount().subtract(priceChange));
+            existingItem.setFrozenTotalPrice(newTotalPrice);
+       }else {
+           BigDecimal additionalTotalPrice = existingItem.getFrozenPrice().multiply(BigDecimal.valueOf(newQuantity));
+           BigDecimal newTotalPrice = existingItem.getFrozenTotalPrice().add(additionalTotalPrice);
+           TableBooking tableBooking = existingItem.getTableBooking();
+           tableBooking.setGrandTotal(tableBooking.getGrandTotal().add(additionalTotalPrice));
+           tableBooking.setPendingAmount(tableBooking.getPendingAmount().add(additionalTotalPrice));
+           existingItem.setFrozenTotalPrice(newTotalPrice);
+       }
+
+       log.info("Updating quantity from {} to {}", existingItem.getQuantity(), quantityUpdateRequest.getNewQuantity());
+       existingItem.setQuantity(quantityUpdateRequest.getNewQuantity());
+       orderItemRepository.save(existingItem);
+       return orderItemMapper.toDtoAfterBooking(existingItem);
+    }
+
+    public void removeOrderItem(UUID orderItemsId) {
+        log.info("Removing order item with ID: {}", orderItemsId);
+        OrderItem existingItem = orderItemRepository.findById(orderItemsId)
+                .orElseThrow(() -> new TableBookingException("Order item not found with ID: " + orderItemsId));
+
+        if (existingItem.getTableBooking().getDishStatus().equals(DishStatus.PREPARING) ||
+                existingItem.getTableBooking().getDishStatus().equals(DishStatus.PREPARED)) {
+            throw new TableBookingException("Cannot remove item as the dish is already being prepared or preparing.");
+        }
+
+        TableBooking tableBooking = existingItem.getTableBooking();
+        tableBooking.setGrandTotal(tableBooking.getGrandTotal().subtract(existingItem.getFrozenTotalPrice()));
+        tableBooking.setPendingAmount(tableBooking.getPendingAmount().subtract(existingItem.getFrozenTotalPrice()));
+
+        tableBookingRepository.save(tableBooking);
+        orderItemRepository.delete(existingItem);
+        log.info("Order item removed successfully with ID: {}", orderItemsId);
+    }
+
+    public OrderItemDto addOrderItem(UUID tableBookingId, AddOrderItemRequest addOrderItemRequest) {
+        log.info("Adding order item to booking with ID: {}", tableBookingId);
+        TableBooking existingBooking = tableBookingRepository.findByIdAndIsActive(tableBookingId)
+                .orElseThrow(() -> new TableBookingException("Booking not found with ID: " + tableBookingId));
+
+        if (existingBooking.getDishStatus().equals(DishStatus.PREPARING) ||
+                existingBooking.getDishStatus().equals(DishStatus.PREPARED)) {
+            throw new TableBookingException("Cannot add item as the dish is already being prepared or preparing. you can order from the restaurant separately.");
+        }
+        Dish dish = dishRepository.findByIdAndIsActive(addOrderItemRequest.getDishId()).orElseThrow(()->new DishException("Dish not found with ID: "+addOrderItemRequest.getDishId()));
+
+        OrderItem newOrderItem = createNewOrderItem(existingBooking, dish, addOrderItemRequest.getQuantity());
+
+        existingBooking.setGrandTotal(existingBooking.getGrandTotal().add(newOrderItem.getFrozenTotalPrice()));
+        existingBooking.setPendingAmount(existingBooking.getPendingAmount().add(newOrderItem.getFrozenTotalPrice()));
+
+        OrderItem savedItem = orderItemRepository.save(newOrderItem);
+        log.info("Order item added successfully to booking ID: {}", tableBookingId);
+        return orderItemMapper.toDtoAfterBooking(savedItem);
+    }
+
+    private OrderItem createNewOrderItem(TableBooking existingBooking, Dish dish, Integer quantity) {
+        log.info("Creating new order item for dish ID: {} with quantity: {}", dish.getDishId(), quantity);
+        OrderItem newOrderItem = new OrderItem();
+        newOrderItem.setDish(dish);
+        newOrderItem.setQuantity(quantity);
+        newOrderItem.setBooked(true);
+        newOrderItem.setRestaurant(existingBooking.getRestaurant());
+        newOrderItem.setTableBooking(existingBooking);
+        newOrderItem.setFrozenValues();
+        return newOrderItem;
     }
 }

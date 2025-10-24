@@ -1,8 +1,11 @@
 package com.dineswift.restaurant_service.controller;
 
 
+import com.dineswift.restaurant_service.payload.request.tableBooking.AddOrderItemRequest;
 import com.dineswift.restaurant_service.payload.request.tableBooking.BookingRequest;
 import com.dineswift.restaurant_service.payload.request.tableBooking.CancellationDetails;
+import com.dineswift.restaurant_service.payload.request.tableBooking.QuantityUpdateRequest;
+import com.dineswift.restaurant_service.payload.response.orderItem.OrderItemDto;
 import com.dineswift.restaurant_service.payload.response.tableBooking.PaymentCreateResponse;
 import com.dineswift.restaurant_service.payload.response.tableBooking.TableBookingDto;
 import com.dineswift.restaurant_service.service.TableBookingService;
@@ -40,6 +43,27 @@ public class TableBookingController {
         TableBookingDto bookingDetails = tableBookingService.viewBooking(tableBookingId);
         log.info("Fetched booking details for bookingId: {}", tableBookingId);
         return ResponseEntity.ok(bookingDetails);
+    }
+
+    @PatchMapping("/change-order-item/{orderItemsId}")
+    public ResponseEntity<OrderItemDto> updateOrderItem(@PathVariable UUID orderItemsId, @RequestBody QuantityUpdateRequest quantityUpdateRequest) {
+        OrderItemDto updatedItem = tableBookingService.updateOrderItem(orderItemsId, quantityUpdateRequest);
+        log.info("Updated order item successfully for orderItemId: {}", orderItemsId);
+        return ResponseEntity.ok(updatedItem);
+    }
+
+    @PatchMapping("/remove-order-item/{orderItemsId}")
+    public ResponseEntity<Void> removeOrderItem(@PathVariable UUID orderItemsId) {
+        tableBookingService.removeOrderItem(orderItemsId);
+        log.info("Removed order item successfully for orderItemId: {}", orderItemsId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/add-order-item/{tableBookingId}")
+    public ResponseEntity<OrderItemDto> addOrderItem(@PathVariable UUID tableBookingId, @RequestBody AddOrderItemRequest addOrderItemRequest) {
+        OrderItemDto addedItem = tableBookingService.addOrderItem(tableBookingId, addOrderItemRequest);
+        log.info("Added order item successfully for bookingId: {}", tableBookingId);
+        return ResponseEntity.ok(addedItem);
     }
 
 }
