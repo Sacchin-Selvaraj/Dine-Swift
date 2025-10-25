@@ -3,11 +3,9 @@ package com.dineswift.restaurant_service.service;
 import com.dineswift.restaurant_service.exception.EmployeeException;
 import com.dineswift.restaurant_service.exception.ImageException;
 import com.dineswift.restaurant_service.exception.RestaurantException;
+import com.dineswift.restaurant_service.geocoding.service.GeocodingService;
 import com.dineswift.restaurant_service.mapper.RestaurantMapper;
-import com.dineswift.restaurant_service.model.Employee;
-import com.dineswift.restaurant_service.model.Restaurant;
-import com.dineswift.restaurant_service.model.RestaurantImage;
-import com.dineswift.restaurant_service.model.RestaurantStatus;
+import com.dineswift.restaurant_service.model.*;
 import com.dineswift.restaurant_service.payload.dto.RestaurantDto;
 import com.dineswift.restaurant_service.payload.dto.RestaurantImageDto;
 import com.dineswift.restaurant_service.payload.request.restaurant.RestaurantCreateRequest;
@@ -46,6 +44,7 @@ public class RestaurantService {
     private final RestaurantMapper restaurantMapper;
     private final ImageService imageService;
     private final RestaurantImageRepository restaurantImageRepository;
+    private final GeocodingService geocodingService;
 
     public void createRestaurant(RestaurantCreateRequest restaurantCreateRequest, UUID employeeId) {
         if (restaurantCreateRequest==null || employeeId==null) {
@@ -59,9 +58,15 @@ public class RestaurantService {
         }
         Restaurant restaurant=restaurantMapper.toEntity(restaurantCreateRequest,employee);
 
-        // need to set latitude and longitude from address using geocoding service in future
-        employee.setRestaurant(restaurant);
+        String fullAddress=String.format("%s, %s, %s, %s", restaurantCreateRequest.getAddress(),
+                restaurantCreateRequest.getCity(),
+                restaurantCreateRequest.getState(),
+                restaurantCreateRequest.getCountry());
+        Coordinates coordinates=geocodingService.getCoordinates(fullAddress);
+        restaurant.setLatitude(coordinates.getLatitude());
+        restaurant.setLongitude(coordinates.getLongitude());
 
+        employee.setRestaurant(restaurant);
         employeeRepository.save(employee);
     }
 

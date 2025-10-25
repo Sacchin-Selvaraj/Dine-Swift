@@ -46,4 +46,9 @@ app:
       sms-verification-topic: sms
 
 
+google:
+  api:
+    key: ${GOOGLE_API_KEY}
+
+
 

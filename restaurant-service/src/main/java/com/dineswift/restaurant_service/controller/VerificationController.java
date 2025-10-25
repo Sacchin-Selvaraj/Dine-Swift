@@ -1,9 +1,8 @@
 package com.dineswift.restaurant_service.controller;
 
 
-import com.dineswift.restaurant_service.payload.request.employee.EmailUpdateRequest;
-import com.dineswift.restaurant_service.payload.request.employee.PhoneNumberUpdateRequest;
-import com.dineswift.restaurant_service.payload.request.employee.VerifyTokenRequest;
+import com.dineswift.restaurant_service.payload.request.employee.*;
+import com.dineswift.restaurant_service.payload.response.MessageResponse;
 import com.dineswift.restaurant_service.service.VerificationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -42,6 +41,18 @@ public class VerificationController {
     public ResponseEntity<String> verifyPhoneNumber(@PathVariable UUID employeeId, @Valid @RequestBody VerifyTokenRequest verifyPhoneNumberRequest){
         verificationService.verifyPhoneNumber(employeeId,verifyPhoneNumberRequest);
         return ResponseEntity.ok("PhoneNumber have been updated Successfully");
+    }
+
+    @PostMapping("/forget-password/{employeeId}" )
+    public ResponseEntity<MessageResponse> forgetPassword(@PathVariable UUID employeeId, @RequestParam String typeOfVerification) {
+        String response=verificationService.forgetPassword(employeeId,typeOfVerification);
+        return ResponseEntity.ok(MessageResponse.builder().message(response).build());
+    }
+
+    @PostMapping("/verify-forget-password/{employeeId}" )
+    public ResponseEntity<MessageResponse> verifyForgetPassword(@PathVariable UUID employeeId, @Valid @RequestBody PasswordUpdateRequest passwordUpdateRequest) {
+        String response = verificationService.verifyForgetPassword(employeeId, passwordUpdateRequest);
+        return ResponseEntity.ok(MessageResponse.builder().message(response).build());
     }
 
 }

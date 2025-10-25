@@ -25,13 +25,14 @@ public class KafkaService {
     @Value("${app.kafka.topic.sms-verification-topic}")
     private String smsVerificationTopic;
 
-    public CompletableFuture<Boolean> sendEmailVerification(String toEmail, String token, String userName) {
+    public CompletableFuture<Boolean> sendEmailVerification(String toEmail, String token, String userName,String templateType) {
 
         try {
             EmailVerificationDetail message = EmailVerificationDetail.builder()
                     .email(toEmail)
                     .token(token)
                     .userName(userName)
+                    .templateType(templateType)
                     .build();
 
             CompletableFuture<SendResult<String, Object>> result = kafkaTemplate.send(emailVerificationTopic, message);

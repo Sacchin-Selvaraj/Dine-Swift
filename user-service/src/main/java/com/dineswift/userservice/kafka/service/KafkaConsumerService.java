@@ -60,14 +60,13 @@ public class KafkaConsumerService {
             log.info("Email verification sent to: {}", message.getEmail());
         } catch (Exception e) {
             log.error("Error processing email verification message: {}", e.getMessage());
-            throw new NotificationException("Failed to process email verification message: " + e.getMessage());
         }
 
     }
     @RetryableTopic(
             attempts = "4",
             backoff = @Backoff(delay = 2000, multiplier = 2),
-            dltTopicSuffix = "-verification-dlt"
+            dltTopicSuffix = "-sms-verification-dlt"
     )
     @KafkaListener(topics = "${app.kafka.topic.sms-verification-topic}", groupId = "user-service-group",
             containerFactory = "kafkaListenerContainerFactory")
@@ -88,30 +87,29 @@ public class KafkaConsumerService {
             log.info("SMS verification sent to: {}", message.getPhoneNumber());
         } catch (Exception e) {
             log.error("Error processing SMS verification message: {}", e.getMessage());
-            throw new NotificationException("Failed to process SMS verification message: " + e.getMessage());
         }
     }
-    @DltHandler
+    @KafkaListener(topics = "${app.kafka.topic.email-verification-topic}-email-verification-dlt",
+            groupId = "dlt-listener-group",
+            containerFactory = "kafkaListenerContainerFactory")
     public void dltListenerEmailVerification(@Payload EmailVerificationDetail message,
-                                             @Header(KafkaHeaders.DLT_EXCEPTION_MESSAGE) String exceptionMessage,
-                                             @Header(KafkaHeaders.ORIGINAL_TOPIC) String originalTopic,
-                                             @Header(KafkaHeaders.ORIGINAL_PARTITION) Integer originalPartition,
-                                             @Header(KafkaHeaders.ORIGINAL_OFFSET) Long originalOffset
+                                             @Header(value = KafkaHeaders.ORIGINAL_TOPIC,required = false) String originalTopic,
+                                             @Header(value = KafkaHeaders.ORIGINAL_PARTITION,required = false) Integer originalPartition,
+                                             @Header(value = KafkaHeaders.ORIGINAL_OFFSET,required = false) Long originalOffset
     ) {
         log.error("DLT reached for email verification message: {}", message);
-        log.error("Exception Message: {}", exceptionMessage);
         log.error("Original Topic: {}, Partition: {}, Offset: {}", originalTopic, originalPartition, originalOffset);
     }
 
-    @DltHandler
+    @KafkaListener(topics = "${app.kafka.topic.sms-verification-topic}-sms-verification-dlt",
+            groupId = "dlt-listener-group",
+            containerFactory = "kafkaListenerContainerFactory")
     public void dltListenerSmsVerification(@Payload SmsVerificationDetail message,
-                                           @Header(KafkaHeaders.DLT_EXCEPTION_MESSAGE) String exceptionMessage,
-                                           @Header(KafkaHeaders.ORIGINAL_TOPIC) String originalTopic,
-                                           @Header(KafkaHeaders.ORIGINAL_PARTITION) Integer originalPartition,
-                                           @Header(KafkaHeaders.ORIGINAL_OFFSET) Long originalOffset
+                                           @Header(value = KafkaHeaders.ORIGINAL_TOPIC,required = false) String originalTopic,
+                                           @Header(value = KafkaHeaders.ORIGINAL_PARTITION,required = false) Integer originalPartition,
+                                           @Header(value = KafkaHeaders.ORIGINAL_OFFSET, required = false) Long originalOffset
     ) {
         log.error("DLT reached for SMS verification message: {}", message);
-        log.error("Exception Message: {}", exceptionMessage);
         log.error("Original Topic: {}, Partition: {}, Offset: {}", originalTopic, originalPartition, originalOffset);
     }
 }
