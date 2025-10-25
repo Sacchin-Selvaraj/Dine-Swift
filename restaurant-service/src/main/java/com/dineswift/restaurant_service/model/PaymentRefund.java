@@ -50,11 +50,11 @@ public class PaymentRefund {
 
 
     @ManyToOne(fetch = FetchType.LAZY,cascade = {CascadeType.PERSIST,CascadeType.MERGE})
-    @Column(name = "payment_id", nullable = false)
+    @JoinColumn(name = "payment_id", nullable = false)
     private Payment payment;
 
     @ManyToOne(fetch = FetchType.LAZY,cascade = {CascadeType.PERSIST,CascadeType.MERGE})
-    @Column(name = "table_booking_id", nullable = false)
+    @JoinColumn(name = "table_booking_id", nullable = false)
     private TableBooking tableBooking;
 
 }

@@ -166,8 +166,12 @@ public class TableBookingService {
 
     public String cancelBooking(UUID tableBookingId, CancellationDetails cancellationDetails) {
         log.info("Cancelling booking with ID: {}", tableBookingId);
-        TableBooking existingBooking = tableBookingRepository.findByIdAndIsActive(tableBookingId)
+        TableBooking existingBooking = tableBookingRepository.findById(tableBookingId)
                 .orElseThrow(() -> new TableBookingException("Booking not found with ID: " + tableBookingId));
+
+        if (!existingBooking.getIsActive()){
+            throw new TableBookingException("Booking is already cancelled with ID: " + tableBookingId);
+        }
         log.info("Is booking eligible for cancellation check");
         String refundStatus = checkIsPaymentDone(existingBooking);
         existingBooking.setBookingStatus(BookingStatus.CANCELLED_BY_CUSTOMER);
@@ -195,7 +199,7 @@ public class TableBookingService {
         LocalDateTime refundDeadLine = dineInDateTime.minusHours(24);
         LocalDateTime currentDateTime = ZonedDateTime.now().toLocalDateTime();
         if (currentDateTime.isBefore(refundDeadLine)){
-            if (existingBooking.getIsPendingAmountPaid()){
+            if (existingBooking.getIsUpfrontPaid()){
                 paymentService.processRefund(existingBooking);
                 return "Refund is being processed for booking ID: " + existingBooking.getTableBookingId();
             }else {

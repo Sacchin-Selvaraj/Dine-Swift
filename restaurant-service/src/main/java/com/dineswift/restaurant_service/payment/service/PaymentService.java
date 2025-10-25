@@ -6,10 +6,12 @@ import com.dineswift.restaurant_service.model.*;
 import com.dineswift.restaurant_service.payload.response.tableBooking.PaymentCreateResponse;
 import com.dineswift.restaurant_service.payment.payload.request.PaymentDetails;
 import com.dineswift.restaurant_service.payment.repository.PaymentRepository;
+import com.dineswift.restaurant_service.payment.repository.PaymentRefundRepository;
 import com.dineswift.restaurant_service.repository.TableBookingRepository;
 import com.razorpay.Order;
 import com.razorpay.RazorpayClient;
 import com.razorpay.RazorpayException;
+import com.razorpay.Refund;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +23,8 @@ import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.math.BigDecimal;
 import java.security.MessageDigest;
+import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -32,6 +36,7 @@ public class PaymentService {
     private final PaymentRepository paymentRepository;
     private final TableBookingRepository tableBookingRepository;
     private final RazorpayClient razorpayClient;
+    private final PaymentRefundRepository paymentRefundRepository;
 
     @Value("${razorpay.api.secret}")
     private String secretKey;
@@ -164,28 +169,31 @@ public class PaymentService {
     }
 
     private void handleSuccessfulPayment(PaymentDetails paymentDetails, com.razorpay.Payment paymentData) {
-        log.info("Handling successful payment for orderId: {}", paymentDetails.getOrderId());
-        Payment payment = paymentRepository.findByOrderId(paymentDetails.getOrderId())
-                .orElseThrow(()-> new PaymentException("No payment found with orderId: " + paymentDetails.getOrderId()));
-        payment.setPaymentStatus(PaymentStatus.COMPLETED);
-        payment.setTransactionId(paymentDetails.getPaymentId());
 
-        log.info("Fetching payment method from paymentId: {}", paymentDetails.getPaymentId());
-        PaymentMethod paymentMethod = getPaymentMethodFromId(paymentData);
-        payment.setPaymentMethod(paymentMethod);
+            log.info("Handling successful payment for orderId: {}", paymentDetails.getOrderId());
+            Payment payment = paymentRepository.findByOrderId(paymentDetails.getOrderId())
+                    .orElseThrow(()-> new PaymentException("No payment found with orderId: " + paymentDetails.getOrderId()));
+            payment.setPaymentStatus(PaymentStatus.COMPLETED);
+            payment.setTransactionId(paymentDetails.getPaymentId());
 
-        TableBooking booking = payment.getTableBooking();
-        if (!booking.getIsUpfrontPaid()) {
-            booking.setBookingStatus(BookingStatus.PAYMENT_PENDING);
-            booking.setIsUpfrontPaid(true);
-        }
-        else
-            booking.setBookingStatus(BookingStatus.ORDER_COMPLETED);
+            log.info("Fetching payment method from paymentId: {}", paymentDetails.getPaymentId());
+            PaymentMethod paymentMethod = getPaymentMethodFromId(paymentData);
+            payment.setPaymentMethod(paymentMethod);
 
-        // remove the cart for the user as payment is completed
-        // take the CartId from orderItem and based on that delete the cart
+            TableBooking booking = payment.getTableBooking();
+            if (!booking.getIsUpfrontPaid()) {
+                booking.setBookingStatus(BookingStatus.PAYMENT_PENDING);
+                booking.setIsUpfrontPaid(true);
+            }
+            else {
+                booking.setBookingStatus(BookingStatus.ORDER_COMPLETED);
+                booking.setIsPendingAmountPaid(true);
+            }
 
-        paymentRepository.save(payment);
+            // remove the cart for the user as payment is completed
+            // take the CartId from orderItem and based on that delete the cart
+
+            paymentRepository.save(payment);
 
     }
 
@@ -252,5 +260,61 @@ public class PaymentService {
     }
 
     public void processRefund(TableBooking existingBooking) {
+        log.info("Processing refund for bookingId: {}", existingBooking.getTableBookingId());
+
+        List<Payment> existingPayments = paymentRepository.findAllByTableBooking(existingBooking);
+        if (existingPayments.isEmpty()){
+            log.warn("No payments found for bookingId: {}. Refund cannot be processed.", existingBooking.getTableBookingId());
+        }
+        for (Payment eachPayment : existingPayments){
+            if (eachPayment.getPaymentStatus() == PaymentStatus.COMPLETED && eachPayment.getTransactionId()!=null){
+                log.info("Initiating refund for paymentId: {}", eachPayment.getPaymentId());
+                initiateRefund(existingBooking,eachPayment);
+            }
+        }
+    }
+
+    private void initiateRefund(TableBooking existingBooking, Payment successfulPayment) {
+        log.info("Creating refund in Razorpay for paymentId: {}", successfulPayment.getPaymentId());
+
+        try {
+            com.razorpay.Payment razorpayPayment = razorpayClient.payments.fetch(successfulPayment.getTransactionId());
+            int amountInPaise = razorpayPayment.get("amount");
+
+            JSONObject refundRequest = new JSONObject();
+
+            refundRequest.put("amount", amountInPaise);
+            refundRequest.put("speed", "normal");
+
+            JSONObject notes = new JSONObject();
+            notes.put("booking_id", existingBooking.getTableBookingId());
+            notes.put("reason", "Customer Requested Refund");
+            refundRequest.put("notes", notes);
+
+            String paymentId = successfulPayment.getTransactionId();
+
+            Refund refund = razorpayClient.payments.refund(paymentId,notes);
+
+            log.info("Refund created in Razorpay with ID: {}", Optional.ofNullable(refund.get("id")));
+            createRefundRecord(existingBooking,successfulPayment,refund);
+        } catch (RazorpayException e) {
+            log.error("Error fetching payment details from Razorpay: " + e.getMessage());
+            throw new PaymentException("Error processing refund from Razorpay, please try again later. Error Message : " + e.getMessage());
+        }
+    }
+
+    private void createRefundRecord(TableBooking existingBooking, Payment successfulPayment, Refund refund) {
+
+        log.info("Creating refund record in database for paymentId: {}", successfulPayment.getPaymentId());
+        PaymentRefund paymentRefund = new PaymentRefund();
+        paymentRefund.setPayment(successfulPayment);
+        paymentRefund.setTableBooking(existingBooking);
+        paymentRefund.setRazorpayRefundId(refund.get("id"));
+        BigDecimal refundAmount = new BigDecimal(Optional.ofNullable(refund.get("amount")).orElse("0").toString()).divide(new BigDecimal(100));
+        paymentRefund.setRefundAmount(refundAmount);
+        paymentRefund.setRefundStatus(Optional.ofNullable(refund.get("status")).orElse("created").toString());
+        paymentRefund.setReason("Customer requested refund for table booking ID: " + existingBooking.getTableBookingId());
+        paymentRefundRepository.save(paymentRefund);
+        log.info("Refund record created successfully in database for paymentId: {}", successfulPayment.getPaymentId());
     }
 }
