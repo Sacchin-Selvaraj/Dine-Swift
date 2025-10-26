@@ -58,13 +58,13 @@ public class RestaurantService {
         }
         Restaurant restaurant=restaurantMapper.toEntity(restaurantCreateRequest,employee);
 
-        String fullAddress=String.format("%s, %s, %s, %s", restaurantCreateRequest.getAddress(),
-                restaurantCreateRequest.getCity(),
-                restaurantCreateRequest.getState(),
-                restaurantCreateRequest.getCountry());
-        Coordinates coordinates=geocodingService.getCoordinates(fullAddress);
-        restaurant.setLatitude(coordinates.getLatitude());
-        restaurant.setLongitude(coordinates.getLongitude());
+//        String fullAddress=String.format("%s, %s, %s, %s", restaurantCreateRequest.getAddress(),
+//                restaurantCreateRequest.getCity(),
+//                restaurantCreateRequest.getState(),
+//                restaurantCreateRequest.getCountry());
+//        Coordinates coordinates=geocodingService.getCoordinates(fullAddress);
+//        restaurant.setLatitude(coordinates.getLatitude());
+//        restaurant.setLongitude(coordinates.getLongitude());
 
         employee.setRestaurant(restaurant);
         employeeRepository.save(employee);

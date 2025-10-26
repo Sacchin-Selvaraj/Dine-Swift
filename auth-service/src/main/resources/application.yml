@@ -1,0 +1,6 @@
+spring:
+  project:
+    name: auth-service
+
+server:
+  port: 8090

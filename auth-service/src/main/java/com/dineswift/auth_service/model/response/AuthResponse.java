@@ -9,5 +9,5 @@ public class AuthResponse {
     private String authToken;
     private String tokenType = "Bearer";
     private long expiresIn;
-    private UserDTO user;
+
 }
