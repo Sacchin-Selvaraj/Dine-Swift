@@ -13,13 +13,13 @@ public class GatewayRouteConfig {
     public RouteLocator createCustomRouteMatcher(RouteLocatorBuilder builder){
         return builder.routes()
                 .route("path_route_user_service", r -> r.path("/user/**")
-                        .uri("http://localhost:8080"))
+                        .uri("lb://USER-SERVICE"))
                 .route("user_service_booking", r -> r.path("/booking/**")
-                        .uri("http://localhost:8080"))
+                        .uri("lb://USER-SERVICE"))
                 .route("user_service_cart", r -> r.path("/cart/**")
-                        .uri("http://localhost:8080"))
+                        .uri("lb://USER-SERVICE"))
                 .route("user_service_verification", r -> r.path("/user-verification/**")
-                        .uri("http://localhost:8080"))
+                        .uri("lb://USER-SERVICE"))
                 .build();
     }
 }
