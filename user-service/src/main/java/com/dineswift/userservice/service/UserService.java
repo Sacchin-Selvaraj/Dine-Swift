@@ -16,6 +16,7 @@ import com.dineswift.userservice.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
@@ -30,6 +31,7 @@ import java.util.*;
 @Service
 @Transactional
 @RequiredArgsConstructor
+@Slf4j
 public class UserService {
 
     private final UserRepository userRepository;
@@ -68,30 +70,32 @@ public class UserService {
 
 
     public Page<BookingDTO> getBookings(UUID userId, Integer pageNumber, Integer limit, BookingStatus bookingStatus, String sortField, String sortOrder) {
-
-        Set<String> allowedFields = Set.of("createdAt", "lastModifiedAt", "bookingStatus","tableBookingId","bookingTime");
+        log.info("Get Bookings from the UserService");
+        Set<String> allowedFields = Set.of("createdAt", "lastModifiedAt", "bookingStatus","tableBookingId","bookingDate");
 
         if (!allowedFields.contains(sortField)) {
             throw new IllegalArgumentException("Invalid sort field: " + sortField);
         }
-
+        log.info("Sorting Field: {}, Order: {}", sortField, sortOrder);
         Sort sort=sortOrder.equalsIgnoreCase("asc")?Sort.by(sortField).ascending():Sort.by(sortField).descending();
 
         Pageable pageable= PageRequest.of(pageNumber,limit,sort);
 
         Page<Booking> bookings;
         if (bookingStatus==null){
+            log.info("Fetching all bookings for user: {}", userId);
             bookings=bookingRepository.findByUser_UserId(userId,pageable);
         }else {
+            log.info("Fetching bookings for user: {} with status: {}", userId, bookingStatus);
             bookings=bookingRepository.findByUser_UserIdAndBookingStatus(userId,bookingStatus,pageable);
         }
-
+        log.info("Fetched {} bookings", bookings.getNumberOfElements());
         return bookings.map(booking -> modelMapper.map(booking,BookingDTO.class));
     }
 
     public void deactivateUser(UUID userId) {
         User user=userCommonService.findValidUser(userId);
-
+        log.info("Deactivating user with ID: {}", userId);
         user.setIsActive(false);
         userRepository.save(user);
     }

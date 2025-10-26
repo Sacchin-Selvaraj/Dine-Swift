@@ -1,0 +1,17 @@
+server:
+  port: 8090
+
+spring:
+  application:
+    name: api-auth-service
+
+  main:
+    web-application-type: reactive
+
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
+    reactor.netty.http.client: DEBUG
+
+
+

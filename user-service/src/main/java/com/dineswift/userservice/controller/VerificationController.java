@@ -15,7 +15,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 @RestController
-@RequestMapping("/user")
+@RequestMapping("/user-verification")
 public class VerificationController {
 
     private final VerificationService verificationService;

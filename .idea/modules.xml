@@ -2,6 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Api-Auth-Service.main.iml" filepath="$PROJECT_DIR$/.idea/modules/Api-Auth-Service.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/auth-service.main.iml" filepath="$PROJECT_DIR$/.idea/modules/auth-service.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/dine-swift.iml" filepath="$PROJECT_DIR$/.idea/dine-swift.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/notification-service.main.iml" filepath="$PROJECT_DIR$/.idea/modules/notification-service.main.iml" />

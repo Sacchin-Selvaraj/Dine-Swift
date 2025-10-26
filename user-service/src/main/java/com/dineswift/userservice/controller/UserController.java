@@ -43,7 +43,7 @@ public class UserController {
             @RequestParam(name = "page") Integer page,
             @RequestParam(name = "limit") Integer limit,
             @RequestParam(name = "bookingStatus",required = false) BookingStatus bookingStatus,
-            @RequestParam(name = "sortField",defaultValue = "bookingTime" ,required = false) String sortField,
+            @RequestParam(name = "sortField",defaultValue = "bookingDate" ,required = false) String sortField,
             @RequestParam(name = "sortOrder",defaultValue = "asc" ,required = false) String sortOrder
     ){
         Page<BookingDTO> bookingDTOS=userService.getBookings(userId,page,limit,bookingStatus,sortField,sortOrder);
