@@ -1,6 +1,5 @@
-package com.dineswift.userservice.model.response;
+package com.dineswift.Api_Auth.Service.payload;
 
-import com.dineswift.userservice.model.entites.Role;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 

@@ -1,7 +1,10 @@
 package com.dineswift.Api_Auth.Service.utilities;
 
 import jakarta.ws.rs.core.HttpHeaders;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cloud.gateway.filter.GatewayFilterChain;
+import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -15,9 +18,19 @@ import java.time.Instant;
 
 @Component
 @Slf4j
+@RequiredArgsConstructor
 public class GatewayJwtFilter implements WebFilter {
+
+    private final JwtUtilities jwtUtilities;
+
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
+        log.info("=== GATEWAY REQUEST ===");
+        log.info("Path: {}", exchange.getRequest().getPath());
+        log.info("Method: {}", exchange.getRequest().getMethod());
+        log.info("Headers: {}", exchange.getRequest().getHeaders());
+        log.info("URI: {}", exchange.getRequest().getURI());
+
         log.info("Get the path of the request: {}", exchange.getRequest().getURI().getPath());
         String path = exchange.getRequest().getURI().getPath();
         if (isPublicEndpoint(path)) {
@@ -30,12 +43,15 @@ public class GatewayJwtFilter implements WebFilter {
             return onAuthenticationFailure(exchange,"Invalid or expired JWT token");
         }
         log.info("JWT token is valid passing request to the next filter");
-        ServerWebExchange mutatedExchange = exchange.mutate().build();
-        return chain.filter(mutatedExchange);
+        log.info("Auth Token: {}", authToken);
+        ServerWebExchange mutatedExchange = exchange.mutate().request(builder -> builder.header("Authorization",authToken)).build();
+        log.info("Header Authorization: {}", exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION));
+        return chain.filter(exchange);
     }
 
     private boolean validateJwtToken(String authToken) {
-
+        log.info("Validating JWT token in JwtUtilities");
+        return jwtUtilities.validateJwtToken(authToken);
     }
 
     private String extractToken(ServerWebExchange exchange) {
@@ -48,8 +64,8 @@ public class GatewayJwtFilter implements WebFilter {
     }
 
     private boolean isPublicEndpoint(String path) {
-         return path.startsWith("/auth/") ||
-                path.startsWith("/public/");
+         return path.startsWith("/user/sign-up") ||
+                path.startsWith("/user/login");
     }
 
     private Mono<Void> onAuthenticationFailure(ServerWebExchange exchange, String message) {

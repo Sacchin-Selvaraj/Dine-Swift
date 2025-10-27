@@ -1,4 +1,4 @@
-package com.dineswift.Api_Auth.Service.utilities;
+package com.dineswift.userservice.security.service;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -47,7 +47,7 @@ public class JwtUtilities {
         return claims.getExpiration().after(new Date());
     }
 
-    private Claims extractClaims(String token) {
+    public Claims extractClaims(String token) {
         log.info("Extracting claims from JWT token");
         return Jwts.parser()
                 .verifyWith(generateKey())

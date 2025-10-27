@@ -12,8 +12,10 @@ public class GatewayRouteConfig {
     @Bean
     public RouteLocator createCustomRouteMatcher(RouteLocatorBuilder builder){
         return builder.routes()
-                .route("path_route_user_service", r -> r.path("/user/**")
+                .route("user_service_no_auth", r -> r.path("/user/sign-up","/user/login")
                         .uri("lb://USER-SERVICE"))
+                .route("path_route_user_service", r -> r.path("/user/**")
+                        .uri("http://localhost:8080"))
                 .route("user_service_booking", r -> r.path("/booking/**")
                         .uri("lb://USER-SERVICE"))
                 .route("user_service_cart", r -> r.path("/cart/**")

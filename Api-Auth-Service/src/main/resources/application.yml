@@ -1,6 +1,10 @@
 server:
   port: 8090
 
+dineswift:
+  user-service-url: "http://localhost:8080"
+
+
 spring:
   application:
     name: api-auth-service
@@ -10,8 +14,9 @@ spring:
 
 logging:
   level:
-    root: INFO
-    org.springframework.cloud.gateway: TRACE
+    org.springframework.cloud.gateway: DEBUG
+    org.springframework.web: DEBUG
+    reactor.netty: DEBUG
 
 
 eureka:
@@ -25,4 +30,5 @@ eureka:
 jwt:
   secret-key: ${JWT_SECRET_KEY}
   expiration-time: ${JWT_EXPIRATION_TIME}
+
 

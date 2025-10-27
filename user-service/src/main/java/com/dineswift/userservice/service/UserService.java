@@ -3,10 +3,7 @@ package com.dineswift.userservice.service;
 import com.dineswift.userservice.exception.UserException;
 import com.dineswift.userservice.mapper.UserMapper;
 import com.dineswift.userservice.model.entites.*;
-import com.dineswift.userservice.model.request.PasswordUpdateRequest;
-import com.dineswift.userservice.model.request.UserDetailsRequest;
-import com.dineswift.userservice.model.request.UserRequest;
-import com.dineswift.userservice.model.request.UsernameUpdateRequest;
+import com.dineswift.userservice.model.request.*;
 import com.dineswift.userservice.model.response.BookingDTO;
 import com.dineswift.userservice.model.response.UserDTO;
 import com.dineswift.userservice.model.response.UserResponse;
@@ -160,6 +157,18 @@ public class UserService {
 
     }
 
+    public UserResponse loginUser(@Valid LoginRequest loginRequest) {
+        User user=userRepository.findByEmail(loginRequest.getEmail()).orElseThrow(
+                ()-> new UserException("Invalid Email or Password")
+        );
+
+        if (!passwordEncoder.matches(loginRequest.getPassword(),user.getPassword())){
+            throw new UserException("Invalid Password was provided");
+        }
+
+        return userMapper.toUserResponse(user);
+    }
+
     public void updatePassword(UUID userId, PasswordUpdateRequest passwordRequest) {
 
         if (!passwordRequest.getNewPassword().equals(passwordRequest.getConfirmPassword())){
@@ -174,5 +183,4 @@ public class UserService {
 
         userRepository.save(user);
     }
-
 }

@@ -7,6 +7,7 @@ import com.dineswift.userservice.model.response.UserDTO;
 import com.dineswift.userservice.model.response.UserResponse;
 import com.dineswift.userservice.service.UserService;
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
+@Slf4j
 @RestController
 @RequestMapping("/user")
 public class UserController {
@@ -36,6 +38,12 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.CREATED).body(userResponse);
     }
 
+    @PostMapping("/login")
+    public ResponseEntity<UserResponse> loginUser(@Valid @RequestBody LoginRequest loginRequest){
+        log.info("Login request received for email: {}", loginRequest.getEmail());
+        UserResponse userResponse=userService.loginUser(loginRequest);
+        return ResponseEntity.ok(userResponse);
+    }
 
     @GetMapping("/bookings/{userId}")
     public ResponseEntity<Page<BookingDTO>> getBookings(
