@@ -2,6 +2,7 @@ package com.dineswift.Api_Auth.Service.config;
 
 import com.dineswift.Api_Auth.Service.utilities.GatewayJwtFilter;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
@@ -15,13 +16,14 @@ import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
 @Configuration
 @EnableWebFluxSecurity
 @RequiredArgsConstructor
+@Slf4j
 public class GatewaySecurityConfig {
 
     private final GatewayJwtFilter gatewayJwtFilter;
 
     @Bean
      public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity httpSecurity) {
-
+        log.info("Configuring SecurityWebFilterChain for Gateway");
         return httpSecurity
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .cors(ServerHttpSecurity.CorsSpec::disable)
@@ -31,7 +33,7 @@ public class GatewaySecurityConfig {
                         .permitAll()
                         .anyExchange()
                         .authenticated())
-                .addFilterBefore(gatewayJwtFilter, SecurityWebFiltersOrder.AUTHORIZATION)
+                .addFilterBefore(gatewayJwtFilter, SecurityWebFiltersOrder.AUTHENTICATION)
                 .build();
      }
 

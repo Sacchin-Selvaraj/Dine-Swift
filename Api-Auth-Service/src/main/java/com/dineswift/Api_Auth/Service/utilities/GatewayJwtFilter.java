@@ -1,5 +1,6 @@
 package com.dineswift.Api_Auth.Service.utilities;
 
+import io.jsonwebtoken.Claims;
 import jakarta.ws.rs.core.HttpHeaders;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -8,6 +9,9 @@ import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilter;
@@ -46,7 +50,17 @@ public class GatewayJwtFilter implements WebFilter {
         log.info("Auth Token: {}", authToken);
         ServerWebExchange mutatedExchange = exchange.mutate().request(builder -> builder.header("Authorization",authToken)).build();
         log.info("Header Authorization: {}", exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION));
-        return chain.filter(exchange);
+
+        log.info("Setting the Authentication Object in the Security Context");
+        Authentication authentication = generateAuthenticationFromToken(authToken);
+
+        return chain.filter(exchange).contextWrite(ReactiveSecurityContextHolder.withAuthentication(authentication));
+    }
+
+    private Authentication generateAuthenticationFromToken(String authToken) {
+        log.info("Generating Authentication object from JWT token");
+        String username = jwtUtilities.extractUsername(authToken);
+        return new UsernamePasswordAuthenticationToken(username,null,null);
     }
 
     private boolean validateJwtToken(String authToken) {

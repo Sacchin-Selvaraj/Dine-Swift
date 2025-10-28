@@ -1,5 +1,6 @@
 package com.dineswift.Api_Auth.Service.config;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
 import org.springframework.context.annotation.Bean;
@@ -7,10 +8,12 @@ import org.springframework.context.annotation.Configuration;
 
 
 @Configuration
+@Slf4j
 public class GatewayRouteConfig {
 
     @Bean
     public RouteLocator createCustomRouteMatcher(RouteLocatorBuilder builder){
+        log.info("Configuring Gateway Routes");
         return builder.routes()
                 .route("user_service_no_auth", r -> r.path("/user/sign-up","/user/login")
                         .uri("lb://USER-SERVICE"))
