@@ -30,8 +30,7 @@ public class AuthService {
         if (userResponse!=null){
             log.info("User authenticated successfully with User Service");
             Map<String,Object> claims = new HashMap<>();
-            claims.put("userId", userResponse.getUserId());
-            claims.put("email", userResponse.getEmail());
+            claims.put("authId", userResponse.getUserId());
             claims.put("roles", getRoleName(userResponse));
             token = jwtUtilities.generateToken(claims,userResponse.getUsername());
 

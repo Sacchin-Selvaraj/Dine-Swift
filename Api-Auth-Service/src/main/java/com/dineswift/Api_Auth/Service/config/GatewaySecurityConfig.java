@@ -29,25 +29,11 @@ public class GatewaySecurityConfig {
                 .cors(ServerHttpSecurity.CorsSpec::disable)
                 .formLogin(ServerHttpSecurity.FormLoginSpec::disable)
                 .authorizeExchange(exchangeSpec -> exchangeSpec
-                        .pathMatchers("/user/sign-up","/user/login")
+                        .pathMatchers("/user/sign-up","/user/login","/eureka/**","/favicon.ico")
                         .permitAll()
                         .anyExchange()
                         .authenticated())
                 .addFilterBefore(gatewayJwtFilter, SecurityWebFiltersOrder.AUTHENTICATION)
                 .build();
      }
-
-    @Bean
-    public CorsWebFilter corsFilter() {
-        CorsConfiguration config = new CorsConfiguration();
-        config.setAllowCredentials(true);
-        config.addAllowedOrigin("*");
-        config.addAllowedHeader("*");
-        config.addAllowedMethod("*");
-
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", config);
-
-        return new CorsWebFilter(source);
-    }
 }

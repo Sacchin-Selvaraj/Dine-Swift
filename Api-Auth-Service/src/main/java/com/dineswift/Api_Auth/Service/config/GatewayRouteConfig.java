@@ -18,13 +18,16 @@ public class GatewayRouteConfig {
                 .route("user_service_no_auth", r -> r.path("/user/sign-up","/user/login")
                         .uri("lb://USER-SERVICE"))
                 .route("path_route_user_service", r -> r.path("/user/**")
-                        .uri("http://localhost:8080"))
+                        .uri("lb://USER-SERVICE"))
                 .route("user_service_booking", r -> r.path("/booking/**")
                         .uri("lb://USER-SERVICE"))
                 .route("user_service_cart", r -> r.path("/cart/**")
                         .uri("lb://USER-SERVICE"))
                 .route("user_service_verification", r -> r.path("/user-verification/**")
                         .uri("lb://USER-SERVICE"))
+                .route("eureka_service", r -> r.path("/eureka/**")
+                        .filters(f -> f.rewritePath("/eureka/(?<segment>.*)", "/"))
+                        .uri("http://localhost:8761"))
                 .build();
     }
 }

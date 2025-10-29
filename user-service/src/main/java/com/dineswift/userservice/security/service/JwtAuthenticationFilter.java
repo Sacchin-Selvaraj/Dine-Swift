@@ -5,6 +5,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -19,10 +20,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.time.Instant;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Component
@@ -41,41 +39,34 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
     
     @Override
-    protected void doFilterInternal(HttpServletRequest request,
+    protected void doFilterInternal( HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
-        log.info("Processing JWT authentication for request: {}", request.getRequestURI());
-        final String authHeader = request.getHeader("Authorization");
-        
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            log.info("No Authorization header found or it is invalid");
-            sendErrorResponse(response,"Missing or invalid Authorization header");
+        log.info("=== USER SERVICE REQUEST ===");
+        log.info("Path: {}", request.getServletPath());
+        log.info("Headers: {}", Collections.list(request.getHeaderNames()).stream()
+                .collect(Collectors.toMap(h -> h, request::getHeader)));
+
+        String authUser = request.getHeader("X-Auth-User");
+        String roles = request.getHeader("X-Roles");
+        if (authUser == null) {
+            log.info("No Auth User header found or it is invalid");
+            sendErrorResponse(response,"Missing or invalid Auth User header");
             return;
         }
-        log.info("Extracting JWT token from Authorization header");
-        String token = authHeader.substring(7);
-        
-        if (jwtUtilities.validateJwtToken(token)) {
-            log.info("JWT token is valid, extracting claims");
-            Claims claims = jwtUtilities.extractClaims(token);
-            String username = claims.getSubject();
+        UsernamePasswordAuthenticationToken authToken =
+                new UsernamePasswordAuthenticationToken(authUser, null, getAuthorities(roles));
 
-            UsernamePasswordAuthenticationToken authToken =
-                new UsernamePasswordAuthenticationToken(username, null, getAuthorities(claims));
-
-            authToken.setDetails(new HashMap<String, Object>(claims));
-            log.info("Setting authentication in SecurityContext");
-            SecurityContextHolder.getContext().setAuthentication(authToken);
-        }else {
-            sendErrorResponse(response,"Invalid or expired JWT token");
-        }
+        log.info("Setting authentication in SecurityContext");
+        SecurityContextHolder.getContext().setAuthentication(authToken);
         
         filterChain.doFilter(request, response);
     }
     
-    private Collection<? extends GrantedAuthority> getAuthorities(Claims claims) {
-        List<String> roles = claims.get("roles", List.class);
-        return roles.stream()
+    private Collection<? extends GrantedAuthority> getAuthorities(String roles) {
+        String[] roleList = roles.split(",");
+        log.info("Extracted roles: {}", Arrays.stream(roleList).toList());
+        return Arrays.stream(roleList)
                 .map(SimpleGrantedAuthority::new)
                 .collect(Collectors.toList());
     }
@@ -88,7 +79,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 "{\"timestamp\": \"%s\", \"status\": 401, \"error\": \"Unauthorized\", \"message\": \"%s\"}",
                 Instant.now(), message
         );
-
         response.getWriter().write(responseBody);
     }
 }

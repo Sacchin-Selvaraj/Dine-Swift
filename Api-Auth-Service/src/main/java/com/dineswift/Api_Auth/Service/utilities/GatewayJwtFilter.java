@@ -1,14 +1,14 @@
 package com.dineswift.Api_Auth.Service.utilities;
 
-import io.jsonwebtoken.Claims;
+
+import com.dineswift.Api_Auth.Service.payload.RoleName;
 import jakarta.ws.rs.core.HttpHeaders;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cloud.gateway.filter.GatewayFilterChain;
-import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
@@ -19,6 +19,9 @@ import org.springframework.web.server.WebFilterChain;
 import reactor.core.publisher.Mono;
 
 import java.time.Instant;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Component
 @Slf4j
@@ -42,19 +45,41 @@ public class GatewayJwtFilter implements WebFilter {
         }
         log.info("Validating JWT token for protected endpoint: {}", path);
         String authToken = extractToken(exchange);
-        if (authToken != null && !validateJwtToken(authToken)) {
+        if (authToken == null || !validateJwtToken(authToken)) {
             log.error("Invalid or expired JWT token");
             return onAuthenticationFailure(exchange,"Invalid or expired JWT token");
         }
         log.info("JWT token is valid passing request to the next filter");
-        log.info("Auth Token: {}", authToken);
-        ServerWebExchange mutatedExchange = exchange.mutate().request(builder -> builder.header("Authorization",authToken)).build();
-        log.info("Header Authorization: {}", exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION));
+        Map<String,Object> claims = parseClaims(authToken);
+        log.info("Extracted Claims: {}", claims);
+        ServerHttpRequest modifiedRequest = exchange.getRequest().mutate()
+                .header("X-Auth-User",claims.get("authId").toString())
+                .header("X-Roles", getRolesAsString(claims))
+                .header("Authorization", "Bearer " + authToken)
+                .build();
+        ServerWebExchange mutatedExchange = exchange.mutate().request(modifiedRequest).build();
+        log.info("Mutated Request Headers: {}", mutatedExchange.getRequest().getHeaders());
 
         log.info("Setting the Authentication Object in the Security Context");
         Authentication authentication = generateAuthenticationFromToken(authToken);
 
-        return chain.filter(exchange).contextWrite(ReactiveSecurityContextHolder.withAuthentication(authentication));
+        return chain.filter(mutatedExchange).contextWrite(ReactiveSecurityContextHolder.withAuthentication(authentication));
+    }
+
+    private String getRolesAsString(Map<String, Object> claims) {
+        try {
+            List<String> roles = (List<String>) claims.get("roles");
+            log.info("Extracted roles from claims: {}", roles);
+            return String.join(",", roles);
+        } catch (NullPointerException | ClassCastException e) {
+            log.error("Error while extracting roles from claims: {}", e.getMessage());
+            return "ROLE_UNDEFINED";
+        }
+    }
+
+    private Map<String,Object> parseClaims(String authToken) {
+        log.info("Parsing claims from JWT token in JwtUtilities");
+        return jwtUtilities.extractClaims(authToken);
     }
 
     private Authentication generateAuthenticationFromToken(String authToken) {
@@ -79,7 +104,8 @@ public class GatewayJwtFilter implements WebFilter {
 
     private boolean isPublicEndpoint(String path) {
          return path.startsWith("/user/sign-up") ||
-                path.startsWith("/user/login");
+                path.startsWith("/user/login")||
+                path.startsWith("/favicon.ico");
     }
 
     private Mono<Void> onAuthenticationFailure(ServerWebExchange exchange, String message) {

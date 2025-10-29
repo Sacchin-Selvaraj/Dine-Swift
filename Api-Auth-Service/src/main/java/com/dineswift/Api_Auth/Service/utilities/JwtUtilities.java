@@ -47,7 +47,7 @@ public class JwtUtilities {
         return claims.getExpiration().after(new Date());
     }
 
-    private Claims extractClaims(String token) {
+    public Claims extractClaims(String token) {
         log.info("Extracting claims from JWT token");
         return Jwts.parser()
                 .verifyWith(generateKey())
@@ -55,12 +55,9 @@ public class JwtUtilities {
                 .parseSignedClaims(token)
                 .getPayload();
     }
-    public <T> T extractClaim(String token, String claimName, Class<T> claimType) {
-        Claims claims = extractClaims(token);
-        return claims.get(claimName, claimType);
-    }
 
     public String extractUsername(String token) {
         return extractClaims(token).getSubject();
     }
+
 }
