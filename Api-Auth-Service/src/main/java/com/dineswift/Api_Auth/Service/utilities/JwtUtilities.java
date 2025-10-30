@@ -22,12 +22,26 @@ public class JwtUtilities {
     @Value("${jwt.expiration-time}")
     private long jwtExpirationMs;
 
+    @Value("${jwt.refresh-expiration-time}")
+    private long refreshTokenExpirationMs;
+
     public String generateToken(Map<String, Object> claims, String subject) {
         log.info("Generating JWT token for subject: {}", subject);
         return Jwts.builder()
                 .claims(claims)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis()+jwtExpirationMs))
+                .subject(subject)
+                .signWith(generateKey())
+                .compact();
+    }
+
+    public String generateRefreshToken(Map<String, Object> claims, String subject) {
+        log.info("Generating Refresh token for subject: {}", subject);
+        return Jwts.builder()
+                .claims(claims)
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis()+refreshTokenExpirationMs))
                 .subject(subject)
                 .signWith(generateKey())
                 .compact();
@@ -59,5 +73,6 @@ public class JwtUtilities {
     public String extractUsername(String token) {
         return extractClaims(token).getSubject();
     }
+
 
 }

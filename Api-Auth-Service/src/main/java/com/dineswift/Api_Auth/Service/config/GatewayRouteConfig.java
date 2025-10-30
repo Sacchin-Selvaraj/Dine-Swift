@@ -15,8 +15,6 @@ public class GatewayRouteConfig {
     public RouteLocator createCustomRouteMatcher(RouteLocatorBuilder builder){
         log.info("Configuring Gateway Routes");
         return builder.routes()
-                .route("user_service_no_auth", r -> r.path("/user/sign-up","/user/login")
-                        .uri("lb://USER-SERVICE"))
                 .route("path_route_user_service", r -> r.path("/user/**")
                         .uri("lb://USER-SERVICE"))
                 .route("user_service_booking", r -> r.path("/booking/**")
