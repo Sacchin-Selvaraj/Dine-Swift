@@ -26,6 +26,8 @@ public class GatewayRouteConfig {
                 .route("eureka_service", r -> r.path("/eureka/**")
                         .filters(f -> f.rewritePath("/eureka/(?<segment>.*)", "/"))
                         .uri("http://localhost:8761"))
+                .route("path_route_restaurant_service", r -> r.path("/restaurant/**")
+                        .uri("lb://RESTAURANT-SERVICE"))
                 .build();
     }
 }

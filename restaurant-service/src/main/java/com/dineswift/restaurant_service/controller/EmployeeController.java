@@ -1,11 +1,9 @@
 package com.dineswift.restaurant_service.controller;
 
 
-import com.dineswift.restaurant_service.payload.request.employee.EmployeeCreateRequest;
+import com.dineswift.restaurant_service.payload.request.employee.*;
 import com.dineswift.restaurant_service.payload.dto.EmployeeDto;
-import com.dineswift.restaurant_service.payload.request.employee.EmployeeNameRequest;
-import com.dineswift.restaurant_service.payload.request.employee.PasswordChangeRequest;
-import com.dineswift.restaurant_service.payload.request.employee.RoleRequest;
+import com.dineswift.restaurant_service.payload.response.employee.EmployeeResponse;
 import com.dineswift.restaurant_service.payload.response.employee.RoleDTOResponse;
 import com.dineswift.restaurant_service.service.EmployeeService;
 import jakarta.validation.Valid;
@@ -27,6 +25,12 @@ public class EmployeeController {
     public ResponseEntity<EmployeeDto> createEmployee(@Valid @RequestBody EmployeeCreateRequest employeeCreateRequest) {
         EmployeeDto employeeDTO = employeeService.createEmployee(employeeCreateRequest);
         return ResponseEntity.ok(employeeDTO);
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<EmployeeResponse> loginRequest(@RequestBody LoginRequest loginRequest){
+        EmployeeResponse employeeResponse = employeeService.authenticateEmployee(loginRequest);
+        return ResponseEntity.ok(employeeResponse);
     }
 
     @GetMapping("/{employeeId}")

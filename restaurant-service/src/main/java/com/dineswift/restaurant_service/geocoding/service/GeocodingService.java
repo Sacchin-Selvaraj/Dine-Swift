@@ -3,7 +3,6 @@ package com.dineswift.restaurant_service.geocoding.service;
 import com.dineswift.restaurant_service.exception.RestaurantException;
 import com.dineswift.restaurant_service.geocoding.payload.GeocodingResponse;
 import com.dineswift.restaurant_service.model.Coordinates;
-import com.google.maps.model.GeocodingResult;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;

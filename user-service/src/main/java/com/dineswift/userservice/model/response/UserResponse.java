@@ -15,12 +15,6 @@ public class UserResponse {
 
     private String username;
 
-    private String email;
-
-    private String password;
-
-    private Boolean isActive;
-
     private Set<RoleDto> roles;
 
 }

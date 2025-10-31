@@ -36,8 +36,9 @@ public class JwtUtilities {
                 .compact();
     }
 
-    public String generateRefreshToken(Map<String, Object> claims, String subject) {
+    public String generateRefreshToken(Map<String, Object> claims, String subject, boolean rememberMe) {
         log.info("Generating Refresh token for subject: {}", subject);
+        refreshTokenExpirationMs = rememberMe?refreshTokenExpirationMs: 24 * 60 * 60 * 1000; // 1 day
         return Jwts.builder()
                 .claims(claims)
                 .issuedAt(new Date())

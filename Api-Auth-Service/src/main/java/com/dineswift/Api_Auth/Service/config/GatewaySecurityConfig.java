@@ -29,7 +29,7 @@ public class GatewaySecurityConfig {
                 .cors(ServerHttpSecurity.CorsSpec::disable)
                 .formLogin(ServerHttpSecurity.FormLoginSpec::disable)
                 .authorizeExchange(exchangeSpec -> exchangeSpec
-                        .pathMatchers("/user/sign-up","/auth/**")
+                        .pathMatchers("/user/sign-up","/auth/**","/restaurant/**")
                         .permitAll()
                         .anyExchange()
                         .authenticated())

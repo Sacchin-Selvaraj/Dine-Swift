@@ -7,10 +7,12 @@ import com.dineswift.restaurant_service.model.RoleName;
 import com.dineswift.restaurant_service.payload.dto.EmployeeDto;
 import com.dineswift.restaurant_service.payload.request.employee.EmployeeCreateRequest;
 import com.dineswift.restaurant_service.payload.request.employee.RoleNameRequest;
+import com.dineswift.restaurant_service.payload.response.employee.EmployeeResponse;
 import com.dineswift.restaurant_service.payload.response.employee.RoleDTOResponse;
 import com.dineswift.restaurant_service.repository.RoleRepository;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.util.HashSet;
@@ -23,6 +25,7 @@ public class EmployeeMapper {
 
     private final ModelMapper mapper;
     private final RoleRepository roleRepository;
+    private final PasswordEncoder passwordEncoder;
 
     public EmployeeDto toDTO(Employee employee){
         EmployeeDto employeeDTO=mapper.map(employee, EmployeeDto.class);
@@ -37,8 +40,7 @@ public class EmployeeMapper {
         if (employeeCreateRequest.getEmployeeName() != null)
             employee.setEmployeeName(employeeCreateRequest.getEmployeeName());
         if (employeeCreateRequest.getPassword() != null)
-            // need to encode the password before setting it
-            employee.setPassword(employeeCreateRequest.getPassword());
+            employee.setPassword(passwordEncoder.encode(employeeCreateRequest.getPassword()));
         if (employeeCreateRequest.getEmail() != null)
             employee.setEmail(employeeCreateRequest.getEmail());
         if (employeeCreateRequest.getPhoneNumber() != null)
@@ -67,8 +69,14 @@ public class EmployeeMapper {
 
     public RoleDTOResponse toRoleDTO(Role role) {
         RoleDTOResponse roleDTOResponse=new RoleDTOResponse();
-        roleDTOResponse.setRoleId(role.getRoleId());
         roleDTOResponse.setRoleName(role.getRoleName());
         return roleDTOResponse;
+    }
+
+    public EmployeeResponse toEmployeeResponse(Employee registeredEmployee) {
+        EmployeeResponse employeeResponse=mapper.map(registeredEmployee, EmployeeResponse.class);
+        employeeResponse.setRoles(registeredEmployee.getRoles().stream()
+                .map(this::toRoleDTO).collect(Collectors.toSet()));
+        return employeeResponse;
     }
 }

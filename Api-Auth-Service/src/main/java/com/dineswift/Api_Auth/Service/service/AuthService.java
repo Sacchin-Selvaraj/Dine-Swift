@@ -31,13 +31,14 @@ public class AuthService {
 
         log.info("Based on the login type, forwarding the request ");
         Mono<TokenPair> tokenPair=null;
-        if (loginRequest.getLoginType().equals("user")){
+        if (loginRequest.getLoginType().equalsIgnoreCase("user")){
            tokenPair = authenticateWithUserService(loginRequest);
-        } else {
-            //tokenPair = authenticateWithRestaurantService(loginRequest);
+        } else if (loginRequest.getLoginType().equalsIgnoreCase("employee")){
+            tokenPair = authenticateWithRestaurantService(loginRequest);
+        }else {
+            throw new AuthenticationException("Unsupported login type: " + loginRequest.getLoginType());
         }
         log.info("token pair generated: {}", tokenPair);
-        assert tokenPair != null;
         return  tokenPair.doOnSuccess(tokenLog->log.info("Authentication process completed successfully"))
                 .map(tokenPair1->{
                     ResponseCookie refreshCookie = getResponseCookie(tokenPair1.getRefreshToken());
@@ -48,6 +49,50 @@ public class AuthService {
                     return tokenResponse;
                 })
                 .doOnError(error -> log.error("Authentication process failed", error));
+    }
+
+    private Mono<TokenPair> authenticateWithRestaurantService(LoginRequest loginRequest) {
+        log.info("Authenticating with Restaurant Service for email: {}", loginRequest.getEmail());
+
+        return getResponseFromRestaurantService(loginRequest)
+                .switchIfEmpty(Mono.error(new AuthenticationException("Invalid credentials provided")))
+                .flatMap(employeeResponse -> {
+                    log.info("Employee authenticated successfully with Restaurant Service");
+
+                    Map<String, Object> claims = new HashMap<>();
+                    claims.put("authId", employeeResponse.getEmployeeId());
+                    claims.put("roles", getEmployeeRoleName(employeeResponse));
+
+                    log.info("Generating JWT tokens for employee: {}", employeeResponse.getEmployeeName());
+                    String authToken = jwtUtilities.generateToken(claims, employeeResponse.getEmployeeName());
+                    String refreshToken = jwtUtilities.generateRefreshToken(claims, employeeResponse.getEmployeeName(),loginRequest.isRememberMe());
+
+                    TokenPair tokenPair = new TokenPair();
+                    tokenPair.setAuthToken(authToken);
+                    tokenPair.setRefreshToken(refreshToken);
+
+                    return Mono.just(tokenPair);
+                })
+                .doOnError(error -> log.error("Employee authentication failed with Restaurant Service", error));
+    }
+
+    private List<EmployeeRole> getEmployeeRoleName(EmployeeResponse employeeResponse) {
+        log.info("Extracting roles for employee: {}", employeeResponse.getEmployeeName());
+        return employeeResponse.getRoles().stream()
+                .map(RoleDTOResponse::getRoleName)
+                .toList();
+    }
+
+    private Mono<EmployeeResponse> getResponseFromRestaurantService(LoginRequest loginRequest) {
+        log.info("Sending login request to Restaurant Service for email: {}", loginRequest.getEmail());
+        Mono<EmployeeResponse> employeeResponse = webClient.post()
+                .uri("http://restaurant-service/restaurant/employee/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(loginRequest)
+                .retrieve()
+                .bodyToMono(EmployeeResponse.class);
+        log.info("Received response from Restaurant Service");
+        return employeeResponse;
     }
 
     private static ResponseCookie getResponseCookie(String refreshToken) {
@@ -74,7 +119,7 @@ public class AuthService {
 
                     log.info("Generating JWT tokens for user: {}", userResponse.getUsername());
                     String authToken = jwtUtilities.generateToken(claims, userResponse.getUsername());
-                    String refreshToken = jwtUtilities.generateRefreshToken(claims, userResponse.getUsername());
+                    String refreshToken = jwtUtilities.generateRefreshToken(claims, userResponse.getUsername(),loginRequest.isRememberMe());
 
                     TokenPair tokenPair = new TokenPair();
                     tokenPair.setAuthToken(authToken);
@@ -119,7 +164,7 @@ public class AuthService {
         String newAuthToken = jwtUtilities.generateToken(claims, authUsername);
 
         log.info("New auth token generated successfully");
-        String newRefreshToken = jwtUtilities.generateRefreshToken(claims, authUsername);
+        String newRefreshToken = jwtUtilities.generateRefreshToken(claims, authUsername, true);
         response.getHeaders().add(HttpHeaders.SET_COOKIE, getResponseCookie(newRefreshToken).toString());
 
         TokenResponse tokenResponse = new TokenResponse();

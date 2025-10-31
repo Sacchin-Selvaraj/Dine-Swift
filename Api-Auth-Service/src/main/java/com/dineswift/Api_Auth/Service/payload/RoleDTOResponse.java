@@ -1,16 +1,13 @@
-package com.dineswift.restaurant_service.payload.response.employee;
+package com.dineswift.Api_Auth.Service.payload;
 
-import com.dineswift.restaurant_service.model.RoleName;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
-
-import java.util.UUID;
 
 @Data
 @RequiredArgsConstructor
 public class RoleDTOResponse {
 
     @NotBlank(message = "Role name is required")
-    private RoleName roleName;
+    private EmployeeRole roleName;
 }

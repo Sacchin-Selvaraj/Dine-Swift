@@ -8,12 +8,11 @@ import java.util.UUID;
 
 @Data
 @RequiredArgsConstructor
-public class UserResponse {
+public class EmployeeResponse {
 
-    private UUID userId;
+    private UUID employeeId;
 
-    private String username;
+    private String employeeName;
 
-    private Set<RoleDto> roles;
-
+    private Set<RoleDTOResponse> roles;
 }

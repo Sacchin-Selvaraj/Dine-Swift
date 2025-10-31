@@ -105,7 +105,9 @@ public class GatewayJwtFilter implements WebFilter {
     private boolean isPublicEndpoint(String path) {
          return path.startsWith("/user/sign-up") ||
                 path.startsWith("/auth/login") ||
-                path.startsWith("/auth/refresh-token");
+                path.startsWith("/auth/refresh-token")||
+                 path.startsWith("/restaurant/employee/login")||
+                path.startsWith("/restaurant/employee/sign-up");
     }
 
     private Mono<Void> onAuthenticationFailure(ServerWebExchange exchange, String message) {

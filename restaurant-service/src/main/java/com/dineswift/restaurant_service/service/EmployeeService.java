@@ -8,17 +8,17 @@ import com.dineswift.restaurant_service.model.Employee;
 import com.dineswift.restaurant_service.model.Restaurant;
 import com.dineswift.restaurant_service.model.Role;
 import com.dineswift.restaurant_service.model.RoleName;
-import com.dineswift.restaurant_service.payload.request.employee.EmployeeCreateRequest;
+import com.dineswift.restaurant_service.payload.request.employee.*;
 import com.dineswift.restaurant_service.payload.dto.EmployeeDto;
-import com.dineswift.restaurant_service.payload.request.employee.EmployeeNameRequest;
-import com.dineswift.restaurant_service.payload.request.employee.PasswordChangeRequest;
-import com.dineswift.restaurant_service.payload.request.employee.RoleRequest;
+import com.dineswift.restaurant_service.payload.response.employee.EmployeeResponse;
 import com.dineswift.restaurant_service.payload.response.employee.RoleDTOResponse;
 import com.dineswift.restaurant_service.repository.EmployeeRepository;
 import com.dineswift.restaurant_service.repository.RestaurantRepository;
 import com.dineswift.restaurant_service.repository.RoleRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -29,12 +29,14 @@ import java.util.stream.Collectors;
 @Service
 @Transactional
 @RequiredArgsConstructor
+@Slf4j
 public class EmployeeService {
 
     private final EmployeeRepository employeeRepository;
     private final RoleRepository roleRepository;
     private final EmployeeMapper employeeMapper;
     private final RestaurantRepository restaurantRepository;
+    private final PasswordEncoder passwordEncoder;
 
 
     public EmployeeDto createEmployee(EmployeeCreateRequest employeeCreateRequest) {
@@ -175,5 +177,19 @@ public class EmployeeService {
         employee.getRoles().addAll(rolesToAdd);
         employee=employeeRepository.save(employee);
         return employeeMapper.toDTO(employee);
+    }
+
+    public EmployeeResponse authenticateEmployee(LoginRequest loginRequest) {
+        log.info("Authenticating employee with Email: {}", loginRequest.getEmail());
+        Employee registeredEmployee = employeeRepository.findByEmailAndIsActive(loginRequest.getEmail())
+                .orElseThrow(() -> new EmployeeException("Invalid credentials provided"));
+
+        if (!passwordEncoder.matches(loginRequest.getPassword(),registeredEmployee.getPassword())){
+            log.error("Password mismatch for employee with Email: {}", loginRequest.getEmail());
+            throw new EmployeeException("Invalid credentials provided");
+        }
+
+        log.info("Employee authenticated successfully with Email: {}", loginRequest.getEmail());
+        return employeeMapper.toEmployeeResponse(registeredEmployee);
     }
 }
