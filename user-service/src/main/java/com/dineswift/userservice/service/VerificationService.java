@@ -15,6 +15,7 @@ import com.dineswift.userservice.model.request.VerifyTokenRequest;
 import com.dineswift.userservice.notification.service.SmsService;
 import com.dineswift.userservice.repository.UserRepository;
 import com.dineswift.userservice.repository.VerificationRepository;
+import com.dineswift.userservice.security.service.AuthService;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +39,7 @@ public class VerificationService {
     private final UserRepository userRepository;
     private final SmsService smsService;
     private final BCryptPasswordEncoder passwordEncoder;
+    private final AuthService authService;
 
 
     public String updateEmail(UUID userId, EmailUpdateRequest emailUpdateRequest) {
@@ -153,6 +155,7 @@ public class VerificationService {
 
     public String forgetPassword(UUID userId, String typeOfVerification) {
         log.info("Initiating forget password process for userId: {}", userId);
+
         User user=userCommonService.findValidUser(userId);
 
         String token = userCommonService.generateNumericCode(6);
@@ -209,11 +212,11 @@ public class VerificationService {
             throw new TokenException("Verification Token was expired");
         }
         User user=verificationToken.getUser();
+
         if (!user.getUserId().equals(userId)){
             throw new UserException("Invalid Verification Token for the user");
         }
 
-       // need to encode the password
         user.setPassword(passwordEncoder.encode(passwordChangeRequest.getNewPassword()));
 
         verificationToken.setWasUsed(true);

@@ -38,9 +38,9 @@ public class BookingController {
 
     @PostMapping("/pay-bill/{bookingId}")
     public ResponseEntity<PaymentCreateResponse> payBill(@PathVariable UUID bookingId) {
-        log.info("Received pay-now request for tableBookingId: {}", bookingId);
+        log.info("Received pay-now request for bookingId: {}", bookingId);
         PaymentCreateResponse response = bookingService.generateBill(bookingId);
-        log.info("Pay-now link generated for tableBookingId: {}", bookingId);
+        log.info("Pay-now link generated for bookingId: {}", bookingId);
         return ResponseEntity.ok(response);
     }
 

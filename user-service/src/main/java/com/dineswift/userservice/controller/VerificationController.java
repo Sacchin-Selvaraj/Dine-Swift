@@ -48,17 +48,4 @@ public class VerificationController {
         return ResponseEntity.ok("PhoneNumber have been updated Successfully");
     }
 
-    @PostMapping("/forget-password/{userId}" )
-    public ResponseEntity<MessageResponse> forgetPassword(@PathVariable UUID userId,@RequestParam String typeOfVerification) {
-        String response=verificationService.forgetPassword(userId,typeOfVerification);
-        return ResponseEntity.ok(MessageResponse.builder().message(response).build());
-    }
-
-    @PostMapping("/verify-forget-password/{userId}" )
-    public ResponseEntity<MessageResponse> verifyForgetPassword(@PathVariable UUID userId, @Valid @RequestBody PasswordChangeRequest passwordChangeRequest) {
-        String response = verificationService.verifyForgetPassword(userId, passwordChangeRequest);
-        return ResponseEntity.ok(MessageResponse.builder().message(response).build());
-    }
-
-
 }

@@ -1,11 +1,9 @@
 package com.dineswift.userservice.security.service;
 
-import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -28,9 +26,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    private final JwtUtilities jwtUtilities;
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
-    private final Set<String> whitelisted = Set.of("/user/login", "/user/sign-up");
+    private final Set<String> whitelisted = Set.of("/user/login", "/user/sign-up","/user-password/**");
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {

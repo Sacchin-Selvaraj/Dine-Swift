@@ -1,6 +1,7 @@
 package com.dineswift.userservice.service;
 
 import com.dineswift.userservice.exception.CartException;
+import com.dineswift.userservice.exception.UserException;
 import com.dineswift.userservice.model.entites.Booking;
 import com.dineswift.userservice.model.entites.User;
 import com.dineswift.userservice.model.request.BookingRequest;
@@ -9,6 +10,7 @@ import com.dineswift.userservice.model.response.booking.TableBookingDto;
 import com.dineswift.userservice.repository.BookingRepository;
 import com.dineswift.userservice.repository.CartRepository;
 import com.dineswift.userservice.repository.UserRepository;
+import com.dineswift.userservice.security.service.AuthService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +31,7 @@ public class BookingService {
     private final CartRepository cartRepository;
     private final UserRepository userRepository;
     private final RestClient restClient;
+    private final AuthService authService;
 
 
     public TableBookingDto bookTable(UUID cartId, BookingRequest bookingRequest) {
@@ -50,9 +53,9 @@ public class BookingService {
         newBooking.setBookingDate(bookingRequest.getBookingDate());
         newBooking.setBookingStatus(tableBookingDto.getBookingStatus());
 
-        // need to get the user from the authentication context in real scenario
-
-        User bookedUser = userRepository.findById(UUID.fromString("2594390c-d0a7-4144-b784-4f98112574f7")).get();
+        log.info("Fetching authenticated user for booking record creation");
+        UUID userId = authService.getAuthenticatedUserId();
+        User bookedUser = userRepository.findById(userId).orElseThrow(()-> new UserException("No user found with ID: " + userId));
         newBooking.setUser(bookedUser);
         bookingRepository.save(newBooking);
         log.info("Booking record created successfully with ID: {}", newBooking.getBookingId());

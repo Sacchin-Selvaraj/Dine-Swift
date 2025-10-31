@@ -67,7 +67,6 @@ public class UserController {
     }
 
     @DeleteMapping("/delete/{userId}")
-    //@PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<String> deactivateUser(@PathVariable UUID userId){
         userService.deactivateUser(userId);
         return ResponseEntity.ok("Account has been deleted Successfully");

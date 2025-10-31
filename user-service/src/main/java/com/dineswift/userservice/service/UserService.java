@@ -20,6 +20,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -38,21 +39,22 @@ public class UserService {
     private final UserCommonService userCommonService;
     private final RoleRepository roleRepository;
     private final UserMapper userMapper;
+    private final BookingSpecification bookingSpecification;
 
 
     public UserDTO updateDetails(UserDetailsRequest userDetailsRequest, UUID userId) {
-
+        log.info("Updating user details for userId: {}", userId);
         User user=userCommonService.findValidUser(userId);
 
         updateUserFromRequest(user, userDetailsRequest);
 
         userRepository.save(user);
-
-
-        return modelMapper.map(user,UserDTO.class);
+        log.info("User details updated successfully for userId: {}", userId);
+        return userMapper.toDTO(user);
     }
 
     private void updateUserFromRequest(User user, UserDetailsRequest request) {
+        log.info("Updating user details for userId: {}", user.getUserId());
         if (request.getFirstName() != null) user.setFirstName(request.getFirstName());
         if (request.getLastName() != null) user.setLastName(request.getLastName());
         if (request.getDob() != null) user.setDob(request.getDob());
@@ -79,13 +81,12 @@ public class UserService {
         Pageable pageable= PageRequest.of(pageNumber,limit,sort);
 
         Page<Booking> bookings;
-        if (bookingStatus==null){
-            log.info("Fetching all bookings for user: {}", userId);
-            bookings=bookingRepository.findByUser_UserId(userId,pageable);
-        }else {
-            log.info("Fetching bookings for user: {} with status: {}", userId, bookingStatus);
-            bookings=bookingRepository.findByUser_UserIdAndBookingStatus(userId,bookingStatus,pageable);
-        }
+        log.info("Building booking specification");
+        Specification<Booking> spec = Specification.<Booking>allOf()
+                .and(bookingSpecification.hasBookingStatus(bookingStatus));
+
+        bookings = bookingRepository.findAll(spec, pageable);
+
         log.info("Fetched {} bookings", bookings.getNumberOfElements());
         return bookings.map(booking -> modelMapper.map(booking,BookingDTO.class));
     }
@@ -98,7 +99,7 @@ public class UserService {
     }
 
     public void updateUsername(UUID userId, UsernameUpdateRequest usernameRequest) {
-
+        log.info("Updating username for userId: {}", userId);
         validUsername(usernameRequest.getUsername(),userId);
         User user=userCommonService.findValidUser(userId);
         user.setUsername(usernameRequest.getUsername());
@@ -134,10 +135,11 @@ public class UserService {
 
         try {
             verifyUser(userRequest);
-
+            log.info("Creating new user account for username: {}", userRequest.getUsername());
             User user=userMapper.toEntity(userRequest);
             user.setPassword(passwordEncoder.encode(userRequest.getPassword()));
 
+            log.info("Initializing cart for new user: {}", userRequest.getUsername());
             Cart cart=new Cart();
 
             Role role=roleRepository.findByRoleName(RoleName.ROLE_USER).orElseThrow(
@@ -147,9 +149,9 @@ public class UserService {
             user.setRoles(Set.of(role));
             user.setCart(cart);
 
-            userRepository.save(user);
-
-            return userMapper.toUserResponse(user);
+            User savedUser = userRepository.save(user);
+            log.info("User account created successfully for username: {}", userRequest.getUsername());
+            return userMapper.toUserResponse(savedUser);
 
         } catch (DataIntegrityViolationException e){
             throw new DataIntegrityViolationException(e.getLocalizedMessage());
