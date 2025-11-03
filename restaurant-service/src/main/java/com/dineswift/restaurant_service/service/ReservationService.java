@@ -11,6 +11,7 @@ import com.dineswift.restaurant_service.payload.response.table.AvailableTimeSlot
 import com.dineswift.restaurant_service.repository.RestaurantRepository;
 import com.dineswift.restaurant_service.repository.TableBookingRepository;
 import com.dineswift.restaurant_service.repository.TableRepository;
+import com.dineswift.restaurant_service.security.service.AuthService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -39,6 +40,7 @@ public class ReservationService {
 
         List<RestaurantTable> restaurantTables = tableRepository.findByRestaurantAndIsActiveTrue(restaurant);
         if (restaurantTables.isEmpty()){
+            log.error("No active tables found for restaurant with ID: {}", restaurantId);
             throw new RestaurantException("No active tables found for the restaurant with ID: " + restaurantId);
         }
 
@@ -77,6 +79,7 @@ public class ReservationService {
 
     private List<AvailableTimeSlot> divideSlotsByDuration(List<AvailableTimeSlot> availableTimeSlots, Long durationInMinutes) {
         List<AvailableTimeSlot> dividedSlotsByDuration = new ArrayList<>();
+        log.info("Dividing available time slots into segments of {} minutes", durationInMinutes);
         for (AvailableTimeSlot slot : availableTimeSlots) {
             LocalTime slotStartTime = slot.getStartTime();
             LocalTime slotEndTime = slot.getEndTime();
@@ -103,6 +106,7 @@ public class ReservationService {
         final int BUFFER_MINUTES = 5;
 
         List<AvailableTimeSlot> availableTimeSlots=new ArrayList<>();
+        log.info("Finding gaps between bookings for available time slots.");
         for (TableBooking booking : activeBookingsForDate) {
             LocalTime bookingStartTime = booking.getDineInTime();
             LocalTime bookingEndTime = booking.getDineOutTime();
@@ -124,6 +128,7 @@ public class ReservationService {
         return availableTimeSlots;
     }
     private static AvailableSlots getEmptyAvailableSlots(RestaurantTable restaurantTable) {
+        log.info("Creating empty AvailableSlots for table ID: {}", restaurantTable.getTableId());
         AvailableSlots availableSlots = new AvailableSlots();
         availableSlots.setTableId(restaurantTable.getTableId());
         availableSlots.setTableNumber(restaurantTable.getTableNumber());
@@ -135,6 +140,7 @@ public class ReservationService {
     }
 
     private AvailableSlots createFullyAvailableSlot(RestaurantTable restaurantTable, Restaurant restaurant, CheckAvailableSlots checkAvailableSlots) {
+        log.info("Creating fully available slot for table ID: {}", restaurantTable.getTableId());
         AvailableSlots availableSlots = getEmptyAvailableSlots(restaurantTable);
         AvailableTimeSlot availableTimeSlot = new AvailableTimeSlot();
         LocalTime startTime = getStartTime(restaurant, checkAvailableSlots);
@@ -162,6 +168,7 @@ public class ReservationService {
     }
 
     private AvailableTimeSlot createAvailableTimeSlot(LocalTime startTime, LocalTime slotEndTime, Integer totalNumberOfSeats) {
+        log.info("Creating AvailableTimeSlot from {} to {}", startTime, slotEndTime);
         AvailableTimeSlot availableTimeSlot = new AvailableTimeSlot();
         availableTimeSlot.setStartTime(startTime);
         availableTimeSlot.setEndTime(slotEndTime);

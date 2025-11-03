@@ -1,11 +1,14 @@
 package com.dineswift.userservice.service;
 
+import com.dineswift.userservice.exception.UserException;
 import com.dineswift.userservice.mapper.CartMapper;
 import com.dineswift.userservice.model.entites.Cart;
+import com.dineswift.userservice.model.entites.User;
 import com.dineswift.userservice.model.request.CartAmountUpdateRequest;
 import com.dineswift.userservice.model.response.CartDTO;
 import com.dineswift.userservice.model.response.restaurant_service.OrderItemDto;
 import com.dineswift.userservice.repository.CartRepository;
+import com.dineswift.userservice.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +27,7 @@ import java.util.UUID;
 public class CartService {
 
     private final CartRepository cartRepository;
+    private final UserRepository userRepository;
     private final CartMapper cartMapper;
     private final RestClient restClient;
 
@@ -76,5 +80,22 @@ public class CartService {
 
         cartRepository.save(cart);
         log.info("Cart total amount updated successfully for cartId={}", cartId);
+    }
+
+    public void clearCart(UUID userId, UUID cartId) {
+       log.info("Clearing cart for userId={} and cartId={}", userId, cartId);
+        User existingUser = userRepository.findByIdAndIsActive(userId).orElseThrow(()-> new UserException("User not found or inactive"));
+
+        Cart cart = existingUser.getCart();
+        if (!cart.getCartId().equals(cartId)) {
+            log.error("Cart ID mismatch for userId={}: expected={}, found={}", userId, cart.getCartId(), cartId);
+            return;
+        }
+        Cart newCart = new Cart();
+        newCart.setGrandTotal(BigDecimal.ZERO);
+        cartRepository.save(newCart);
+        existingUser.setCart(newCart);
+        userRepository.save(existingUser);
+        log.info("Cart cleared successfully for userId={} and cartId={}", userId, cartId);
     }
 }

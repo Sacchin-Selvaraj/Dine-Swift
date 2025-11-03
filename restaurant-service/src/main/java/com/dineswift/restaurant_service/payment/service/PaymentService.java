@@ -7,6 +7,7 @@ import com.dineswift.restaurant_service.payload.response.tableBooking.PaymentCre
 import com.dineswift.restaurant_service.payment.payload.request.PaymentDetails;
 import com.dineswift.restaurant_service.payment.repository.PaymentRepository;
 import com.dineswift.restaurant_service.payment.repository.PaymentRefundRepository;
+import com.dineswift.restaurant_service.repository.OrderItemRepository;
 import com.dineswift.restaurant_service.repository.TableBookingRepository;
 import com.razorpay.Order;
 import com.razorpay.RazorpayClient;
@@ -17,7 +18,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClient;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -37,6 +42,8 @@ public class PaymentService {
     private final TableBookingRepository tableBookingRepository;
     private final RazorpayClient razorpayClient;
     private final PaymentRefundRepository paymentRefundRepository;
+    private final OrderItemRepository orderItemRepository;
+    private final RestClient restClient;
 
     @Value("${razorpay.api.secret}")
     private String secretKey;
@@ -51,7 +58,7 @@ public class PaymentService {
         newPayment.setTableBooking(newBooking);
 
         log.info("Create orderId using Razorpay");
-        String contactEmail = newBooking.getGuestInformation().getContactEmail();
+        String contactEmail = "demo";
         String createdOrderId = createRazorpayOrder(amount, "INR",contactEmail);
 
         newPayment.setOrderId(createdOrderId);
@@ -184,17 +191,43 @@ public class PaymentService {
             if (!booking.getIsUpfrontPaid()) {
                 booking.setBookingStatus(BookingStatus.PAYMENT_PENDING);
                 booking.setIsUpfrontPaid(true);
+                removeCartForUser(booking);
             }
             else {
                 booking.setBookingStatus(BookingStatus.ORDER_COMPLETED);
                 booking.setIsPendingAmountPaid(true);
             }
-
-            // remove the cart for the user as payment is completed
-            // take the CartId from orderItem and based on that delete the cart
-
+            log.info("Updating booking status to {} for bookingId: {}", booking.getBookingStatus(), booking.getTableBookingId());
             paymentRepository.save(payment);
 
+    }
+
+    private void removeCartForUser(TableBooking booking) {
+        log.info("Removing cart for userId: {}", booking.getGuestInformation().getUserId());
+        Pageable pageable = Pageable.ofSize(1);
+        Page<OrderItem> orderItems = orderItemRepository.findAllByTableBookingId(booking.getTableBookingId(),pageable);
+        if (!orderItems.hasContent()){
+            log.error("No order items found for bookingId: {}", booking.getTableBookingId());
+            throw new BookingException("No order items found for bookingId: " + booking.getTableBookingId());
+        }
+        UUID cartId = orderItems.getContent().getFirst().getCartId();
+        UUID userId = booking.getGuestInformation().getUserId();
+        log.info("Sending cart removal request for cartId: {} and userId: {}", cartId, userId);
+        sendCartRemovalRequest(userId,cartId);
+    }
+
+    private void sendCartRemovalRequest(UUID userId, UUID cartId) {
+        log.info("Calling cart service to remove cartId: {} for userId: {}", cartId, userId);
+        ResponseEntity<Void> response = restClient.put()
+                .uri("cart/update-cart/{userId}/clear-cart/{cartId}", userId, cartId)
+                .retrieve()
+                .toBodilessEntity();
+        if (response.getStatusCode().is2xxSuccessful()) {
+            log.info("Cart removal successful for cartId: {} and userId: {}", cartId, userId);
+        } else {
+            log.error("Failed to remove cart for cartId: {} and userId: {}. Status code: {}", cartId, userId, response.getStatusCode());
+            throw new BookingException("Failed to remove cart for cartId: " + cartId + " and userId: " + userId);
+        }
     }
 
     private void handleFailedPayment(PaymentDetails paymentDetails, com.razorpay.Payment paymentData) {

@@ -18,7 +18,6 @@ public class VerificationController {
 
     private final VerificationService verificationService;
 
-
     @PostMapping("/update-mail/{employeeId}")
     public ResponseEntity<String> updateEmail(@PathVariable UUID employeeId, @Valid @RequestBody EmailUpdateRequest emailUpdateRequest) {
         String response=verificationService.updateEmail(employeeId,emailUpdateRequest);

@@ -13,6 +13,7 @@ import com.dineswift.restaurant_service.payload.request.restaurant.RestaurantUpd
 import com.dineswift.restaurant_service.repository.EmployeeRepository;
 import com.dineswift.restaurant_service.repository.RestaurantImageRepository;
 import com.dineswift.restaurant_service.repository.RestaurantRepository;
+import com.dineswift.restaurant_service.security.service.AuthService;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -45,18 +46,22 @@ public class RestaurantService {
     private final ImageService imageService;
     private final RestaurantImageRepository restaurantImageRepository;
     private final GeocodingService geocodingService;
+    private final AuthService authService;
 
     public void createRestaurant(RestaurantCreateRequest restaurantCreateRequest, UUID employeeId) {
         if (restaurantCreateRequest==null || employeeId==null) {
+            log.error("Invalid Restaurant Create data");
             throw new RestaurantException("Invalid Restaurant Create data");
         }
         Employee employee=employeeRepository.findById(employeeId)
                 .orElseThrow(() -> new EmployeeException("Employee not found with id: " + employeeId));
 
         if (employee.getRestaurant()!=null && employee.getRestaurant().getIsActive()){
+            log.error("Admin Can have only one Active Restaurant");
             throw new RestaurantException("Admin Can have only one Active Restaurant");
         }
         Restaurant restaurant=restaurantMapper.toEntity(restaurantCreateRequest,employee);
+        restaurant.setLastModifiedBy(authService.getAuthenticatedId());
 
 //        String fullAddress=String.format("%s, %s, %s, %s", restaurantCreateRequest.getAddress(),
 //                restaurantCreateRequest.getCity(),
@@ -67,6 +72,8 @@ public class RestaurantService {
 //        restaurant.setLongitude(coordinates.getLongitude());
 
         employee.setRestaurant(restaurant);
+        log.info("Setting Authenticated Employee as last modified by for Restaurant");
+        employee.setLastModifiedBy(authService.getAuthenticatedId());
         employeeRepository.save(employee);
     }
 
@@ -75,11 +82,12 @@ public class RestaurantService {
                                               String restaurantName, LocalTime openingTime, LocalTime closingTime) {
         try {
             RestaurantStatus restaurantStatusEnum=null;
-
+            log.info("Creating sort object for restaurants");
             Sort sort = sortDir.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
             if (restaurantStatus==null) restaurantStatus="OPEN";
             restaurantStatusEnum=RestaurantStatus.fromDisplayName(restaurantStatus);
 
+            log.info("Building restaurant specifications for filtering");
             Specification<Restaurant> spec = Specification.<Restaurant>allOf()
                     .and(RestaurantSpecification.hasStatus(restaurantStatusEnum))
                     .and(RestaurantSpecification.hasArea(area))
@@ -94,7 +102,7 @@ public class RestaurantService {
             Pageable pageable = PageRequest.of(page, size, sort);
 
             Page<Restaurant> restaurantPage;
-
+            log.info("Retrieving restaurants from repository with specifications and pagination");
             restaurantPage=restaurantRepository.findAll(spec, pageable);
             if (restaurantPage.hasContent()) {
                 return restaurantPage.map(restaurantMapper::toDTO);
@@ -102,6 +110,7 @@ public class RestaurantService {
                 return Page.empty();
             }
         } catch (Exception e) {
+            log.error("Error retrieving restaurants: {}", e.getMessage());
             throw new RestaurantException("Restaurant retrieval failed: " + e.getMessage());
         }
     }
@@ -112,8 +121,10 @@ public class RestaurantService {
         }
         Restaurant restaurant = restaurantRepository.findByIdAndIsActive(restaurantId)
                 .orElseThrow(() -> new RestaurantException("Restaurant not found with id: " + restaurantId));
+        log.info("Updating restaurant details for restaurant id: {}", restaurantId);
         restaurant=restaurantMapper.updateEntity(restaurant, restaurantUpdateRequest);
         restaurantRepository.save(restaurant);
+        restaurant.setLastModifiedBy(authService.getAuthenticatedId());
         return restaurantMapper.toDTO(restaurant);
 
     }
@@ -124,7 +135,9 @@ public class RestaurantService {
         }
         Restaurant restaurant = restaurantRepository.findByIdAndIsActive(restaurantId)
                 .orElseThrow(() -> new RestaurantException("Restaurant not found with id: " + restaurantId));
+        log.info("Deactivating restaurant with id: {}", restaurantId);
         restaurant.setIsActive(false);
+        restaurant.setLastModifiedBy(authService.getAuthenticatedId());
         restaurantRepository.save(restaurant);
     }
 
@@ -138,14 +151,17 @@ public class RestaurantService {
         try {
             RestaurantStatus restaurantStatus = RestaurantStatus.fromDisplayName(status);
             restaurant.setRestaurantStatus(restaurantStatus);
+            restaurant.setLastModifiedBy(authService.getAuthenticatedId());
             restaurantRepository.save(restaurant);
         } catch (IllegalArgumentException e) {
+            log.error("Invalid Restaurant status: {}", status);
             throw new RestaurantException("Invalid status: " + status);
         }
     }
 
     public CompletableFuture<Void> uploadRestaurantImage(UUID restaurantId, MultipartFile imageFile) throws ExecutionException, InterruptedException {
         if (restaurantId == null || imageFile == null || imageFile.isEmpty()) {
+            log.error("Invalid data for uploading Restaurant image");
             throw new RestaurantException("Invalid data for uploading Restaurant image");
         }
 

@@ -8,6 +8,7 @@ import com.dineswift.restaurant_service.payload.request.table.TableUpdateRequest
 import com.dineswift.restaurant_service.payload.response.table.AvailableSlots;
 import com.dineswift.restaurant_service.payload.response.table.RestaurantTableDto;
 import com.dineswift.restaurant_service.repository.TableRepository;
+import com.dineswift.restaurant_service.security.service.AuthService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,12 +28,13 @@ public class TableService {
     private final TableRepository tableRepository;
     private final TableMapper tableMapper;
     private final ReservationService reservationService;
+    private final AuthService authService;
 
     public RestaurantTableDto addTableToRestaurant(UUID restaurantId, TableCreateRequest tableCreateRequest) {
         log.info("Adding table to restaurant with ID: {}", restaurantId);
         RestaurantTable restaurantTable=tableMapper.toEntity(tableCreateRequest,restaurantId);
-        restaurantTable.setCreatedBy(restaurantId);
-        // need to set createdBy and lastModifiedBy from the authenticated user context
+        restaurantTable.setCreatedBy(authService.getAuthenticatedId());
+        restaurantTable.setLastModifiedBy(authService.getAuthenticatedId());
         RestaurantTable savedTable=tableRepository.save(restaurantTable);
         log.info("Table added with ID: {}", savedTable.getTableId());
         return tableMapper.toDto(savedTable);
@@ -41,10 +43,11 @@ public class TableService {
 
     public void deleteTable(UUID tableId) {
         log.info("Deleting table with ID: {}", tableId);
-        RestaurantTable table = tableRepository.findById(tableId)
-                .orElseThrow(() -> new IllegalArgumentException("Table not found with ID: " + tableId));
-        table.setIsActive(false);
-        tableRepository.save(table);
+        RestaurantTable existingTable = tableRepository.findByIdAndIsActive(tableId)
+                .orElseThrow(() -> new IllegalArgumentException("Table not found with ID or already inactive" + tableId));
+        existingTable.setIsActive(false);
+        existingTable.setLastModifiedBy(authService.getAuthenticatedId());
+        tableRepository.save(existingTable);
         log.info("Table deleted with ID: {}", tableId);
     }
 
@@ -54,8 +57,7 @@ public class TableService {
                 .orElseThrow(() -> new IllegalArgumentException("Table not found with ID: " + tableId));
 
         RestaurantTable updatedTable = tableMapper.toUpdateEntity(table, tableUpdateRequest);
-        // need to set lastModifiedBy from the authenticated user context
-        updatedTable.setLastModifiedBy(table.getCreatedBy());
+        updatedTable.setLastModifiedBy(authService.getAuthenticatedId());
         RestaurantTable savedTable = tableRepository.save(updatedTable);
         log.info("Table updated with ID: {}", savedTable.getTableId());
         return tableMapper.toDto(savedTable);

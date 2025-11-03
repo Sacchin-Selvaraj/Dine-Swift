@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -21,6 +22,7 @@ public class BookingController {
     private final BookingService bookingService;
 
     @PostMapping("/book-table/{cartId}")
+    @PreAuthorize("hasRole('ROLE_USER')")
     public ResponseEntity<TableBookingDto> bookTable(@PathVariable UUID cartId,@Valid @RequestBody BookingRequest bookingRequest){
         log.info("Received booking request for cartId: {}", cartId);
         TableBookingDto tableBookingDto = bookingService.bookTable(cartId, bookingRequest);
@@ -29,6 +31,7 @@ public class BookingController {
     }
 
     @PostMapping("/pay-now/{tableBookingId}")
+    @PreAuthorize("hasRole('ROLE_USER')")
     public ResponseEntity<PaymentCreateResponse> payNow(@PathVariable UUID tableBookingId) {
         log.info("Received pay-now request for tableBookingId: {}", tableBookingId);
         PaymentCreateResponse response = bookingService.getPaymentCreateResponse(tableBookingId);
@@ -37,6 +40,7 @@ public class BookingController {
     }
 
     @PostMapping("/pay-bill/{bookingId}")
+    @PreAuthorize("hasRole('ROLE_USER')")
     public ResponseEntity<PaymentCreateResponse> payBill(@PathVariable UUID bookingId) {
         log.info("Received pay-now request for bookingId: {}", bookingId);
         PaymentCreateResponse response = bookingService.generateBill(bookingId);
@@ -45,6 +49,7 @@ public class BookingController {
     }
 
     @GetMapping("/view-table-booking/{bookingId}")
+    @PreAuthorize("hasRole('ROLE_USER')")
     public ResponseEntity<TableBookingDto> viewTableBooking(@PathVariable UUID bookingId) {
         log.info("Received view booking request for tableBookingId: {}", bookingId);
         TableBookingDto bookedTableDetails = bookingService.viewTableBooking(bookingId);

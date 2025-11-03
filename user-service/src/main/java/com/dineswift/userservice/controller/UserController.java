@@ -48,6 +48,7 @@ public class UserController {
     }
 
     @GetMapping("/bookings/{userId}")
+    @PreAuthorize("hasRole('ROLE_USER')")
     public ResponseEntity<Page<BookingDTO>> getBookings(
             @PathVariable UUID userId,
             @RequestParam(name = "page") Integer page,
@@ -61,24 +62,28 @@ public class UserController {
     }
 
     @PatchMapping("/update-users/{userId}")
+    @PreAuthorize(value = "hasRole('ROLE_USER')")
     public ResponseEntity<UserDTO> updateUsers(@Valid @RequestBody UserDetailsRequest userDetailsRequest, @PathVariable UUID userId){
         UserDTO userDTO=userService.updateDetails(userDetailsRequest,userId);
         return ResponseEntity.ok(userDTO);
     }
 
     @DeleteMapping("/delete/{userId}")
+    @PreAuthorize("hasRole('ROLE_USER')")
     public ResponseEntity<String> deactivateUser(@PathVariable UUID userId){
         userService.deactivateUser(userId);
         return ResponseEntity.ok("Account has been deleted Successfully");
     }
 
     @PatchMapping("/update-username/{userId}")
+    @PreAuthorize("hasRole('ROLE_USER')")
     public ResponseEntity<String> updateUserName(@PathVariable UUID userId, @Valid @RequestBody UsernameUpdateRequest usernameRequest){
         userService.updateUsername(userId,usernameRequest);
         return ResponseEntity.status(HttpStatus.ACCEPTED).body("Username Updated Successfully");
     }
 
     @PostMapping("/update-password/{userId}")
+    @PreAuthorize("hasRole('ROLE_USER')")
     public ResponseEntity<String> updatePassword(@PathVariable UUID userId, @Valid @RequestBody PasswordUpdateRequest passwordRequest){
         userService.updatePassword(userId,passwordRequest);
         return ResponseEntity.status(HttpStatus.ACCEPTED).body("Password Updated Successfully");

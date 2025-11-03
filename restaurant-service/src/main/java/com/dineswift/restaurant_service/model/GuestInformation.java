@@ -23,20 +23,6 @@ public class GuestInformation {
     @Column(name = "special_request", columnDefinition = "TEXT")
     private String specialRequest;
 
-    @NotBlank(message = "Guest name is required")
-    @Size(min = 2, max = 100, message = "Guest name must be between 2 and 100 characters")
-    @Column(name = "guest_name", nullable = false, length = 100)
-    private String guestName;
-
-    @NotBlank(message = "Contact number is required")
-    @Column(name = "contact_number", nullable = false, length = 20)
-    private String contactNumber;
-
-    @Email(message = "Contact email should be valid")
-    @Size(max = 255, message = "Contact email cannot exceed 255 characters")
-    @Column(name = "contact_email", length = 255)
-    private String contactEmail;
-
     @DecimalMin(value = "0.0", inclusive = true, message = "Cancellation fee must be greater than or equal to 0")
     @Digits(integer = 10, fraction = 2, message = "Cancellation fee must have up to 10 integer digits and 2 decimal places")
     @Column(name = "cancellation_fee", precision = 12, scale = 2)

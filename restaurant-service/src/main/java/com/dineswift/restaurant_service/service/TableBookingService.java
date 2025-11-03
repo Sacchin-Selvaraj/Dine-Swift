@@ -16,6 +16,7 @@ import com.dineswift.restaurant_service.repository.DishRepository;
 import com.dineswift.restaurant_service.repository.OrderItemRepository;
 import com.dineswift.restaurant_service.repository.TableBookingRepository;
 import com.dineswift.restaurant_service.repository.TableRepository;
+import com.dineswift.restaurant_service.security.service.AuthService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -42,6 +43,7 @@ public class TableBookingService {
     private final TableBookingMapper tableBookingMapper;
     private final OrderItemMapper orderItemMapper;
     private final DishRepository dishRepository;
+    private final AuthService authService;
     private final PaymentService paymentService;
 
 
@@ -53,6 +55,7 @@ public class TableBookingService {
                 .orElseThrow(() -> new TableBookingException("Invalid table ID: " + tableId));
 
         if (bookingRequest.getNoOfGuest()>bookingTable.getTotalNumberOfSeats()){
+            log.error("Number of guests {} exceeds table capacity {}", bookingRequest.getNoOfGuest(), bookingTable.getTotalNumberOfSeats());
             throw new TableBookingException("Number of guests exceeds table capacity.");
         }
 
@@ -82,8 +85,8 @@ public class TableBookingService {
         log.info("Calculate the total amount for the order items");
         calculateTotalAmount(newBooking, orderItems);
 
-        newBooking.setCreatedBy(UUID.randomUUID()); // Placeholder for actual user ID
-        newBooking.setLastModifiedBy(UUID.randomUUID()); // Placeholder for actual user ID
+        newBooking.setCreatedBy(authService.getAuthenticatedId());
+        newBooking.setLastModifiedBy(authService.getAuthenticatedId());
         newBooking.setRestaurantTable(bookingTable);
         newBooking.setRestaurant(bookingTable.getRestaurant());
         newBooking.setIsActive(true);
@@ -103,11 +106,7 @@ public class TableBookingService {
         GuestInformation guestInfo = new GuestInformation();
         if (bookingRequest.getSpecialRequest()!=null)
             guestInfo.setSpecialRequest(bookingRequest.getSpecialRequest());
-        // Placeholder for actual user details
-        guestInfo.setGuestName("John Doe");
-        guestInfo.setContactNumber("123-456-7890");
-        guestInfo.setContactEmail("sacchindemo@gmail.com");
-        guestInfo.setUserId(UUID.randomUUID());
+        guestInfo.setUserId(authService.getAuthenticatedId());
         return guestInfo;
     }
 
@@ -177,7 +176,7 @@ public class TableBookingService {
         existingBooking.setBookingStatus(BookingStatus.CANCELLED_BY_CUSTOMER);
         existingBooking.setDishStatus(DishStatus.CANCELLED);
         existingBooking.setIsActive(false);
-        existingBooking.setLastModifiedBy(UUID.randomUUID());// Placeholder for actual user ID
+        existingBooking.setLastModifiedBy(authService.getAuthenticatedId());
 
         GuestInformation guestInformation = existingBooking.getGuestInformation();
         guestInformation.setCancellationFee(existingBooking.getUpfrontAmount());
@@ -269,6 +268,7 @@ public class TableBookingService {
         TableBooking tableBooking = existingItem.getTableBooking();
         tableBooking.setGrandTotal(tableBooking.getGrandTotal().subtract(existingItem.getFrozenTotalPrice()));
         tableBooking.setPendingAmount(tableBooking.getPendingAmount().subtract(existingItem.getFrozenTotalPrice()));
+        tableBooking.setLastModifiedBy(authService.getAuthenticatedId());
 
         tableBookingRepository.save(tableBooking);
         orderItemRepository.delete(existingItem);
@@ -282,6 +282,7 @@ public class TableBookingService {
 
         if (existingBooking.getDishStatus().equals(DishStatus.PREPARING) ||
                 existingBooking.getDishStatus().equals(DishStatus.PREPARED)) {
+            log.error("Cannot add item as the dish is already being prepared or preparing for booking ID: {}", tableBookingId);
             throw new TableBookingException("Cannot add item as the dish is already being prepared or preparing. you can order from the restaurant separately.");
         }
         Dish dish = dishRepository.findByIdAndIsActive(addOrderItemRequest.getDishId()).orElseThrow(()->new DishException("Dish not found with ID: "+addOrderItemRequest.getDishId()));
@@ -290,6 +291,7 @@ public class TableBookingService {
 
         existingBooking.setGrandTotal(existingBooking.getGrandTotal().add(newOrderItem.getFrozenTotalPrice()));
         existingBooking.setPendingAmount(existingBooking.getPendingAmount().add(newOrderItem.getFrozenTotalPrice()));
+        existingBooking.setLastModifiedBy(authService.getAuthenticatedId());
 
         OrderItem savedItem = orderItemRepository.save(newOrderItem);
         log.info("Order item added successfully to booking ID: {}", tableBookingId);

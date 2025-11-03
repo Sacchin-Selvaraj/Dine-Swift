@@ -29,6 +29,7 @@ public class ImageService {
         byte[] fileBytes;
         try {
             if (file == null || file.isEmpty()) {
+                log.error("File is null or empty");
                 throw new IllegalArgumentException("File is null or empty");
             }
             fileBytes = file.getBytes();
@@ -40,6 +41,7 @@ public class ImageService {
 
         int maxAttempts = 2;
         int attempt = 0;
+        log.info("Starting upload for file to folder: {}", folderName);
         while (attempt < maxAttempts) {
             try {
                 if (fileBytes.length == 0) {

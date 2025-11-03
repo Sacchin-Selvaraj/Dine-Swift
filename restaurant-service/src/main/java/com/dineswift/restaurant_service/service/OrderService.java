@@ -72,7 +72,7 @@ public class OrderService {
                         .multiply(dish.getDiscount())
                         .divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP)
         );
-
+        log.info("Final dish price after discount: {}", finalDishPrice);
         finalDishPrice = finalDishPrice.setScale(2, RoundingMode.HALF_UP);
         BigDecimal finalTotalPrice = finalDishPrice.multiply(BigDecimal.valueOf(quantity))
                 .setScale(2, RoundingMode.HALF_UP);

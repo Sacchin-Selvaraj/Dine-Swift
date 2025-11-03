@@ -13,6 +13,7 @@ import com.dineswift.restaurant_service.payload.response.dish.DishDTO;
 import com.dineswift.restaurant_service.repository.DishImageRepository;
 import com.dineswift.restaurant_service.repository.DishRepository;
 import com.dineswift.restaurant_service.repository.RestaurantRepository;
+import com.dineswift.restaurant_service.security.service.AuthService;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -41,6 +42,7 @@ public class DishService {
     private final DishMapper dishMapper;
     private final ImageService imageService;
     private final DishImageRepository dishImageRepository;
+    private final AuthService authService;
 
     public String addDish(DishAddRequest dishAddRequest, UUID restaurantId) {
 
@@ -48,6 +50,7 @@ public class DishService {
 
         Dish dish=dishMapper.toEntity(dishAddRequest);
         dish.setRestaurant(restaurant);
+        dish.setLastModifiedBy(authService.getAuthenticatedId());
         dishRepository.save(dish);
         log.info("Dish added successfully: {}", dish.getDishName());
         return "Dish added successfully";
@@ -56,6 +59,7 @@ public class DishService {
     public String deleteDish(UUID dishId) {
         Dish dish = dishRepository.findByIdAndIsActive(dishId).orElseThrow(() -> new RestaurantException("Dish not found with id: " + dishId));
         dish.setIsActive(false);
+        dish.setLastModifiedBy(authService.getAuthenticatedId());
         dishRepository.save(dish);
         log.info("Dish deleted successfully: {}", dish.getDishName());
         return "Dish deleted successfully";
@@ -66,6 +70,7 @@ public class DishService {
         Dish dish = dishRepository.findById(dishId).orElseThrow(()-> new DishException("Dish not found with id: "+dishId));
 
         dish = dishMapper.toEntity(dishUpdateRequest, dish);
+        dish.setLastModifiedBy(authService.getAuthenticatedId());
         Dish updatedDish = dishRepository.save(dish);
         log.info("Dish updated successfully: {}", updatedDish.getDishName());
         return dishMapper.toDTO(updatedDish);
@@ -126,6 +131,7 @@ public class DishService {
 
     private void saveDishImageDetails(UUID dishId, Map<String, Object> res) {
         Dish dish = dishRepository.findByIdAndIsActive(dishId).orElseThrow(() -> new DishException("Dish not found with id: " + dishId));
+        dish.setLastModifiedBy(authService.getAuthenticatedId());
         log.info("Saving image details for dish: {}", dish.getDishName());
         DishImage dishImage = dishMapper.toImageEntity(res, dish);
         dishImageRepository.save(dishImage);
@@ -200,7 +206,6 @@ public class DishService {
         } catch (Exception e) {
             throw new DishException("Dish retrieval failed: " + e.getMessage());
         }
-
 
     }
 }

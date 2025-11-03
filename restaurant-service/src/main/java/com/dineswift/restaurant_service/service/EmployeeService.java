@@ -21,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -40,17 +41,16 @@ public class EmployeeService {
 
 
     public EmployeeDto createEmployee(EmployeeCreateRequest employeeCreateRequest) {
-
+        log.info("Creating new employee with name: {}", employeeCreateRequest.getEmployeeName());
         verifyUser(employeeCreateRequest);
 
         Employee employee = employeeMapper.convertToEntity(employeeCreateRequest);
 
         Role role = roleRepository.findByRoleName(RoleName.ROLE_ADMIN).orElseThrow(() -> new EmployeeException("Role not found"));
         employee.setRoles(Set.of(role));
-
-        employee = employeeRepository.save(employee);
-
-        return employeeMapper.toDTO(employee);
+        Employee savedEmployee = employeeRepository.save(employee);
+        log.info("Employee created successfully with id: {}", savedEmployee.getEmployeeId());
+        return employeeMapper.toDTO(savedEmployee);
 
     }
 
@@ -58,26 +58,33 @@ public class EmployeeService {
         if (employeeCreateRequest == null) {
             throw new EmployeeException("Employee Details not found");
         }
+        log.info("Verifying employee details for name: {}", employeeCreateRequest.getEmployeeName());
         if (employeeRepository.existsByEmployeeName(employeeCreateRequest.getEmployeeName())) {
+            log.error("Employee name already taken: {}", employeeCreateRequest.getEmployeeName());
             throw new EmployeeException("Employee name already taken!");
         }
         if (employeeRepository.existsByEmail(employeeCreateRequest.getEmail())) {
+            log.error("Email already registered: {}", employeeCreateRequest.getEmail());
             throw new EmployeeException("Email already registered!");
         }
     }
 
     public EmployeeDto getEmployee(UUID employeeId) {
+        if (employeeId == null) {
+            throw new EmployeeException("Invalid request with employee id");
+        }
+        log.info("Fetching employee details for id: {}", employeeId);
         Employee employee=employeeRepository.findByIdAndIsActive(employeeId).orElseThrow(() -> new EmployeeException("Employee not found"));
         return employeeMapper.toDTO(employee);
     }
 
-
     public void changeUsername(EmployeeNameRequest employeeNameRequest, UUID employeeId) {
         if (employeeNameRequest == null || employeeId == null) {
-            throw new EmployeeException("Invalid request");
+            throw new EmployeeException("Invalid request or Employee Id is null");
         }
         Employee employee = employeeRepository.findById(employeeId).orElseThrow(() -> new EmployeeException("Employee not found"));
         if (employeeRepository.existsByEmployeeName(employeeNameRequest.getEmployeeName())) {
+            log.error("Employee name already exists: {}", employeeNameRequest.getEmployeeName());
             throw new EmployeeException("Employee name already taken!");
         }
         employee.setEmployeeName(employeeNameRequest.getEmployeeName());
@@ -86,11 +93,11 @@ public class EmployeeService {
 
     public void deleteEmployee(UUID employeeId) {
         if (employeeId == null) {
-            throw new EmployeeException("Invalid request");
+            throw new EmployeeException("Invalid request with employee id");
         }
-        Employee employee = employeeRepository.findById(employeeId).orElseThrow(() -> new EmployeeException("Employee not found"));
+        Employee employee = employeeRepository.findByIdAndIsActive(employeeId).orElseThrow(() -> new EmployeeException("Employee not found or already inactive"));
         isAdmin(employee);
-
+        log.info("Deleting employee with id: {}", employeeId);
         employee.setEmployeeIsActive(false);
         // need to sent it to auth service to disable the user
         employeeRepository.save(employee);
@@ -102,6 +109,7 @@ public class EmployeeService {
         for (Role role:roles){
             if (role.getRoleName().equals(RoleName.ROLE_ADMIN)){
                 if (employee.getRestaurant()!=null && employee.getRestaurant().getIsActive()){
+                    log.error("Cannot delete admin of an active restaurant: {}", employee.getEmployeeId());
                     throw new EmployeeException("Cannot delete admin of an active restaurant");
                 }else {
                     return;
@@ -115,27 +123,29 @@ public class EmployeeService {
             throw new EmployeeException("Invalid request");
         }
         if (!passwordChangeRequest.getNewPassword().equals(passwordChangeRequest.getConfirmNewPassword())){
+            log.error("New password and confirm password do not match for employee id: {}", employeeId);
             throw new EmployeeException("New password and confirm password do not match");
         }
         Employee employee = employeeRepository.findById(employeeId).orElseThrow(() -> new EmployeeException("Employee not found with provided Id"));
         if (!employee.getPassword().equals(passwordChangeRequest.getOldPassword())) {
+            log.error("Old password is incorrect for employee id: {}", employeeId);
             throw new EmployeeException("Old password is incorrect");
         }
-        // need to encode the password and sent it to auth service
-        employee.setPassword(passwordChangeRequest.getNewPassword());
+        log.info("Encoding new password for employee id: {}", employeeId);
+        employee.setPassword(passwordEncoder.encode(passwordChangeRequest.getNewPassword()));
         employeeRepository.save(employee);
     }
 
     public String createEmployer(EmployeeCreateRequest employeeCreateRequest, UUID restaurantId) {
         if (restaurantId == null) {
-            throw new EmployeeException("Invalid Restaurant id");
+            throw new EmployeeException("Invalid Restaurant id or Restaurant Id not found");
         }
         verifyUser(employeeCreateRequest);
-
+        log.info("Creating employee for restaurant id: {}", restaurantId);
         Employee employee = employeeMapper.convertToEntity(employeeCreateRequest);
 
         Restaurant restaurant=restaurantRepository.findById(restaurantId).orElseThrow(()-> new RestaurantException("Restaurant not found with id: " + restaurantId));
-
+        log.info("Setting restaurant admin for restaurant id: {}", restaurantId);
         employee.setRestaurant(restaurant);
         employeeRepository.save(employee);
 
@@ -144,6 +154,7 @@ public class EmployeeService {
 
     public EmployeeDto removeRolesFromEmployee(UUID employeeId, RoleRequest roleRemovalRequest) {
         if (employeeId == null || roleRemovalRequest == null || roleRemovalRequest.getRoleIds().isEmpty()) {
+            log.info("Invalid request to remove roles from employee");
             throw new EmployeeException("Invalid request to remove roles from employee");
         }
         Employee employee = employeeRepository.findById(employeeId).orElseThrow(() -> new EmployeeException("Employee not found"));
@@ -153,12 +164,14 @@ public class EmployeeService {
 
         employee.setRoles(updatedRoles);
         employee = employeeRepository.save(employee);
+        log.info("Roles removed successfully from employee id: {}", employeeId);
         return employeeMapper.toDTO(employee);
     }
 
     public List<RoleDTOResponse> getAllRoles() {
         List<Role> roles=roleRepository.findAll();
         if (roles.isEmpty()){
+            log.error("No roles found in the system");
             throw new RoleException("No roles found");
         }
         return roles.stream().map(employeeMapper::toRoleDTO).collect(Collectors.toList());
@@ -167,11 +180,13 @@ public class EmployeeService {
 
     public EmployeeDto addRolesToEmployee(UUID employeeId, RoleRequest roleAddRequest) {
         if (employeeId==null || roleAddRequest==null || roleAddRequest.getRoleIds().isEmpty()){
+            log.error("Invalid request to add roles to employee");
             throw new EmployeeException("Invalid request to add roles to employee");
         }
         Employee employee=employeeRepository.findById(employeeId).orElseThrow(()-> new EmployeeException("Employee not found"));
-        Set<Role> rolesToAdd=roleRepository.findAllById(roleAddRequest.getRoleIds()).stream().collect(Collectors.toSet());
+        Set<Role> rolesToAdd= new HashSet<>(roleRepository.findAllById(roleAddRequest.getRoleIds()));
         if (rolesToAdd.isEmpty()) {
+            log.error("No valid roles found to add to employee id: {}", employeeId);
             throw new RoleException("No valid roles found to add");
         }
         employee.getRoles().addAll(rolesToAdd);

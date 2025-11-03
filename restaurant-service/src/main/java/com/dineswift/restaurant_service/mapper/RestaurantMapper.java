@@ -10,6 +10,7 @@ import com.dineswift.restaurant_service.payload.request.restaurant.RestaurantCre
 import com.dineswift.restaurant_service.payload.request.restaurant.RestaurantUpdateRequest;
 import com.dineswift.restaurant_service.repository.RestaurantImageRepository;
 import com.dineswift.restaurant_service.repository.RestaurantRepository;
+import com.dineswift.restaurant_service.security.service.AuthService;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +28,7 @@ public class RestaurantMapper {
     private final ModelMapper mapper;
     private final RestaurantImageRepository restaurantImageRepository;
     private final RestaurantRepository restaurantRepository;
+    private final AuthService authService;
 
 
     public Restaurant toEntity(RestaurantCreateRequest restaurantCreateRequest, Employee employee) {
@@ -35,7 +37,6 @@ public class RestaurantMapper {
 
         restaurant.setOwnerName(employee.getEmployeeName());
         restaurant.setRestaurantStatus(RestaurantStatus.CREATED);
-        restaurant.setLastModifiedBy(employee.getEmployeeId());
         return restaurant;
     }
 

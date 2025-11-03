@@ -1,6 +1,7 @@
 package com.dineswift.restaurant_service.config;
 
 import com.dineswift.restaurant_service.exception.RemoteApiException;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -10,8 +11,13 @@ import org.springframework.http.HttpStatusCode;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @Slf4j
 @Configuration
@@ -26,8 +32,11 @@ public class RestClientConfig {
         return RestClient.builder()
                 .requestFactory(new HttpComponentsClientHttpRequestFactory())
                 .requestInterceptor((request, body, execution) ->{
-
+                    Map<String,String> headers = getDefaultHeaders();
+                    request.getHeaders().add("X-Auth-User",headers.get("X-Auth-User"));
+                    request.getHeaders().add("X-Roles",headers.get("X-Roles"));
                     log.info("Making request to URL: {}", request.getURI());
+                    log.info("Request Headers: {}", request.getHeaders());
                     return execution.execute(request,body);
                 })
                 .defaultStatusHandler(HttpStatusCode::isError,(request, response) -> {
@@ -64,6 +73,19 @@ public class RestClientConfig {
                         .allowCredentials(false);
             }
         };
+    }
+
+    private Map<String, String> getDefaultHeaders() {
+        ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        if (attributes==null)
+            log.info("No request attributes found");
+        assert attributes != null;
+        log.info("Extracting headers from the initial request");
+        HttpServletRequest initialRequest = attributes.getRequest();
+        Map<String,String> headers = new HashMap<>();
+        headers.put("X-Auth-User", initialRequest.getHeader("X-Auth-User"));
+        headers.put("X-Roles", initialRequest.getHeader("X-Roles"));
+        return headers;
     }
 
     @Bean

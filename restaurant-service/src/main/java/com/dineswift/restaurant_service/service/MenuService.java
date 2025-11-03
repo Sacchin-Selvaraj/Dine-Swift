@@ -8,6 +8,7 @@ import com.dineswift.restaurant_service.payload.request.menu.MenuUpdateRequest;
 import com.dineswift.restaurant_service.payload.response.menu.MenuDTO;
 import com.dineswift.restaurant_service.payload.response.menu.MenuResponse;
 import com.dineswift.restaurant_service.repository.MenuRepository;
+import com.dineswift.restaurant_service.security.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -22,6 +23,7 @@ public class MenuService {
 
     private final MenuRepository menuRepository;
     private final MenuMapper menuMapper;
+    private final AuthService authService;
 
     public void addMenu(MenuCreateRequest menuCreateRequest, UUID restaurantId) {
         log.info("Adding new menu: {}", menuCreateRequest.getMenuName());
@@ -29,8 +31,8 @@ public class MenuService {
             throw new MenuException("menu name already exists");
         }
         Menu menu = menuMapper.toEntity(menuCreateRequest,restaurantId);
-        menu.setCreatedBy(restaurantId);
-        // After working with authentication, set the createdBy field to the authenticated user's ID
+        menu.setCreatedBy(authService.getAuthenticatedId());
+        menu.setLastModifiedBy(authService.getAuthenticatedId());
         menuRepository.save(menu);
         log.info("menu added successfully: {}", menu.getMenuId());
     }
@@ -39,6 +41,7 @@ public class MenuService {
         log.info("Deleting menu with ID: {}", menuId);
         Menu menu = menuRepository.findByIdAndIsActive(menuId).orElseThrow(() -> new MenuException("menu not found with provided Id"));
         menu.setIsActive(false);
+        menu.setLastModifiedBy(authService.getAuthenticatedId());
         menuRepository.save(menu);
         log.info("Menu deleted successfully: {}", menuId);
     }
@@ -49,15 +52,17 @@ public class MenuService {
 
         if (menuUpdateRequest.getMenuName() != null && !menuUpdateRequest.getMenuName().isEmpty()) {
             if (!menu.getMenuName().equals(menuUpdateRequest.getMenuName()) && menuRepository.existsByMenuName(menuUpdateRequest.getMenuName())) {
+                log.error("Menu name {} already exists", menuUpdateRequest.getMenuName());
                 throw new MenuException("menu name already exists");
             }
             menu.setMenuName(menuUpdateRequest.getMenuName());
         }
-
+        log.info("Updating menu description for menu ID: {}", menuId);
         if (menuUpdateRequest.getDescription() != null) {
             menu.setDescription(menuUpdateRequest.getDescription());
         }
 
+        menu.setLastModifiedBy(authService.getAuthenticatedId());
         menuRepository.save(menu);
         log.info("menu updated successfully: {}", menuId);
         return menuMapper.toDTO(menu);
@@ -83,11 +88,13 @@ public class MenuService {
         if (!removed) {
             throw new MenuException("Dish not found in the specified menu");
         }
+        menu.setLastModifiedBy(authService.getAuthenticatedId());
         menuRepository.save(menu);
         log.info("Dish {} removed from menu {}", dishId, menuId);
     }
 
     public MenuDTO getMenuDetails(UUID menuId) {
+        log.info("Fetching details for menu ID: {}", menuId);
         Menu menu = menuRepository.findByIdAndIsActive(menuId)
                 .orElseThrow(() -> new MenuException("menu not found with provided Id"));
         return menuMapper.toDTO(menu);

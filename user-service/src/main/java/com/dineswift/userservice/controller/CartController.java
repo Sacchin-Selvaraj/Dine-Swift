@@ -6,6 +6,7 @@ import com.dineswift.userservice.service.CartService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -26,6 +27,7 @@ public class CartController {
     }
 
     @GetMapping("/get-cart/{cartId}")
+    @PreAuthorize("hasRole('ROLE_USER')")
     public ResponseEntity<CartDTO> getCartById(@PathVariable UUID cartId) {
         log.info("Fetching cart details for cartId={}", cartId);
         CartDTO cartDTO=cartService.getCartDetails(cartId);
@@ -33,10 +35,20 @@ public class CartController {
     }
 
     @PatchMapping("/update-cart-amount/{cartId}" )
+    @PreAuthorize("hasRole('ROLE_USER')")
     public ResponseEntity<Void> updateCartTotalAmount(@PathVariable UUID cartId,
                                                      @RequestBody CartAmountUpdateRequest cartAmountUpdateRequest) {
         log.info("Request Received from the Restaurant Service to update cart total amount for cartId: {}", cartId);
         cartService.updateCartTotalAmount(cartId, cartAmountUpdateRequest);
         return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/update-cart/{userId}/clear-cart/{cartId}")
+    @PreAuthorize("hasRole('ROLE_USER')")
+    public ResponseEntity<Void> clearCart(@PathVariable UUID userId,
+                                          @PathVariable UUID cartId) {
+        log.info("Request Received from the User Service to clear cart for userId: {} and cartId: {}", userId, cartId);
+        cartService.clearCart(userId, cartId);
+        return ResponseEntity.noContent().build();
     }
 }

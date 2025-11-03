@@ -15,7 +15,7 @@ import java.util.UUID;
 @Slf4j
 public class AuthService {
 
-    public UUID getAuthenticatedUserId() {
+    public UUID getAuthenticatedId() {
         log.info("Fetching authenticated Employee ID from security context");
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String UUIDString=null;
