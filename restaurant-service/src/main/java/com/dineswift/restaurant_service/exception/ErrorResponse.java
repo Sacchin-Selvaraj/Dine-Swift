@@ -14,7 +14,7 @@ import java.util.List;
 public class ErrorResponse {
 
     private String errorMessage;
-    private final LocalDateTime timeStamp = LocalDateTime.now();
+    private final LocalDateTime timestamp = LocalDateTime.now();
     private List<String> errors;
 
     public ErrorResponse(String errorMessage) {

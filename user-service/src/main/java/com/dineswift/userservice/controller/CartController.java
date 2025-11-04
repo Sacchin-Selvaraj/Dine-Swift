@@ -20,6 +20,7 @@ public class CartController {
     private final CartService cartService;
 
     @GetMapping("/valid-cartId/{cartId}")
+    @PreAuthorize("hasRole('ROLE_USER')")
     public ResponseEntity<Boolean> isValidCartId(@PathVariable UUID cartId) {
         log.info("Received Request from the Restaurant Service to validate cartId: {}", cartId);
         boolean response = cartService.isValidCartId(cartId);

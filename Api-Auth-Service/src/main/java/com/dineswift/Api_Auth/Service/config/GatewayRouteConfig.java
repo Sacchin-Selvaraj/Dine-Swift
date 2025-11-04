@@ -23,9 +23,8 @@ public class GatewayRouteConfig {
                         .uri("lb://USER-SERVICE"))
                 .route("user_service_verification", r -> r.path("/user-verification/**")
                         .uri("lb://USER-SERVICE"))
-                .route("eureka_service", r -> r.path("/eureka/**")
-                        .filters(f -> f.rewritePath("/eureka/(?<segment>.*)", "/"))
-                        .uri("http://localhost:8761"))
+                .route("user_service_verification", r -> r.path("/user-password/**")
+                        .uri("lb://USER-SERVICE"))
                 .route("path_route_restaurant_service", r -> r.path("/restaurant/**")
                         .uri("lb://RESTAURANT-SERVICE"))
                 .build();

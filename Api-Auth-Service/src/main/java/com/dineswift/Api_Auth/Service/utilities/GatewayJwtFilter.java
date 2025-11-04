@@ -11,6 +11,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.stereotype.Component;
+import org.springframework.util.AntPathMatcher;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilter;
 import org.springframework.web.server.WebFilterChain;
@@ -26,6 +27,7 @@ import java.util.Map;
 public class GatewayJwtFilter implements WebFilter {
 
     private final JwtUtilities jwtUtilities;
+    private final AntPathMatcher pathMatcher = new AntPathMatcher();
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
@@ -100,11 +102,16 @@ public class GatewayJwtFilter implements WebFilter {
     }
 
     private boolean isPublicEndpoint(String path) {
-         return path.startsWith("/user/sign-up") ||
-                path.startsWith("/auth/login") ||
-                path.startsWith("/auth/refresh-token")||
-                 path.startsWith("/restaurant/employee/login")||
-                path.startsWith("/restaurant/employee/sign-up");
+        List<String> publicEndpoints = List.of(
+                "/user/sign-up",
+                "/auth/login",
+                "/user-password/**",
+                "/auth/refresh-token",
+                "/restaurant/employee/login",
+                "/restaurant/employee/sign-up"
+        );
+         return publicEndpoints.stream()
+                 .anyMatch(pattern -> pathMatcher.match(pattern,path));
     }
 
     private Mono<Void> onAuthenticationFailure(ServerWebExchange exchange, String message) {

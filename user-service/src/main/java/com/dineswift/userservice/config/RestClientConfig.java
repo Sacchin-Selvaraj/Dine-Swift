@@ -2,9 +2,13 @@ package com.dineswift.userservice.config;
 
 import com.dineswift.userservice.exception.ErrorResponse;
 import com.dineswift.userservice.exception.RemoteApiException;
+import com.dineswift.userservice.exception.UserException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.http.conn.HttpHostConnectException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,10 +18,10 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Configuration
@@ -32,27 +36,44 @@ public class RestClientConfig {
         return RestClient.builder()
                 .requestFactory(new HttpComponentsClientHttpRequestFactory())
                 .requestInterceptor((request, body, execution) ->{
-                    Map<String,String> headers = getDefaultHeaders();
-                    request.getHeaders().add("X-Auth-User",headers.get("X-Auth-User"));
-                    request.getHeaders().add("X-Roles",headers.get("X-Roles"));
-                    log.info("Making request to URL: {}", request.getURI());
-                    log.info("Request Headers: {}", request.getHeaders());
-                    return execution.execute(request,body);
+                    try {
+                        Map<String,String> headers = getDefaultHeaders();
+                        request.getHeaders().add("X-Auth-User",headers.get("X-Auth-User"));
+                        request.getHeaders().add("X-Roles",headers.get("X-Roles"));
+                        log.info("Making request to URL: {}", request.getURI());
+                        log.info("Request Headers: {}", request.getHeaders());
+                        return execution.execute(request,body);
+                    } catch (HttpHostConnectException e) {
+                        throw new RemoteApiException("Unable to connect to remote service: " + e.getMessage());
+                    } catch (Exception e){
+                        throw new RemoteApiException("Error during remote service call: " + e.getMessage());
+                    }
                 })
                 .defaultStatusHandler(HttpStatusCode::isError,(request, response) -> {
 
                     log.error("Remote service call failed with status: {}", response.getStatusCode());
 
                     String errorBody = "";
+
                     try {
                         errorBody = new String(response.getBody().readAllBytes(), StandardCharsets.UTF_8);
+                        ObjectMapper mapper = new ObjectMapper();
+                        JsonNode rootNode = mapper.readTree(errorBody);
+                        errorBody = "";
+
+                        if (rootNode.has("errors") && rootNode.get("errors").isArray()) {
+                            for (JsonNode errorNode : rootNode.get("errors")) {
+                                log.error("Error detail: {}", errorNode.asText());
+                                errorBody = errorBody.concat(errorNode.asText()).concat(",");
+                            }
+                        }
                     } catch (Exception e) {
                         log.error("Failed to read error body from the Restaurant Service Response ", e);
+                        throw new RemoteApiException(
+                                "Service call failed with status: " + response.getStatusCode()
+                        );
                     }
-
-                    throw new RemoteApiException(
-                            "Service call failed with response : " + errorBody
-                    );
+                    throw new RemoteApiException(errorBody);
 
                 });
        }

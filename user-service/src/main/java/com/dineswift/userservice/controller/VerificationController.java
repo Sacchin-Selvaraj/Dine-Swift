@@ -1,29 +1,26 @@
 package com.dineswift.userservice.controller;
 
 import com.dineswift.userservice.model.request.EmailUpdateRequest;
-import com.dineswift.userservice.model.request.PasswordChangeRequest;
 import com.dineswift.userservice.model.request.PhoneNumberUpdateRequest;
 import com.dineswift.userservice.model.request.VerifyTokenRequest;
-import com.dineswift.userservice.model.response.MessageResponse;
 import com.dineswift.userservice.service.VerificationService;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 @RestController
 @RequestMapping("/user-verification")
+@RequiredArgsConstructor
+@Slf4j
 public class VerificationController {
 
     private final VerificationService verificationService;
-
-    public VerificationController(VerificationService verificationService) {
-        this.verificationService = verificationService;
-    }
 
     @PostMapping("/update-mail/{userId}")
     @PreAuthorize("hasRole('ROLE_USER')")
