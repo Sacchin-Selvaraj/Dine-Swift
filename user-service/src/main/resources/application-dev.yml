@@ -29,6 +29,10 @@ spring:
             trusted:
               packages: '*'
 
+  zipkin:
+    base-url: http://localhost:9411/
+    enabled: true
+
 
 # Optional: For better debugging
 logging:
@@ -52,5 +56,20 @@ app:
     topic:
       email-verification-topic: email
       sms-verification-topic: sms
+
+
+eureka:
+  instance: localhost
+  prefer-ip-address: true
+  ip-address: 127:0.0.1
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+    register-with-eureka: true
+    fetch-registry: true
+
+dineswift:
+  restaurant-service:
+    url: ${ORDER_SERVICE_URL}
 
 

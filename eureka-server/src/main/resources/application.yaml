@@ -6,6 +6,10 @@ spring:
         name: eureka-server
 
 eureka:
+  instance:
+    hostname: localhost
+    prefer-ip-address: true
+    ip-address: 127.0.0.1
   client:
     register-with-eureka: false
     fetch-registry: false

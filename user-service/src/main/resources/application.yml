@@ -1,16 +1,10 @@
-spring:
-  project:
-    name: user-service
 
 
 
-dineswift:
-  restaurant-service:
-      url: ${ORDER_SERVICE_URL}
 
-eureka:
-  client:
-    service-url:
-      defaultZone: http://localhost:8761/eureka/
-    register-with-eureka: true
-    fetch-registry: true
+
+
+
+
+
+

@@ -1,5 +1,6 @@
 server:
   port: 8080
+  address: 127.0.0.1
 
 # Optional: For better debugging
 logging:
@@ -12,25 +13,40 @@ logging:
             sql:
               BasicBinder: TRACE
 
-
-jwt:
-  secret-key: "3A7F5D9C1E6B8A2F4D9C0E5B8A1F3D7E2C6A9D0B4F8E3C7A1D5F9E2B6C8A0D4"
-  expiration-time: 86400000
-
-  level:
     org.apache.kafka: ERROR
     org.springframework.kafka: ERROR
     org.apache.kafka.clients.NetworkClient: OFF
     org.apache.kafka.clients.admin.AdminClientConfig: OFF
+    org.springframework.cloud.commons.util.InetUtils: DEBUG
+    com.netflix.appinfo: DEBUG
+
+
+jwt:
+  secret-key: ${JWT_SECRET_KEY}
+  expiration-time: ${JWT_EXPIRATION_TIME}
+
+
 
 spring:
   project:
     name: user-service
   datasource:
-    url: jdbc:postgresql://localhost:5432/user_db
-    username: postgres
-    password: Sacchin
+    url: ${DATABASE_URL}
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
     driver-class-name: org.postgresql.Driver
+
+  zipkin:
+    base-url: http://localhost:9411/
+    enabled: true
+
+  cloud:
+    client:
+      ip-address: 127.0.0.1
+    inetutils:
+      preferred-networks: 127.0.0.1
+      ignored-interfaces: .*
+
 
   jpa:
     hibernate:
@@ -83,4 +99,19 @@ app:
     topic:
       email-verification-topic: email
       sms-verification-topic: sms
+
+
+eureka:
+  instance: localhost
+  prefer-ip-address: true
+  ip-address: 127:0.0.1
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+    register-with-eureka: true
+    fetch-registry: true
+
+dineswift:
+  restaurant-service:
+    url: ${ORDER_SERVICE_URL}
 

@@ -17,6 +17,8 @@ logging:
     org.springframework.cloud.gateway: DEBUG
     org.springframework.web: DEBUG
     reactor.netty: DEBUG
+    org.springframework.cloud.commons.util.InetUtils: DEBUG
+    com.netflix.appinfo: DEBUG
 
 
 eureka:
