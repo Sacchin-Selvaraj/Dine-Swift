@@ -1,6 +1,7 @@
 package com.dineswift.restaurant_service.service;
 
 import com.dineswift.restaurant_service.exception.DishException;
+import com.dineswift.restaurant_service.exception.RestaurantException;
 import com.dineswift.restaurant_service.exception.TableBookingException;
 import com.dineswift.restaurant_service.mapper.OrderItemMapper;
 import com.dineswift.restaurant_service.mapper.TableBookingMapper;
@@ -12,14 +13,16 @@ import com.dineswift.restaurant_service.payload.request.tableBooking.QuantityUpd
 import com.dineswift.restaurant_service.payload.response.orderItem.OrderItemDto;
 import com.dineswift.restaurant_service.payload.response.tableBooking.TableBookingDto;
 import com.dineswift.restaurant_service.payment.service.PaymentService;
-import com.dineswift.restaurant_service.repository.DishRepository;
-import com.dineswift.restaurant_service.repository.OrderItemRepository;
-import com.dineswift.restaurant_service.repository.TableBookingRepository;
-import com.dineswift.restaurant_service.repository.TableRepository;
+import com.dineswift.restaurant_service.repository.*;
 import com.dineswift.restaurant_service.security.service.AuthService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -40,11 +43,13 @@ public class TableBookingService {
     private final TableBookingRepository tableBookingRepository;
     private final TableRepository tableRepository;
     private final OrderItemRepository orderItemRepository;
+    private final RestaurantRepository restaurantRepository;
     private final TableBookingMapper tableBookingMapper;
     private final OrderItemMapper orderItemMapper;
     private final DishRepository dishRepository;
     private final AuthService authService;
     private final PaymentService paymentService;
+    private final TableBookingSpecification tableBookingSpecification;
 
 
     public TableBookingDto createOrder(UUID cartId, BookingRequest bookingRequest) {
@@ -308,5 +313,39 @@ public class TableBookingService {
         newOrderItem.setTableBooking(existingBooking);
         newOrderItem.setFrozenValues();
         return newOrderItem;
+    }
+
+    public Page<TableBookingDto> getTableBookingDetails(UUID restaurantId, Integer pageNo, Integer pageSize,
+                                                        String tableNumber, LocalDate bookingDate, LocalTime dineInTime,
+                                                        Integer duration, Integer noOfGuest, String bookingStatus,
+                                                        String dishStatus, String sortBy, String sortDir) {
+        log.info("Fetching table booking details for restaurantId: {}", restaurantId);
+        Restaurant restaurant = restaurantRepository.findByIdAndIsActive(restaurantId).orElseThrow(()->
+                new RestaurantException("Restaurant not found with ID: " + restaurantId));
+
+        Sort sort = sortDir.equalsIgnoreCase("asc")?Sort.by(sortBy).ascending():Sort.by(sortBy).descending();
+
+        log.info("Creating pageable object for pageNo: {}, pageSize: {}, sortBy: {}, sortDir: {}", pageNo, pageSize, sortBy, sortDir);
+        Pageable pageable = PageRequest.of(pageNo, pageSize, sort);
+
+        Specification<TableBooking> spec = Specification.<TableBooking>allOf()
+                .and(tableBookingSpecification.hasRestaurant(restaurant))
+                .and(tableBookingSpecification.hasTableNumber(tableNumber))
+                .and(tableBookingSpecification.hasBookingDate(bookingDate))
+                .and(tableBookingSpecification.hasDineInTime(dineInTime))
+                .and(tableBookingSpecification.hasDuration(duration))
+                .and(tableBookingSpecification.hasNoOfGuest(noOfGuest))
+                .and(tableBookingSpecification.hasBookingStatus(bookingStatus))
+                .and(tableBookingSpecification.hasDishStatus(dishStatus));
+
+        Page<TableBooking> bookingsPage = tableBookingRepository.findAllBySpec(spec, pageable);
+
+        if (!bookingsPage.hasContent()){
+            throw new TableBookingException("No bookings found for the given criteria in restaurant ID: " + restaurantId);
+        }
+
+        Page<TableBookingDto> bookingDtosPage = bookingsPage.map(tableBookingMapper::toDto);
+        log.info("Fetched {} bookings for restaurantId: {}", bookingDtosPage.getTotalElements(), restaurantId);
+        return bookingDtosPage;
     }
 }

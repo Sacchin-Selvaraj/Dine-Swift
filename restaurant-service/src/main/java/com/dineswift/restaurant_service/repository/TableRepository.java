@@ -24,4 +24,8 @@ public interface TableRepository extends JpaRepository<RestaurantTable, UUID> {
 
     @Query("SELECT rt FROM RestaurantTable rt WHERE rt.tableId = :tableId AND rt.isActive = true")
     Optional<RestaurantTable> findByIdAndIsActive(UUID tableId);
+
+    @Query("SELECT rt FROM RestaurantTable rt WHERE rt.tableNumber = :tableNumber AND rt.isActive = true")
+    Optional<RestaurantTable> findByTableNumber(String tableNumber);
+
 }

@@ -30,12 +30,6 @@ public class TableBookingMapper {
         log.info("Mapping TableBooking entity to TableBookingDto");
         TableBookingDto tableBookingDto = modelMapper.map(existingBooking,TableBookingDto.class);
 
-        log.info("Restaurant Table mapping to RestaurantTableDto");
-        tableBookingDto.setRestaurantTableDto( tableMapper.toDto(existingBooking.getRestaurantTable()));
-
-        log.info("Restaurant mapping to RestaurantDto");
-        tableBookingDto.setRestaurantDto( restaurantMapper.toDTO(existingBooking.getRestaurant()));
-
         log.info("Mapping for Guest Information");
         tableBookingDto.setGuestInformationDto(modelMapper.map(existingBooking.getGuestInformation(), GuestInformationDto.class));
 
