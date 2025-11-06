@@ -58,8 +58,7 @@ public class PaymentService {
         newPayment.setTableBooking(newBooking);
 
         log.info("Create orderId using Razorpay");
-        String contactEmail = "demo";
-        String createdOrderId = createRazorpayOrder(amount, "INR",contactEmail);
+        String createdOrderId = createRazorpayOrder(amount, "INR");
 
         newPayment.setOrderId(createdOrderId);
         Payment savedPayment = paymentRepository.save(newPayment);
@@ -69,21 +68,19 @@ public class PaymentService {
                 .amount(savedPayment.getAmount())
                 .paymentName(paymentName)
                 .description("Payment for table booking ID: " + newBooking.getTableBookingId())
-                .email(contactEmail)
                 .tableBookingId(newBooking.getTableBookingId())
                 .bookingStatus(newBooking.getBookingStatus())
                 .currency("INR")
                 .build();
     }
 
-    private String createRazorpayOrder(BigDecimal upfrontAmount, String currency, String contactEmail) {
+    private String createRazorpayOrder(BigDecimal upfrontAmount, String currency) {
 
         try {
             JSONObject paymentRequest = new JSONObject();
             int amountInPaise = upfrontAmount.multiply(new BigDecimal(100)).intValue();
             paymentRequest.put("amount", amountInPaise);
             paymentRequest.put("currency", currency);
-            paymentRequest.put("receipt", contactEmail);
             paymentRequest.put("payment_capture", 1);
 
             Order createdOrder = razorpayClient.orders.create(paymentRequest);

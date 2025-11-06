@@ -17,7 +17,6 @@ public class PaymentCreateResponse {
     private String currency;
     private String paymentName;
     private String description;
-    private String email;
     private UUID tableBookingId;
     private BookingStatus bookingStatus;
 

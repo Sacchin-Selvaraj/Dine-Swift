@@ -27,7 +27,13 @@ import java.util.stream.Collectors;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
-    private final Set<String> whitelisted = Set.of("/user/login", "/user/sign-up","/user-password/**");
+    private final Set<String> whitelisted = Set.of("/user/login",
+            "/user/sign-up",
+            "/user-password/**",
+            "/v3/api-docs/**",
+            "/swagger-ui/**",
+            "/swagger-ui.html"
+            );
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {

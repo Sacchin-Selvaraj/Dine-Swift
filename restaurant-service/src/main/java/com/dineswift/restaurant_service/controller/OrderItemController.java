@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -13,21 +14,23 @@ import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/order-items")
+@RequestMapping("/restaurant/order-items")
 @Slf4j
 public class OrderItemController {
 
     private final OrderService orderService;
 
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_USER')")
     @PostMapping("/add-item/{cartId}/{dishId}/{quantity}")
-    public ResponseEntity<Void> addItemToCart(@PathVariable UUID cartId,
+    public ResponseEntity<Void> addItemToOrderItem(@PathVariable UUID cartId,
                                               @PathVariable UUID dishId,
                                               @PathVariable Integer quantity) {
         log.info("Adding item to cart: cartId={}, dishId={}, quantity={}", cartId, dishId, quantity);
-        orderService.addItemToCart(cartId, dishId, quantity);
+        orderService.addItemToOrderItem(cartId, dishId, quantity);
         return ResponseEntity.created(null).build();
     }
 
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_USER')")
     @PatchMapping("/update-item/{orderItemId}/{quantity}")
     public ResponseEntity<Void> updateItemQuantity(@PathVariable UUID orderItemId,
                                                    @PathVariable Integer quantity) {
@@ -36,6 +39,7 @@ public class OrderItemController {
         return ResponseEntity.ok().build();
     }
 
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_USER')")
     @DeleteMapping("/delete-item/{orderItemId}")
     public ResponseEntity<Void> deleteItem(@PathVariable UUID orderItemId) {
         log.info("Deleting item: orderItemId={}", orderItemId);
@@ -43,6 +47,7 @@ public class OrderItemController {
         return ResponseEntity.noContent().build();
     }
 
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_USER')")
     @GetMapping("/get-order-items/{cartId}")
     public ResponseEntity<List<OrderItemDto>> getOrderItemsByCartId(@PathVariable UUID cartId) {
         log.info("Fetching order items for cartId={}", cartId);
@@ -50,6 +55,7 @@ public class OrderItemController {
         return ResponseEntity.ok(orderItems);
     }
 
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_USER')")
     @GetMapping("/get-order-items-booking/{tableBookingId}")
     public ResponseEntity<Page<OrderItemDto>> getOrderItemsByTableBookingId(
             @PathVariable UUID tableBookingId,

@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -19,6 +20,7 @@ public class PaymentController {
 
     private final PaymentService paymentService;
 
+    @PreAuthorize("hasRole('ROLE_USER')")
     @PostMapping("/verify-payment")
     public ResponseEntity<?> verifyPayment(@RequestBody PaymentDetails paymentDetails){
         boolean isValid = paymentService.verifyPayment(paymentDetails);
@@ -30,7 +32,7 @@ public class PaymentController {
            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Payment verification failed");
         }
     }
-
+    @PreAuthorize("hasRole('ROLE_USER')")
     @PostMapping("/pay-now/{tableBookingId}")
     public ResponseEntity<PaymentCreateResponse> payBill(@PathVariable UUID tableBookingId) {
         PaymentCreateResponse paymentCreateDetails = paymentService.generatePayNow(tableBookingId);

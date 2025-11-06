@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,12 +18,13 @@ import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/table")
+@RequestMapping("/restaurant/table")
 @Slf4j
 public class TableController {
 
     private final TableService tableService;
 
+    @PreAuthorize(("hasAnyRole('ROLE_ADMIN','ROLE_MANAGER')"))
     @PostMapping("/add-table/{restaurantId}" )
     public ResponseEntity<RestaurantTableDto> addTableToRestaurant(@PathVariable UUID  restaurantId, @RequestBody TableCreateRequest tableCreateRequest) {
         log.info("Received request to add table to restaurant with ID: {}", restaurantId);
@@ -30,6 +32,7 @@ public class TableController {
         return ResponseEntity.ok(createdTable);
     }
 
+    @PreAuthorize(("hasAnyRole('ROLE_ADMIN','ROLE_MANAGER')"))
     @DeleteMapping("/delete-table/{tableId}" )
     public ResponseEntity<Void> deleteTable(@PathVariable UUID  tableId) {
         log.info("Received request to delete table with ID: {}", tableId);
@@ -37,6 +40,7 @@ public class TableController {
         return ResponseEntity.noContent().build();
     }
 
+    @PreAuthorize(("hasAnyRole('ROLE_ADMIN','ROLE_MANAGER')"))
     @PatchMapping("/update-table/{tableId}" )
     public ResponseEntity<RestaurantTableDto> updateTable(@PathVariable UUID  tableId, @RequestBody TableUpdateRequest tableUpdateRequest) {
         log.info("Received request to update table with ID: {}", tableId);

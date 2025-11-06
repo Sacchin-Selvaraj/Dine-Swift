@@ -36,7 +36,7 @@ public class OrderService {
     private final OrderItemMapper orderItemMapper;
     private final RestClient restClient;
 
-    public void addItemToCart(UUID cartId, UUID dishId, Integer quantity) {
+    public void addItemToOrderItem(UUID cartId, UUID dishId, Integer quantity) {
         log.info("Checking quantity: {}", quantity);
         checkQuantity(quantity);
         checkCartIdIsValid(cartId);

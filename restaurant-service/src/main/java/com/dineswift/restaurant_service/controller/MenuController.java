@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -17,11 +18,12 @@ import java.util.UUID;
 @RestController
 @RequiredArgsConstructor
 @Slf4j
-@RequestMapping("/menu")
+@RequestMapping("/restaurant/menu")
 public class MenuController {
 
     private final MenuService menuService;
 
+    @PreAuthorize(("hasRole('ROLE_ADMIN') or hasRole('ROLE_MANAGER')"))
     @PostMapping("/add-menu/{restaurantId}")
     public ResponseEntity<MessageResponse> addMenu(@RequestBody MenuCreateRequest menuCreateRequest, @PathVariable UUID restaurantId) {
         log.info("Received add menu request");
@@ -29,6 +31,7 @@ public class MenuController {
         return new ResponseEntity<>(new MessageResponse("menu created successfully"), HttpStatus.CREATED);
     }
 
+    @PreAuthorize(("hasRole('ROLE_ADMIN') or hasRole('ROLE_MANAGER')"))
     @DeleteMapping("/delete-menu/{menuId}")
     public ResponseEntity<Void> deleteMenu(@PathVariable UUID menuId) {
         log.info("Received delete menu request for menuId: {}", menuId);
@@ -36,6 +39,7 @@ public class MenuController {
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
+    @PreAuthorize(("hasRole('ROLE_ADMIN') or hasRole('ROLE_MANAGER')"))
     @PatchMapping("/update-menu/{menuId}")
     public ResponseEntity<MenuDTO> updateMenu(@PathVariable UUID menuId, @RequestBody MenuUpdateRequest menuUpdateRequest) {
         MenuDTO menuDTO = menuService.updateMenu(menuId, menuUpdateRequest);
@@ -48,6 +52,7 @@ public class MenuController {
         return ResponseEntity.ok(menuResponse);
     }
 
+    @PreAuthorize(("hasRole('ROLE_ADMIN') or hasRole('ROLE_MANAGER')"))
     @DeleteMapping("/remove-dish/{menuId}/{dishId}")
     public ResponseEntity<Void> removeDishFromMenu(@PathVariable UUID menuId, @PathVariable UUID dishId) {
         log.info("Received request to remove dish {} from menu {}", dishId, menuId);

@@ -1,9 +1,12 @@
 package com.dineswift.restaurant_service.config;
 
 import com.dineswift.restaurant_service.exception.RemoteApiException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -16,6 +19,7 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -40,18 +44,33 @@ public class RestClientConfig {
                     return execution.execute(request,body);
                 })
                 .defaultStatusHandler(HttpStatusCode::isError,(request, response) -> {
-
-
                     log.error("Remote service call failed with status: {}", response.getStatusCode());
 
-                    throw new RemoteApiException(
-                            "Service call failed with status: " + response.getStatusCode()
-                    );
+                    String errorBody = "";
+
+                    try {
+                        errorBody = new String(response.getBody().readAllBytes(), StandardCharsets.UTF_8);
+                        ObjectMapper mapper = new ObjectMapper();
+                        JsonNode rootNode = mapper.readTree(errorBody);
+                        errorBody = "";
+
+                        if (rootNode.has("errors") && rootNode.get("errors").isArray()) {
+                            for (JsonNode errorNode : rootNode.get("errors")) {
+                                log.error("Error detail: {}", errorNode.asText());
+                                errorBody = errorBody.concat(errorNode.asText()).concat(",");
+                            }
+                        }
+                    } catch (Exception e) {
+                        log.error("Failed to read error body from the Restaurant Service Response ", e);
+                        throw new RemoteApiException(
+                                "Service call failed with status: " + response.getStatusCode()
+                        );
+                    }
+                    throw new RemoteApiException(errorBody);
 
                 });
 
        }
-
 
        @Bean
        public RestClient restClient(RestClient.Builder genericRestClientBuilder){
@@ -64,7 +83,7 @@ public class RestClientConfig {
     public WebMvcConfigurer webMvcConfigurer() {
         return new WebMvcConfigurer() {
             @Override
-            public void addCorsMappings(CorsRegistry registry) {
+            public void addCorsMappings(@NotNull CorsRegistry registry) {
                 registry
                         .addMapping("/**")
                         .allowedOrigins("*")

@@ -30,7 +30,13 @@ import java.util.stream.Collectors;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
-    private final Set<String> whitelisted = Set.of("/restaurant/employee/sign-up","/restaurant/employee/login");
+    private final Set<String> whitelisted = Set.of(
+            "/restaurant/employee/sign-up",
+            "/restaurant/employee/login",
+            "/v3/api-docs/**",
+            "/swagger-ui/**",
+            "/swagger-ui.html"
+    );
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {

@@ -30,8 +30,13 @@ public class SecurityConfig {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(auth-> auth.requestMatchers("/restaurant/employee/sign-up",
-                                "/restaurant/employee/login")
+                .authorizeHttpRequests(auth-> auth.requestMatchers(
+                        "/restaurant/employee/sign-up",
+                                "/restaurant/employee/login",
+                                "/v3/api-docs/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html"
+                        )
                         .permitAll()
                         .anyRequest().authenticated())
                 .formLogin(AbstractHttpConfigurer::disable)
