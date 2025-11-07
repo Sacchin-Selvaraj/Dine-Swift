@@ -28,6 +28,9 @@ public class KafkaConfig {
     @Value("${app.kafka.topic.sms-verification-topic}")
     private String smsVerificationTopic;
 
+    @Value("${app.kafka.topic.email-notification-topic}")
+    private String emailNotificationTopic;
+
     @Value("${spring.kafka.bootstrap-servers}")
     private String bootstrapServers;
 
@@ -45,6 +48,14 @@ public class KafkaConfig {
     @Bean
     public NewTopic smsVerificationTopic(){
         return TopicBuilder.name(smsVerificationTopic)
+                .partitions(2)
+                .replicas(1)
+                .build();
+    }
+
+    @Bean
+    public NewTopic emailNotificationTopic() {
+        return TopicBuilder.name(emailNotificationTopic)
                 .partitions(2)
                 .replicas(1)
                 .build();

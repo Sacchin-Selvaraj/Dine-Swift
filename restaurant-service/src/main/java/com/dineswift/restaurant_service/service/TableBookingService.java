@@ -3,13 +3,11 @@ package com.dineswift.restaurant_service.service;
 import com.dineswift.restaurant_service.exception.DishException;
 import com.dineswift.restaurant_service.exception.RestaurantException;
 import com.dineswift.restaurant_service.exception.TableBookingException;
+import com.dineswift.restaurant_service.kafka.service.KafkaService;
 import com.dineswift.restaurant_service.mapper.OrderItemMapper;
 import com.dineswift.restaurant_service.mapper.TableBookingMapper;
 import com.dineswift.restaurant_service.model.*;
-import com.dineswift.restaurant_service.payload.request.tableBooking.AddOrderItemRequest;
-import com.dineswift.restaurant_service.payload.request.tableBooking.BookingRequest;
-import com.dineswift.restaurant_service.payload.request.tableBooking.CancellationDetails;
-import com.dineswift.restaurant_service.payload.request.tableBooking.QuantityUpdateRequest;
+import com.dineswift.restaurant_service.payload.request.tableBooking.*;
 import com.dineswift.restaurant_service.payload.response.orderItem.OrderItemDto;
 import com.dineswift.restaurant_service.payload.response.tableBooking.TableBookingDto;
 import com.dineswift.restaurant_service.payment.service.PaymentService;
@@ -50,6 +48,7 @@ public class TableBookingService {
     private final AuthService authService;
     private final PaymentService paymentService;
     private final TableBookingSpecification tableBookingSpecification;
+    private final KafkaService kafkaService;
 
 
     public TableBookingDto createOrder(UUID cartId, BookingRequest bookingRequest) {
@@ -347,5 +346,40 @@ public class TableBookingService {
         Page<TableBookingDto> bookingDtosPage = bookingsPage.map(tableBookingMapper::toDto);
         log.info("Fetched {} bookings for restaurantId: {}", bookingDtosPage.getTotalElements(), restaurantId);
         return bookingDtosPage;
+    }
+
+    public String updateBookingStatus(UUID tableBookingId, TableBookingStatusUpdateRequest statusUpdateRequest) {
+        log.info("Updating booking status for booking ID: {}", tableBookingId);
+        TableBooking existingBooking = tableBookingRepository.findByIdAndIsActive(tableBookingId)
+                .orElseThrow(() -> new TableBookingException("Booking not found with ID: " + tableBookingId));
+        UUID userId=existingBooking.getGuestInformation().getUserId();
+        if (statusUpdateRequest.getBookingStatus()!=null) {
+            log.info("Updating booking status from {} to {}", existingBooking.getBookingStatus(), statusUpdateRequest.getBookingStatus());
+            existingBooking.setBookingStatus(BookingStatus.valueOf(statusUpdateRequest.getBookingStatus().toUpperCase(Locale.ROOT)));
+            sendNotificationViaKafka(userId, statusUpdateRequest.getBookingStatus());
+        }
+
+        if (statusUpdateRequest.getDishStatus()!=null) {
+            log.info("Updating dish status from {} to {}", existingBooking.getDishStatus(), statusUpdateRequest.getDishStatus());
+            existingBooking.setDishStatus(DishStatus.valueOf(statusUpdateRequest.getDishStatus().toUpperCase(Locale.ROOT)));
+            sendNotificationViaKafka(userId, statusUpdateRequest.getDishStatus());
+        }
+
+        existingBooking.setLastModifiedBy(authService.getAuthenticatedId());
+        tableBookingRepository.save(existingBooking);
+        log.info("Booking status updated successfully for booking ID: {}", tableBookingId);
+        return "Table Booking status updated successfully.";
+    }
+
+    private void sendNotificationViaKafka(UUID userId, String bookingStatus) {
+        log.info("Sending notification via Kafka for userId: {} with bookingStatus: {}", userId, bookingStatus);
+
+        kafkaService.sendEmailNotification(userId, bookingStatus, "status-update").thenAccept(success -> {
+            if (success) {
+                log.info("Email notification sent successfully for userId: {}", userId);
+            } else {
+                log.error("Failed to send email notification for userId: {}", userId);
+            }
+        });
     }
 }

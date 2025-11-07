@@ -3,6 +3,7 @@ package com.dineswift.userservice.controller;
 import com.dineswift.userservice.model.entites.BookingStatus;
 import com.dineswift.userservice.model.request.*;
 import com.dineswift.userservice.model.response.BookingDTO;
+import com.dineswift.userservice.model.response.GuestInformationResponse;
 import com.dineswift.userservice.model.response.UserDTO;
 import com.dineswift.userservice.model.response.UserResponse;
 import com.dineswift.userservice.service.UserService;
@@ -89,4 +90,10 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.ACCEPTED).body("Password Updated Successfully");
     }
 
+    @GetMapping("/get-info/{userId}")
+    @PreAuthorize("hasAnyRole('ROLE_USER','ROLE_ADMIN','ROLE_MANAGER','ROLE_WAITER')")
+    public ResponseEntity<GuestInformationResponse> getUserInfo(@PathVariable UUID userId) {
+        GuestInformationResponse guestInformationResponse = userService.getUserInfo(userId);
+        return ResponseEntity.ok(guestInformationResponse);
+    }
 }

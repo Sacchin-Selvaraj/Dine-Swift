@@ -1,5 +1,6 @@
 package com.dineswift.restaurant_service.kafka.service;
 
+import com.dineswift.notification_service.model.BookingStatusUpdateDetail;
 import com.dineswift.notification_service.model.EmailVerificationDetail;
 import com.dineswift.notification_service.model.SmsVerificationDetail;
 import lombok.RequiredArgsConstructor;
@@ -9,6 +10,7 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Service;
 
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 @Service
@@ -24,6 +26,10 @@ public class KafkaService {
 
     @Value("${app.kafka.topic.sms-verification-topic}")
     private String smsVerificationTopic;
+
+    @Value("${app.kafka.topic.email-notification-topic}")
+    private String emailNotificationTopic;
+
 
     public CompletableFuture<Boolean> sendEmailVerification(String toEmail, String token, String userName,String templateType) {
 
@@ -74,6 +80,32 @@ public class KafkaService {
             });
         } catch (Exception e) {
             log.error("Exception occurred while sending SMS verification: " + e.getMessage());
+            return CompletableFuture.completedFuture(false);
+        }
+
+    }
+
+    public CompletableFuture<Boolean> sendEmailNotification(UUID userId,String status,String templateType) {
+
+        try {
+            if (userId == null || status == null || templateType == null) {
+                return CompletableFuture.completedFuture(false);
+            }
+            BookingStatusUpdateDetail bookingStatusUpdateDetail = BookingStatusUpdateDetail.builder()
+                    .userId(userId)
+                    .status(status)
+                    .templateType(templateType)
+                    .build();
+            return kafkaTemplate.send(emailNotificationTopic,bookingStatusUpdateDetail).thenApply(res->{
+                log.info("Email Notification Message Published Successfully....");
+                log.info("Topic Name: "+res.getRecordMetadata().topic());
+                return true;
+            }).exceptionally(throwable -> {
+                log.error("Exception occurred while sending Email notification: " + throwable.getMessage());
+                return false;
+            });
+        } catch (Exception e) {
+            log.error("Exception occurred while sending Email notification: " + e.getMessage());
             return CompletableFuture.completedFuture(false);
         }
 

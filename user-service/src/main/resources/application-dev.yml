@@ -56,6 +56,8 @@ app:
     topic:
       email-verification-topic: email
       sms-verification-topic: sms
+      email-notification-topic: email-notification
+      sms-notification-topic: sms-notification
 
 
 eureka:

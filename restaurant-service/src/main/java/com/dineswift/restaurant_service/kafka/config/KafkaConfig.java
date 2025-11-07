@@ -1,13 +1,11 @@
 package com.dineswift.restaurant_service.kafka.config;
 
-import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.annotation.EnableKafka;
-import org.springframework.kafka.config.TopicBuilder;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
@@ -20,30 +18,9 @@ import java.util.Map;
 @EnableKafka
 public class KafkaConfig {
 
-    @Value("${app.kafka.topic.email-verification-topic}")
-    public String emailVerificationTopic;
-
-    @Value("${app.kafka.topic.sms-verification-topic}")
-    public String smsVerificationTopic;
-
     @Value("${spring.kafka.bootstrap-servers}")
     private String bootstrapServers;
 
-    @Bean
-    public NewTopic emailVerificationTopic(){
-        return TopicBuilder.name(emailVerificationTopic)
-                .partitions(2)
-                .replicas(1)
-                .build();
-    }
-
-    @Bean
-    public NewTopic smsVerificationTopic(){
-        return TopicBuilder.name(smsVerificationTopic)
-                .partitions(2)
-                .replicas(1)
-                .build();
-    }
 
     public ProducerFactory<String,Object> producerFactory(){
         Map<String,Object> configProps=new HashMap<>();

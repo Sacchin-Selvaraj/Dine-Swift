@@ -5,6 +5,7 @@ import com.dineswift.userservice.mapper.UserMapper;
 import com.dineswift.userservice.model.entites.*;
 import com.dineswift.userservice.model.request.*;
 import com.dineswift.userservice.model.response.BookingDTO;
+import com.dineswift.userservice.model.response.GuestInformationResponse;
 import com.dineswift.userservice.model.response.UserDTO;
 import com.dineswift.userservice.model.response.UserResponse;
 import com.dineswift.userservice.repository.BookingRepository;
@@ -184,5 +185,12 @@ public class UserService {
         user.setPassword(passwordEncoder.encode(passwordRequest.getNewPassword()));
 
         userRepository.save(user);
+    }
+
+    public GuestInformationResponse getUserInfo(UUID userId) {
+        log.info("Fetching user information for userId: {}", userId);
+        User user=userCommonService.findValidUser(userId);
+        log.info("Successfully retrieved user information for userId: {}", userId);
+        return userMapper.toGuestInformationResponse(user);
     }
 }

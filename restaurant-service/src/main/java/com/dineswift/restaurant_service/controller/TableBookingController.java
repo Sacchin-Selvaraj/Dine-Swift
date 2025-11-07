@@ -1,10 +1,7 @@
 package com.dineswift.restaurant_service.controller;
 
 
-import com.dineswift.restaurant_service.payload.request.tableBooking.AddOrderItemRequest;
-import com.dineswift.restaurant_service.payload.request.tableBooking.BookingRequest;
-import com.dineswift.restaurant_service.payload.request.tableBooking.CancellationDetails;
-import com.dineswift.restaurant_service.payload.request.tableBooking.QuantityUpdateRequest;
+import com.dineswift.restaurant_service.payload.request.tableBooking.*;
 import com.dineswift.restaurant_service.payload.response.MessageResponse;
 import com.dineswift.restaurant_service.payload.response.orderItem.OrderItemDto;
 import com.dineswift.restaurant_service.payload.response.tableBooking.TableBookingDto;
@@ -103,6 +100,14 @@ public class TableBookingController {
         );
         log.info("Fetched table booking details for restaurantId: {}", restaurantId);
         return ResponseEntity.ok(bookings);
+    }
+
+    @PreAuthorize(("hasAnyRole('ROLE_ADMIN', 'ROLE_MANAGER','ROLE_CHEF', 'ROLE_WAITER')"))
+    @PutMapping("/update-status/{tableBookingId}")
+    public ResponseEntity<MessageResponse> updateBookingStatus(@PathVariable UUID tableBookingId, @RequestBody TableBookingStatusUpdateRequest statusUpdateRequest) {
+        String responseFromUpdateRequest = tableBookingService.updateBookingStatus(tableBookingId, statusUpdateRequest);
+        log.info("Updated booking status successfully for bookingId: {}", tableBookingId);
+        return ResponseEntity.ok(MessageResponse.builder().message(responseFromUpdateRequest).build());
     }
 
 }

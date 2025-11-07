@@ -3,6 +3,7 @@ package com.dineswift.userservice.mapper;
 import com.dineswift.userservice.model.entites.Role;
 import com.dineswift.userservice.model.entites.User;
 import com.dineswift.userservice.model.request.UserRequest;
+import com.dineswift.userservice.model.response.GuestInformationResponse;
 import com.dineswift.userservice.model.response.RoleDto;
 import com.dineswift.userservice.model.response.UserDTO;
 import com.dineswift.userservice.model.response.UserResponse;
@@ -44,5 +45,12 @@ public class UserMapper {
         roleDto.setRoleNameString(role.getRoleName().getDisplayName());
         log.info("Mapped Role to RoleDto: {}", roleDto);
         return roleDto;
+    }
+
+    public GuestInformationResponse toGuestInformationResponse(User user) {
+        log.info("Mapping User to GuestInformationResponse for userId: {}", user.getUserId());
+        GuestInformationResponse response = modelMapper.map(user, GuestInformationResponse.class);
+        log.info("Mapped GuestInformationResponse: {}", response);
+        return response;
     }
 }
