@@ -8,6 +8,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.annotation.RetryableTopic;
+import org.springframework.kafka.support.KafkaHeaders;
+import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.stereotype.Service;
@@ -35,22 +37,33 @@ public class NotificationConsumerService {
         }
         User userDetail = userCommonService.findValidUser(message.getUserId());
 
-        Map<String,Object> modal = Map.of(
+        Map<String,Object> model = Map.of(
                 "userName", userDetail.getFirstName(),
-                "
                 "status", message.getStatus(),
-                "updateTime", message.getUpdateTime()
+                "dineInTime", message.getDineInTime(),
+                "noOfGuest", message.getNoOfGuest(),
+                "bookingDate", message.getBookingDate(),
+                "grandTotal", message.getGrandTotal()
         );
 
         emailService.sendMail(
                 userDetail.getEmail(),
                 "Booking Status Update",
                 message.getTemplateType(),
-
+                model
         );
         log.info("Booking status update email sent to: {}", userDetail.getEmail());
-
     }
 
+    @KafkaListener(topics = "${app.kafka.topic.email-notification-topic}-booking-status-update-dlt", groupId = "user-service-group-dlt")
+    public void listenEmailVerificationDlt(@Payload BookingStatusUpdateDetail message,
+                                           @Header(value = KafkaHeaders.DLT_EXCEPTION_MESSAGE) String dltExceptionMessage,
+                                           @Header(value = KafkaHeaders.ORIGINAL_TOPIC) String originalTopic,
+                                           @Header(value = KafkaHeaders.ORIGINAL_PARTITION) Integer originalPartition
+    ) {
+        log.error("DLT Exception Message: {}", dltExceptionMessage);
+        log.error("Original Topic: {}, Original Partition: {}", originalTopic, originalPartition);
+        log.error("Message moved to DLT in email notification topic: {}", message);
+    }
 
 }

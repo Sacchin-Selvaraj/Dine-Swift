@@ -11,42 +11,41 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
 @RestController
-@RequestMapping("/user-verification")
+@RequestMapping("/user/verification")
 @RequiredArgsConstructor
 @Slf4j
 public class VerificationController {
 
     private final VerificationService verificationService;
 
-    @PostMapping("/update-mail/{userId}")
+    @PostMapping("/update-mail")
     @PreAuthorize("hasRole('ROLE_USER')")
-    public ResponseEntity<String> updateEmail(@PathVariable UUID userId, @Valid @RequestBody EmailUpdateRequest emailUpdateRequest) throws ExecutionException, InterruptedException {
-        String response=verificationService.updateEmail(userId,emailUpdateRequest);
+    public ResponseEntity<String> updateEmail(@Valid @RequestBody EmailUpdateRequest emailUpdateRequest) throws ExecutionException, InterruptedException {
+        String response=verificationService.updateEmail(emailUpdateRequest);
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/verify-mail/{userId}")
+    @PostMapping("/verify-mail")
     @PreAuthorize("hasRole('ROLE_USER')")
-    public ResponseEntity<String> verifyEmail(@PathVariable UUID userId, @Valid @RequestBody VerifyTokenRequest verifyEmailRequest){
-        verificationService.verifyEmail(userId,verifyEmailRequest);
+    public ResponseEntity<String> verifyEmail(@Valid @RequestBody VerifyTokenRequest verifyEmailRequest){
+        verificationService.verifyEmail(verifyEmailRequest);
         return ResponseEntity.ok("Email have been updated Successfully");
     }
 
-    @PostMapping("/update-phone-number/{userId}")
+    @PostMapping("/update-phone-number")
     @PreAuthorize("hasRole('ROLE_USER')")
-    public ResponseEntity<String> updatePhoneNumber(@PathVariable UUID userId, @Valid @RequestBody PhoneNumberUpdateRequest phoneNumberUpdateRequest) {
-        String response=verificationService.updatePhoneNumber(userId,phoneNumberUpdateRequest);
+    public ResponseEntity<String> updatePhoneNumber(@Valid @RequestBody PhoneNumberUpdateRequest phoneNumberUpdateRequest) {
+        String response=verificationService.updatePhoneNumber(phoneNumberUpdateRequest);
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/verify-phone-number/{userId}")
+    @PostMapping("/verify-phone-number")
     @PreAuthorize("hasRole('ROLE_USER')")
-    public ResponseEntity<String> verifyPhoneNumber(@PathVariable UUID userId, @Valid @RequestBody VerifyTokenRequest verifyPhoneNumberRequest){
-        verificationService.verifyPhoneNumber(userId,verifyPhoneNumberRequest);
+    public ResponseEntity<String> verifyPhoneNumber(@Valid @RequestBody VerifyTokenRequest verifyPhoneNumberRequest){
+        verificationService.verifyPhoneNumber(verifyPhoneNumberRequest);
         return ResponseEntity.ok("PhoneNumber have been updated Successfully");
     }
 

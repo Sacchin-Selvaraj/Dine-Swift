@@ -79,6 +79,7 @@ public class DishController {
         return result.thenApply(res -> ResponseEntity.ok(new MessageResponse("Image deleted successfully")));
     }
 
+    @PreAuthorize("hasAnyRole('ROLE_USER','ROLE_ADMIN','ROLE_MANAGER')")
     @PatchMapping("/rate-dish/{dishId}")
     public ResponseEntity<Void> rateDish(@PathVariable UUID dishId, @RequestParam Double rating) {
         dishService.addRating(dishId,rating);

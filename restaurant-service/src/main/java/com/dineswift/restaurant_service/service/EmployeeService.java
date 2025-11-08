@@ -15,6 +15,7 @@ import com.dineswift.restaurant_service.payload.response.employee.RoleDTORespons
 import com.dineswift.restaurant_service.repository.EmployeeRepository;
 import com.dineswift.restaurant_service.repository.RestaurantRepository;
 import com.dineswift.restaurant_service.repository.RoleRepository;
+import com.dineswift.restaurant_service.security.service.AuthService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -38,6 +39,7 @@ public class EmployeeService {
     private final EmployeeMapper employeeMapper;
     private final RestaurantRepository restaurantRepository;
     private final PasswordEncoder passwordEncoder;
+    private final AuthService authService;
 
 
     public EmployeeDto createEmployee(EmployeeCreateRequest employeeCreateRequest) {
@@ -78,7 +80,9 @@ public class EmployeeService {
         return employeeMapper.toDTO(employee);
     }
 
-    public void changeUsername(EmployeeNameRequest employeeNameRequest, UUID employeeId) {
+    public void changeUsername(EmployeeNameRequest employeeNameRequest) {
+        log.info("Getting Employee Id from security context for username change");
+        UUID employeeId = authService.getAuthenticatedId();
         if (employeeNameRequest == null || employeeId == null) {
             throw new EmployeeException("Invalid request or Employee Id is null");
         }
@@ -118,7 +122,8 @@ public class EmployeeService {
         }
     }
 
-    public void changePassword(PasswordChangeRequest passwordChangeRequest, UUID employeeId) {
+    public void changePassword(PasswordChangeRequest passwordChangeRequest) {
+        UUID employeeId = authService.getAuthenticatedId();
         if (employeeId == null || passwordChangeRequest == null) {
             throw new EmployeeException("Invalid request");
         }

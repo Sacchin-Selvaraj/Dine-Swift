@@ -3,6 +3,7 @@ package com.dineswift.restaurant_service.kafka.service;
 import com.dineswift.notification_service.model.BookingStatusUpdateDetail;
 import com.dineswift.notification_service.model.EmailVerificationDetail;
 import com.dineswift.notification_service.model.SmsVerificationDetail;
+import com.dineswift.restaurant_service.model.TableBooking;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -85,7 +86,7 @@ public class KafkaService {
 
     }
 
-    public CompletableFuture<Boolean> sendEmailNotification(UUID userId,String status,String templateType) {
+    public CompletableFuture<Boolean> sendEmailNotification(UUID userId, String status, String templateType, TableBooking existingBooking) {
 
         try {
             if (userId == null || status == null || templateType == null) {
@@ -95,6 +96,10 @@ public class KafkaService {
                     .userId(userId)
                     .status(status)
                     .templateType(templateType)
+                    .dineInTime(existingBooking.getDineInTime())
+                    .noOfGuest(existingBooking.getNoOfGuest())
+                    .bookingDate(existingBooking.getBookingDate())
+                    .grandTotal(existingBooking.getGrandTotal())
                     .build();
             return kafkaTemplate.send(emailNotificationTopic,bookingStatusUpdateDetail).thenApply(res->{
                 log.info("Email Notification Message Published Successfully....");

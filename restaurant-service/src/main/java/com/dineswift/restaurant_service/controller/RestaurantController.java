@@ -3,6 +3,7 @@ package com.dineswift.restaurant_service.controller;
 import com.dineswift.restaurant_service.payload.dto.RestaurantDto;
 import com.dineswift.restaurant_service.payload.request.restaurant.RestaurantCreateRequest;
 import com.dineswift.restaurant_service.payload.request.restaurant.RestaurantUpdateRequest;
+import com.dineswift.restaurant_service.payload.response.MessageResponse;
 import com.dineswift.restaurant_service.service.RestaurantService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -25,11 +26,11 @@ public class RestaurantController {
 
     private final RestaurantService restaurantService;
 
-    @PreAuthorize("hasAnyRole('ROLE_ADMIN')")
-    @PostMapping("/create-restaurant/{employeeId}")
-    public ResponseEntity<String> createRestaurant(@Valid @RequestBody RestaurantCreateRequest restaurantCreateRequest, @PathVariable UUID employeeId) {
-        restaurantService.createRestaurant(restaurantCreateRequest, employeeId);
-        return ResponseEntity.ok("Restaurant created successfully");
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PostMapping("/create-restaurant")
+    public ResponseEntity<MessageResponse> createRestaurant(@Valid @RequestBody RestaurantCreateRequest restaurantCreateRequest) {
+        restaurantService.createRestaurant(restaurantCreateRequest);
+        return ResponseEntity.ok(MessageResponse.builder().message("Restaurant created successfully").build());
     }
     @PreAuthorize("hasAnyRole('ROLE_ADMIN','ROLE_MANAGER')")
     @PatchMapping("/edit-details/{restaurantId}")
@@ -60,30 +61,30 @@ public class RestaurantController {
 
     @PreAuthorize("hasAnyRole('ROLE_ADMIN')")
     @DeleteMapping("/deactivate/{restaurantId}")
-    public ResponseEntity<String> deactivateRestaurant(@PathVariable UUID restaurantId) {
+    public ResponseEntity<MessageResponse> deactivateRestaurant(@PathVariable UUID restaurantId) {
         restaurantService.deactivateRestaurant(restaurantId);
-        return ResponseEntity.ok("Restaurant deactivated successfully");
+        return ResponseEntity.ok(MessageResponse.builder().message("Restaurant deactivated successfully").build());
     }
 
     @PreAuthorize("hasAnyRole('ROLE_ADMIN','ROLE_MANAGER')")
     @PostMapping("/change-status/{restaurantId}")
-    public ResponseEntity<String> changeRestaurantStatus(@PathVariable UUID restaurantId, @RequestParam("status") String status) {
+    public ResponseEntity<MessageResponse> changeRestaurantStatus(@PathVariable UUID restaurantId, @RequestParam("status") String status) {
         restaurantService.changeRestaurantStatus(restaurantId, status);
-        return ResponseEntity.ok("Restaurant status changed successfully");
+        return ResponseEntity.ok(MessageResponse.builder().message("Restaurant status changed successfully").build());
     }
 
     @PreAuthorize("hasAnyRole('ROLE_ADMIN','ROLE_MANAGER')")
     @PostMapping("upload-image/{restaurantId}")
-    public CompletableFuture<ResponseEntity<String>> uploadRestaurantImage(@PathVariable UUID restaurantId,@RequestParam("imageFile") MultipartFile imageFile) throws ExecutionException, InterruptedException {
+    public CompletableFuture<ResponseEntity<MessageResponse>> uploadRestaurantImage(@PathVariable UUID restaurantId,@RequestParam("imageFile") MultipartFile imageFile) throws ExecutionException, InterruptedException {
         CompletableFuture<Void> result = restaurantService.uploadRestaurantImage(restaurantId, imageFile);
-        return result.thenApply(res-> new ResponseEntity<>("Image uploaded successfully", HttpStatus.ACCEPTED));
+        return result.thenApply(res-> ResponseEntity.ok(MessageResponse.builder().message("Image uploaded successfully").build()));
     }
 
     @PreAuthorize("hasAnyRole('ROLE_ADMIN')")
     @DeleteMapping("delete-image/{imageId}")
-    public CompletableFuture<ResponseEntity<String>> deleteRestaurantImage(@PathVariable UUID imageId) {
+    public CompletableFuture<ResponseEntity<MessageResponse>> deleteRestaurantImage(@PathVariable UUID imageId) {
         CompletableFuture<Void> result = restaurantService.deleteRestaurantImage(imageId);
-        return result.thenApply(res -> ResponseEntity.ok("Image deleted successfully"));
+        return result.thenApply(res -> ResponseEntity.ok(MessageResponse.builder().message("Image deleted successfully").build()));
     }
 
     @GetMapping("/get-images/{restaurantId}")

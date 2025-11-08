@@ -103,12 +103,23 @@ public class GatewayJwtFilter implements WebFilter {
 
     private boolean isPublicEndpoint(String path) {
         List<String> publicEndpoints = List.of(
+                "/auth/**",
                 "/user/sign-up",
-                "/auth/login",
-                "/user-password/**",
-                "/auth/refresh-token",
+                "/user/login",
+                "/user/password/**",
                 "/restaurant/employee/login",
-                "/restaurant/employee/sign-up"
+                "/restaurant/employee/sign-up",
+                "/restaurant/dish/search-dish/**",
+                "/restaurant/dish/search-dish-restaurant/**",
+                "/restaurant/menu/get-menu/**",
+                "/restaurant/menu/get-menu-details/**",
+                "/restaurant/get-restaurants/**",
+                "/restaurant/get-images/**",
+                "/restaurant/table/get-table/**",
+                "/restaurant/table/available-slots/**",
+                "/restaurant/table/available-slot/**",
+                "/restaurant/employee/forgot-password",
+                "/restaurant/employee/verify-forgot-password"
         );
          return publicEndpoints.stream()
                  .anyMatch(pattern -> pathMatcher.match(pattern,path));

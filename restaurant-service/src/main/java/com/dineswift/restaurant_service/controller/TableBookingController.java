@@ -69,6 +69,7 @@ public class TableBookingController {
         return ResponseEntity.ok(addedItem);
     }
 
+    @PreAuthorize("(hasAnyRole('ROLE_ADMIN', 'ROLE_MANAGER','ROLE_CHEF', 'ROLE_WAITER'))")
     @GetMapping("/get-table-booking-details/{restaurantId}")
     public ResponseEntity<Page<TableBookingDto>> getTableBookingDetails(
             @PathVariable UUID restaurantId,

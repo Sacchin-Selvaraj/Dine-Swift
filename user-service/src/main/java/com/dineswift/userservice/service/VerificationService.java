@@ -8,11 +8,7 @@ import com.dineswift.userservice.model.entites.TokenStatus;
 import com.dineswift.userservice.model.entites.TokenType;
 import com.dineswift.userservice.model.entites.User;
 import com.dineswift.userservice.model.entites.VerificationToken;
-import com.dineswift.userservice.model.request.EmailUpdateRequest;
-import com.dineswift.userservice.model.request.PasswordChangeRequest;
-import com.dineswift.userservice.model.request.PhoneNumberUpdateRequest;
-import com.dineswift.userservice.model.request.VerifyTokenRequest;
-import com.dineswift.userservice.notification.service.SmsService;
+import com.dineswift.userservice.model.request.*;
 import com.dineswift.userservice.repository.UserRepository;
 import com.dineswift.userservice.repository.VerificationRepository;
 import com.dineswift.userservice.security.service.AuthService;
@@ -20,7 +16,6 @@ import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -38,13 +33,13 @@ public class VerificationService {
     private final VerificationRepository verificationRepository;
     private final KafkaService kafkaService;
     private final UserRepository userRepository;
-    private final SmsService smsService;
     private final PasswordEncoder passwordEncoder;
     private final AuthService authService;
 
 
-    public String updateEmail(UUID userId, EmailUpdateRequest emailUpdateRequest) {
+    public String updateEmail(EmailUpdateRequest emailUpdateRequest) {
 
+        UUID userId=authService.getAuthenticatedUserId();
         if (userRepository.existsByEmail(emailUpdateRequest.getEmail())){
             throw new UserException("Email already registered by another user");
         }
@@ -71,8 +66,9 @@ public class VerificationService {
     }
 
 
-    public void verifyEmail(UUID userId, @Valid VerifyTokenRequest verifyEmailRequest) {
+    public void verifyEmail(@Valid VerifyTokenRequest verifyEmailRequest) {
 
+        UUID userId=authService.getAuthenticatedUserId();
         VerificationToken verificationToken=verificationRepository.findByToken(verifyEmailRequest.getToken())
                 .orElseThrow(()->new TokenException("Email Verification Token was invalid"));
 
@@ -94,8 +90,9 @@ public class VerificationService {
 
     }
 
-    public String updatePhoneNumber(UUID userId, PhoneNumberUpdateRequest phoneNumberUpdateRequest) {
+    public String updatePhoneNumber(PhoneNumberUpdateRequest phoneNumberUpdateRequest) {
 
+        UUID userId=authService.getAuthenticatedUserId();
         if (userRepository.existsByPhoneNumber(phoneNumberUpdateRequest.getPhoneNumber())){
             throw new UserException("Phone Number already registered by another user");
         }
@@ -132,8 +129,9 @@ public class VerificationService {
         return verificationToken;
     }
 
-    public void verifyPhoneNumber(UUID userId, VerifyTokenRequest verifyPhoneNumberRequest) {
+    public void verifyPhoneNumber(VerifyTokenRequest verifyPhoneNumberRequest) {
 
+        UUID userId=authService.getAuthenticatedUserId();
         VerificationToken verificationToken=verificationRepository.findByToken(verifyPhoneNumberRequest.getToken())
                 .orElseThrow(()->new TokenException("Verification Token was invalid"));
 
@@ -154,15 +152,15 @@ public class VerificationService {
         verificationRepository.save(verificationToken);
     }
 
-    public String forgetPassword(UUID userId, String typeOfVerification) {
-        log.info("Initiating forget password process for userId: {}", userId);
+    public String forgetPassword(ForgotPasswordRequest forgotPasswordRequest) {
+        String typeOfVerification=forgotPasswordRequest.getTypeOfVerification();
 
-        User user=userCommonService.findValidUser(userId);
+        User user=userCommonService.findValidUserByEmail(forgotPasswordRequest.getUserEmail());
 
         String token = userCommonService.generateNumericCode(6);
         VerificationToken verificationToken = setVerificationToken(token,user,TokenType.FORGOT_PASSWORD);
 
-        log.info("Generated verification token for userId: {}", userId);
+        log.info("Generated verification token for user");
         verificationRepository.save(verificationToken);
 
         if (typeOfVerification.equalsIgnoreCase("Email")){
@@ -175,7 +173,7 @@ public class VerificationService {
                 }
                 return verificationRepository.save(verificationToken);
             });
-            log.info("Sent forget password email to userId: {}", userId);
+            log.info("Sent forget password email to user");
         }else {
             if (user.getPhoneNumber()==null){
                 throw new UserException("User does not have a phone number associated");
@@ -190,15 +188,15 @@ public class VerificationService {
                 }
                 return verificationRepository.save(verificationToken);
             });
-            log.info("Sent forget password SMS to userId: {}", userId);
+            log.info("Sent forget password SMS to user");
         }
 
         return "Verification code sent via " + typeOfVerification.toLowerCase();
     }
 
-    public String verifyForgetPassword(UUID userId, PasswordChangeRequest passwordChangeRequest) {
+    public String verifyForgetPassword(PasswordChangeRequest passwordChangeRequest) {
 
-        log.info("Verifying forget password token for userId: {}", userId);
+        log.info("Verifying forget password token for user");
         if (!passwordChangeRequest.getNewPassword().equals(passwordChangeRequest.getConfirmPassword())){
             throw new UserException("New Password and Confirm Password do not match");
         }
@@ -214,16 +212,12 @@ public class VerificationService {
         }
         User user=verificationToken.getUser();
 
-        if (!user.getUserId().equals(userId)){
-            throw new UserException("Invalid Verification Token for the user");
-        }
-
         user.setPassword(passwordEncoder.encode(passwordChangeRequest.getNewPassword()));
 
         verificationToken.setWasUsed(true);
         verificationToken.setTokenStatus(TokenStatus.VERIFIED);
         verificationRepository.save(verificationToken);
-        log.info("Password updated successfully for userId: {}", userId);
+        log.info("Password updated successfully for user");
         return "Password updated successfully";
 
     }

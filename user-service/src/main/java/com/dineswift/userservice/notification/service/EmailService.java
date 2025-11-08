@@ -1,5 +1,6 @@
 package com.dineswift.userservice.notification.service;
 
+import com.dineswift.userservice.exception.NotificationException;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import org.springframework.beans.factory.annotation.Value;
@@ -46,7 +47,7 @@ public class EmailService {
             javaMailSender.send(mimeMessage);
 
         } catch (MessagingException e) {
-            throw new RuntimeException("Failed to send email");
+            throw new NotificationException("Failed to send email");
         }
     }
 }

@@ -48,7 +48,8 @@ public class RestaurantService {
     private final GeocodingService geocodingService;
     private final AuthService authService;
 
-    public void createRestaurant(RestaurantCreateRequest restaurantCreateRequest, UUID employeeId) {
+    public void createRestaurant(RestaurantCreateRequest restaurantCreateRequest) {
+        UUID employeeId = authService.getAuthenticatedId();
         if (restaurantCreateRequest==null || employeeId==null) {
             log.error("Invalid Restaurant Create data");
             throw new RestaurantException("Invalid Restaurant Create data");

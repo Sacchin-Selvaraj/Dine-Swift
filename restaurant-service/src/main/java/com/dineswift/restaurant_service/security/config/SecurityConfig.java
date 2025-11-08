@@ -31,8 +31,19 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth-> auth.requestMatchers(
-                        "/restaurant/employee/sign-up",
                                 "/restaurant/employee/login",
+                                "/restaurant/employee/sign-up",
+                                "/restaurant/dish/search-dish/**",
+                                "/restaurant/dish/search-dish-restaurant/**",
+                                "/restaurant/menu/get-menu/**",
+                                "/restaurant/menu/get-menu-details/**",
+                                "/restaurant/get-restaurants/**",
+                                "/restaurant/get-images/**",
+                                "/restaurant/table/get-table/**",
+                                "/restaurant/table/available-slots/**",
+                                "/restaurant/table/available-slot/**",
+                                "/restaurant/employee/forgot-password",
+                                "/restaurant/employee/verify-forgot-password",
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html"

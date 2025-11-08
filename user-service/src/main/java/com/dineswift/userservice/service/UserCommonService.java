@@ -3,6 +3,7 @@ package com.dineswift.userservice.service;
 import com.dineswift.userservice.exception.UserException;
 import com.dineswift.userservice.model.entites.User;
 import com.dineswift.userservice.repository.UserRepository;
+import jakarta.validation.constraints.NotBlank;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
@@ -30,5 +31,10 @@ public class UserCommonService {
             sb.append(random.nextInt(10)); // 0–9
         }
         return sb.toString();
+    }
+
+    public User findValidUserByEmail(String userEmail) {
+        return userRepository.findByEmail(userEmail).orElseThrow(
+                () -> new UserException("User not found with email: " + userEmail));
     }
 }

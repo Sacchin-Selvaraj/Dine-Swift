@@ -40,23 +40,23 @@ public class EmployeeController {
         return ResponseEntity.ok(employeeDTO);
     }
     @PreAuthorize(("!hasRole('ROLE_USER')"))
-    @PatchMapping("/change-employee-name/{employeeId}")
-    public ResponseEntity<String> changeUsername(@Valid @RequestBody EmployeeNameRequest employeeNameRequest, @PathVariable UUID employeeId) {
-        employeeService.changeUsername(employeeNameRequest, employeeId);
-        return ResponseEntity.ok(employeeNameRequest.getEmployeeName());
+    @PatchMapping("/change-employee-name")
+    public ResponseEntity<Void> changeUsername(@Valid @RequestBody EmployeeNameRequest employeeNameRequest) {
+        employeeService.changeUsername(employeeNameRequest);
+        return ResponseEntity.noContent().build();
     }
 
     @PreAuthorize(("!hasRole('ROLE_USER')"))
-    @DeleteMapping("/delete/{employeeId}")
-    public ResponseEntity<String> deleteEmployee(@PathVariable UUID employeeId) {
+    @DeleteMapping("/delete-employee/{employeeId}")
+    public ResponseEntity<Void> deleteEmployee(@PathVariable UUID employeeId) {
         employeeService.deleteEmployee(employeeId);
-        return ResponseEntity.ok("Employee deleted successfully");
+        return ResponseEntity.noContent().build();
     }
 
     @PreAuthorize(("!hasRole('ROLE_USER')"))
-    @PutMapping("/change-password/{employeeId}")
-    public ResponseEntity<String> changePassword( @Valid @RequestBody PasswordChangeRequest passwordChangeRequest, @PathVariable UUID employeeId) {
-        employeeService.changePassword(passwordChangeRequest, employeeId);
+    @PutMapping("/change-password")
+    public ResponseEntity<String> changePassword( @Valid @RequestBody PasswordChangeRequest passwordChangeRequest) {
+        employeeService.changePassword(passwordChangeRequest);
         return ResponseEntity.ok("Password changed successfully");
     }
 

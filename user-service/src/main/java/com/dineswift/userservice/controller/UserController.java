@@ -2,10 +2,7 @@ package com.dineswift.userservice.controller;
 
 import com.dineswift.userservice.model.entites.BookingStatus;
 import com.dineswift.userservice.model.request.*;
-import com.dineswift.userservice.model.response.BookingDTO;
-import com.dineswift.userservice.model.response.GuestInformationResponse;
-import com.dineswift.userservice.model.response.UserDTO;
-import com.dineswift.userservice.model.response.UserResponse;
+import com.dineswift.userservice.model.response.*;
 import com.dineswift.userservice.service.UserService;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
@@ -48,46 +45,45 @@ public class UserController {
         return ResponseEntity.ok(userResponse);
     }
 
-    @GetMapping("/bookings/{userId}")
+    @GetMapping("/bookings")
     @PreAuthorize("hasRole('ROLE_USER')")
     public ResponseEntity<Page<BookingDTO>> getBookings(
-            @PathVariable UUID userId,
             @RequestParam(name = "page") Integer page,
             @RequestParam(name = "limit") Integer limit,
             @RequestParam(name = "bookingStatus",required = false) BookingStatus bookingStatus,
             @RequestParam(name = "sortField",defaultValue = "bookingDate" ,required = false) String sortField,
             @RequestParam(name = "sortOrder",defaultValue = "asc" ,required = false) String sortOrder
     ){
-        Page<BookingDTO> bookingDTOS=userService.getBookings(userId,page,limit,bookingStatus,sortField,sortOrder);
+        Page<BookingDTO> bookingDTOS=userService.getBookings(page,limit,bookingStatus,sortField,sortOrder);
         return ResponseEntity.ok(bookingDTOS);
     }
 
-    @PatchMapping("/update-users/{userId}")
+    @PatchMapping("/update-users")
     @PreAuthorize(value = "hasRole('ROLE_USER')")
-    public ResponseEntity<UserDTO> updateUsers(@Valid @RequestBody UserDetailsRequest userDetailsRequest, @PathVariable UUID userId){
-        UserDTO userDTO=userService.updateDetails(userDetailsRequest,userId);
+    public ResponseEntity<UserDTO> updateUsers(@Valid @RequestBody UserDetailsRequest userDetailsRequest){
+        UserDTO userDTO=userService.updateDetails(userDetailsRequest);
         return ResponseEntity.ok(userDTO);
     }
 
-    @DeleteMapping("/delete/{userId}")
+    @DeleteMapping("/delete")
     @PreAuthorize("hasRole('ROLE_USER')")
-    public ResponseEntity<String> deactivateUser(@PathVariable UUID userId){
-        userService.deactivateUser(userId);
-        return ResponseEntity.ok("Account has been deleted Successfully");
+    public ResponseEntity<MessageResponse> deactivateUser(){
+        userService.deactivateUser();
+        return ResponseEntity.ok(MessageResponse.builder().message("Account has been deleted Successfully").build());
     }
 
-    @PatchMapping("/update-username/{userId}")
+    @PatchMapping("/update-username")
     @PreAuthorize("hasRole('ROLE_USER')")
-    public ResponseEntity<String> updateUserName(@PathVariable UUID userId, @Valid @RequestBody UsernameUpdateRequest usernameRequest){
-        userService.updateUsername(userId,usernameRequest);
-        return ResponseEntity.status(HttpStatus.ACCEPTED).body("Username Updated Successfully");
+    public ResponseEntity<MessageResponse> updateUserName(@Valid @RequestBody UsernameUpdateRequest usernameRequest){
+        userService.updateUsername(usernameRequest);
+        return ResponseEntity.ok(MessageResponse.builder().message("Username Updated Successfully").build());
     }
 
-    @PostMapping("/update-password/{userId}")
+    @PostMapping("/update-password")
     @PreAuthorize("hasRole('ROLE_USER')")
-    public ResponseEntity<String> updatePassword(@PathVariable UUID userId, @Valid @RequestBody PasswordUpdateRequest passwordRequest){
-        userService.updatePassword(userId,passwordRequest);
-        return ResponseEntity.status(HttpStatus.ACCEPTED).body("Password Updated Successfully");
+    public ResponseEntity<MessageResponse> updatePassword(@Valid @RequestBody PasswordUpdateRequest passwordRequest){
+        userService.updatePassword(passwordRequest);
+        return ResponseEntity.ok(MessageResponse.builder().message("Password Updated Successfully").build());
     }
 
     @GetMapping("/get-info/{userId}")

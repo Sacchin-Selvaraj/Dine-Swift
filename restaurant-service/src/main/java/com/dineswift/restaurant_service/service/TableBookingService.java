@@ -356,13 +356,13 @@ public class TableBookingService {
         if (statusUpdateRequest.getBookingStatus()!=null) {
             log.info("Updating booking status from {} to {}", existingBooking.getBookingStatus(), statusUpdateRequest.getBookingStatus());
             existingBooking.setBookingStatus(BookingStatus.valueOf(statusUpdateRequest.getBookingStatus().toUpperCase(Locale.ROOT)));
-            sendNotificationViaKafka(userId, statusUpdateRequest.getBookingStatus());
+            sendNotificationViaKafka(userId, statusUpdateRequest.getBookingStatus(),existingBooking);
         }
 
         if (statusUpdateRequest.getDishStatus()!=null) {
             log.info("Updating dish status from {} to {}", existingBooking.getDishStatus(), statusUpdateRequest.getDishStatus());
             existingBooking.setDishStatus(DishStatus.valueOf(statusUpdateRequest.getDishStatus().toUpperCase(Locale.ROOT)));
-            sendNotificationViaKafka(userId, statusUpdateRequest.getDishStatus());
+            sendNotificationViaKafka(userId, statusUpdateRequest.getDishStatus(),existingBooking);
         }
 
         existingBooking.setLastModifiedBy(authService.getAuthenticatedId());
@@ -371,10 +371,10 @@ public class TableBookingService {
         return "Table Booking status updated successfully.";
     }
 
-    private void sendNotificationViaKafka(UUID userId, String bookingStatus) {
+    private void sendNotificationViaKafka(UUID userId, String bookingStatus, TableBooking existingBooking) {
         log.info("Sending notification via Kafka for userId: {} with bookingStatus: {}", userId, bookingStatus);
 
-        kafkaService.sendEmailNotification(userId, bookingStatus, "status-update").thenAccept(success -> {
+        kafkaService.sendEmailNotification(userId, bookingStatus, "booking-confirmation",existingBooking).thenAccept(success -> {
             if (success) {
                 log.info("Email notification sent successfully for userId: {}", userId);
             } else {

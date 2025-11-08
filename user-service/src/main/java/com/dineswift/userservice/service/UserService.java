@@ -11,6 +11,7 @@ import com.dineswift.userservice.model.response.UserResponse;
 import com.dineswift.userservice.repository.BookingRepository;
 import com.dineswift.userservice.repository.RoleRepository;
 import com.dineswift.userservice.repository.UserRepository;
+import com.dineswift.userservice.security.service.AuthService;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -41,9 +42,12 @@ public class UserService {
     private final RoleRepository roleRepository;
     private final UserMapper userMapper;
     private final BookingSpecification bookingSpecification;
+    private final AuthService authService;
 
 
-    public UserDTO updateDetails(UserDetailsRequest userDetailsRequest, UUID userId) {
+    public UserDTO updateDetails(UserDetailsRequest userDetailsRequest) {
+
+        UUID userId=authService.getAuthenticatedUserId();
         log.info("Updating user details for userId: {}", userId);
         User user=userCommonService.findValidUser(userId);
 
@@ -69,8 +73,10 @@ public class UserService {
     }
 
 
-    public Page<BookingDTO> getBookings(UUID userId, Integer pageNumber, Integer limit, BookingStatus bookingStatus, String sortField, String sortOrder) {
+    public Page<BookingDTO> getBookings(Integer pageNumber, Integer limit, BookingStatus bookingStatus, String sortField, String sortOrder) {
         log.info("Get Bookings from the UserService");
+
+        UUID userId = authService.getAuthenticatedUserId();
         Set<String> allowedFields = Set.of("createdAt", "lastModifiedAt", "bookingStatus","tableBookingId","bookingDate");
 
         if (!allowedFields.contains(sortField)) {
@@ -84,7 +90,8 @@ public class UserService {
         Page<Booking> bookings;
         log.info("Building booking specification");
         Specification<Booking> spec = Specification.<Booking>allOf()
-                .and(bookingSpecification.hasBookingStatus(bookingStatus));
+                .and(bookingSpecification.hasBookingStatus(bookingStatus)
+                .and(bookingSpecification.belongsToUser(userId)));
 
         bookings = bookingRepository.findAll(spec, pageable);
 
@@ -92,14 +99,17 @@ public class UserService {
         return bookings.map(booking -> modelMapper.map(booking,BookingDTO.class));
     }
 
-    public void deactivateUser(UUID userId) {
+    public void deactivateUser() {
+        log.info("Deactivating user account");
+        UUID userId = authService.getAuthenticatedUserId();
         User user=userCommonService.findValidUser(userId);
         log.info("Deactivating user with ID: {}", userId);
         user.setIsActive(false);
         userRepository.save(user);
     }
 
-    public void updateUsername(UUID userId, UsernameUpdateRequest usernameRequest) {
+    public void updateUsername(UsernameUpdateRequest usernameRequest) {
+        UUID userId=authService.getAuthenticatedUserId();
         log.info("Updating username for userId: {}", userId);
         validUsername(usernameRequest.getUsername(),userId);
         User user=userCommonService.findValidUser(userId);
@@ -172,8 +182,9 @@ public class UserService {
         return userMapper.toUserResponse(user);
     }
 
-    public void updatePassword(UUID userId, PasswordUpdateRequest passwordRequest) {
+    public void updatePassword(PasswordUpdateRequest passwordRequest) {
 
+        UUID userId=authService.getAuthenticatedUserId();
         if (!passwordRequest.getNewPassword().equals(passwordRequest.getConfirmPassword())){
             throw new UserException("Password Mismatch between new and confirm password");
         }

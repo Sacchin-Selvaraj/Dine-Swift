@@ -16,6 +16,7 @@ import com.dineswift.restaurant_service.payload.request.employee.VerifyTokenRequ
 import com.dineswift.restaurant_service.payload.request.verification.ForgotPasswordRequest;
 import com.dineswift.restaurant_service.repository.EmployeeRepository;
 import com.dineswift.restaurant_service.repository.VerificationRepository;
+import com.dineswift.restaurant_service.security.service.AuthService;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -38,10 +39,12 @@ public class VerificationService {
     private final EmployeeRepository employeeRepository;
     private final UtilityService utilityService;
     private final PasswordEncoder passwordEncoder;
+    private final AuthService authService;
 
 
-    public String updateEmail(UUID employeeId, EmailUpdateRequest emailUpdateRequest) {
+    public String updateEmail(EmailUpdateRequest emailUpdateRequest) {
 
+        UUID employeeId = authService.getAuthenticatedId();
         if (employeeRepository.existsByEmail(emailUpdateRequest.getEmail())){
             log.error("Email {} already registered by another user", emailUpdateRequest.getEmail());
             throw new EmployeeException("Email already registered by another user");
@@ -71,20 +74,25 @@ public class VerificationService {
     }
 
 
-    public void verifyEmail(UUID employeeId, @Valid VerifyTokenRequest verifyEmailRequest) {
+    public void verifyEmail( @Valid VerifyTokenRequest verifyEmailRequest) {
+        UUID employeeId = authService.getAuthenticatedId();
         log.info("Verifying email token for employeeId: {}", employeeId);
-        VerificationToken verificationToken = verifyTokenExistence(verifyEmailRequest.getToken(),TokenType.FORGET_PASSWORD);
+        VerificationToken verificationToken = verifyTokenExistence(verifyEmailRequest.getToken(),TokenType.FORGOT_PASSWORD);
         Employee employee = verificationToken.getEmployee();
         employee.setEmail(verificationToken.getNewEmail());
 
+        if (!employeeId.equals(employee.getEmployeeId())){
+            throw new EmployeeException("Verification Token is not from valid Employee");
+        }
         verificationToken.setWasUsed(true);
         verificationToken.setTokenStatus(TokenStatus.VERIFIED);
         verificationRepository.save(verificationToken);
 
     }
 
-    public String updatePhoneNumber(UUID employeeId, PhoneNumberUpdateRequest phoneNumberUpdateRequest) {
+    public String updatePhoneNumber(PhoneNumberUpdateRequest phoneNumberUpdateRequest) {
 
+        UUID employeeId = authService.getAuthenticatedId();
         if (employeeRepository.existsByPhoneNumber(phoneNumberUpdateRequest.getPhoneNumber())){
             log.error("Phone Number {} already registered by another user", phoneNumberUpdateRequest.getPhoneNumber());
             throw new EmployeeException("Phone Number already registered by another user");
@@ -124,44 +132,49 @@ public class VerificationService {
         return verificationToken;
     }
 
-    public void verifyPhoneNumber(UUID employeeId, VerifyTokenRequest verifyPhoneNumberRequest) {
+    public void verifyPhoneNumber( VerifyTokenRequest verifyPhoneNumberRequest) {
 
-        VerificationToken verificationToken = verifyTokenExistence(verifyPhoneNumberRequest.getToken(),TokenType.FORGET_PASSWORD);
+        UUID employeeId = authService.getAuthenticatedId();
+        VerificationToken verificationToken = verifyTokenExistence(verifyPhoneNumberRequest.getToken(),TokenType.FORGOT_PASSWORD);
         Employee employee = verificationToken.getEmployee();
         log.info("Updating phone number for employeeId: {}", employeeId);
         employee.setPhoneNumber(verificationToken.getNewPhonenumber());
+
+        if (!employeeId.equals(employee.getEmployeeId())){
+            throw new EmployeeException("Verification Token is not from valid Employee");
+        }
 
         verificationToken.setWasUsed(true);
         verificationToken.setTokenStatus(TokenStatus.VERIFIED);
         verificationRepository.save(verificationToken);
     }
 
-    public String forgetPassword(ForgotPasswordRequest forgotPasswordRequest) {
+    public String forgotPassword(ForgotPasswordRequest forgotPasswordRequest) {
 
         String employeeEmail = forgotPasswordRequest.getEmployeeEmail();
         String typeOfVerification = forgotPasswordRequest.getTypeOfVerification();
-        log.info("Initiating forget password process for employeeEmail: {}", employeeEmail);
-        Employee registedEmployee= employeeRepository.findByEmailAndIsActive(employeeEmail)
+        log.info("Initiating forgot password process for employeeEmail: {}", employeeEmail);
+        Employee registedEmployee=employeeRepository.findByEmailAndIsActive(employeeEmail)
                 .orElseThrow(()->new EmployeeException("Employee not found or inactive"));
 
         String token = utilityService.generateNumericCode(6);
-        VerificationToken verificationToken = setVerificationToken(token,registedEmployee,TokenType.FORGET_PASSWORD);
+        VerificationToken verificationToken = setVerificationToken(token,registedEmployee,TokenType.FORGOT_PASSWORD);
 
         log.info("Generated verification token for employeeEmail: {}", employeeEmail);
         verificationRepository.save(verificationToken);
 
         if (typeOfVerification.equalsIgnoreCase("Email")){
-            kafkaService.sendEmailVerification(registedEmployee.getEmail(),token,registedEmployee.getEmployeeName(),"forget-password").thenApply(status->{
+            kafkaService.sendEmailVerification(registedEmployee.getEmail(),token,registedEmployee.getEmployeeName(),"forgot-password").thenApply(status->{
                 if (!status){
                     verificationToken.setTokenStatus(TokenStatus.FAILED);
-                    log.error("Failed to send forget password email to {} for employeeEmail: {}", registedEmployee.getEmail(), employeeEmail);
+                    log.error("Failed to send forgot password email to {} for employeeEmail: {}", registedEmployee.getEmail(), employeeEmail);
                     throw new NotificationException("Failed to send Email");
                 }else {
                     verificationToken.setTokenStatus(TokenStatus.SENT);
                 }
                 return verificationRepository.save(verificationToken);
             });
-            log.info("Sent forget password email to employeeEmail: {}", employeeEmail);
+            log.info("Sent forgot password email to employeeEmail: {}", employeeEmail);
         }else {
             if (registedEmployee.getPhoneNumber()==null){
                 throw new EmployeeException("Employee does not have a phone number associated");
@@ -170,27 +183,27 @@ public class VerificationService {
             smsStatus.thenApply(status->{
                 if (!status){
                     verificationToken.setTokenStatus(TokenStatus.FAILED);
-                    log.error("Failed to send forget password SMS to {} for employeeEmail: {}", registedEmployee.getPhoneNumber(), employeeEmail);
+                    log.error("Failed to send forgot password SMS to {} for employeeEmail: {}", registedEmployee.getPhoneNumber(), employeeEmail);
                     throw new NotificationException("Failed to send SMS");
                 }else {
                     verificationToken.setTokenStatus(TokenStatus.SENT);
                 }
                 return verificationRepository.save(verificationToken);
             });
-            log.info("Sent forget password SMS to employeeEmail: {}", employeeEmail);
+            log.info("Sent forgot password SMS to employeeEmail: {}", employeeEmail);
         }
 
         return "Verification code sent via " + typeOfVerification.toLowerCase();
     }
 
-    public String verifyForgetPassword(PasswordUpdateRequest passwordChangeRequest) {
+    public String verifyforgotPassword(PasswordUpdateRequest passwordChangeRequest) {
 
-        log.info("Verifying forget password token");
+        log.info("Verifying forgot password token");
         if (!passwordChangeRequest.getNewPassword().equals(passwordChangeRequest.getConfirmPassword())){
             throw new EmployeeException("New Password and Confirm Password do not match");
         }
 
-        VerificationToken verificationToken = verifyTokenExistence(passwordChangeRequest.getToken(),TokenType.FORGET_PASSWORD);
+        VerificationToken verificationToken = verifyTokenExistence(passwordChangeRequest.getToken(),TokenType.FORGOT_PASSWORD);
 
         Employee employee = verificationToken.getEmployee();
         employee.setPassword(passwordEncoder.encode(passwordChangeRequest.getNewPassword()));
