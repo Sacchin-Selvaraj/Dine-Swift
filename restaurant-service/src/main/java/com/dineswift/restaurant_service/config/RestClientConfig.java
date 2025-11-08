@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatusCode;
@@ -32,6 +33,7 @@ public class RestClientConfig {
     private String userServiceUrl;
 
     @Bean
+    @LoadBalanced
     public RestClient.Builder genericRestClientBuilder(){
         return RestClient.builder()
                 .requestFactory(new HttpComponentsClientHttpRequestFactory())
