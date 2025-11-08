@@ -337,7 +337,7 @@ public class TableBookingService {
                 .and(tableBookingSpecification.hasBookingStatus(bookingStatus))
                 .and(tableBookingSpecification.hasDishStatus(dishStatus));
 
-        Page<TableBooking> bookingsPage = tableBookingRepository.findAllBySpec(spec, pageable);
+        Page<TableBooking> bookingsPage = tableBookingRepository.findAll(spec, pageable);
 
         if (!bookingsPage.hasContent()){
             throw new TableBookingException("No bookings found for the given criteria in restaurant ID: " + restaurantId);

@@ -43,9 +43,7 @@ public class WebClientConfig {
                                     .flatMap(errorBody -> {
                                         log.error("Remote service call failed with status: {} and body: {}",
                                                 response.statusCode(), errorBody);
-                                        return Mono.error(new RuntimeException(
-                                                "Service call failed with response: " + errorBody
-                                        ));
+                                        return Mono.error(new RuntimeException(errorBody));
                                     })
                                     .switchIfEmpty(Mono.error(new RuntimeException(
                                             "Service call failed with status: " + response.statusCode()

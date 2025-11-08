@@ -39,7 +39,7 @@ public class GuestInformationService {
         log.info("Fetching user details from User Service for User ID: {}", userId);
         ResponseEntity<GuestInformationResponse> responseEntity =
                 restClient.get()
-                        .uri("http://USER-SERVICE/user/get-info/{userId}" + userId)
+                        .uri("http://USER-SERVICE/user/get-info/{userId}", userId)
                         .retrieve()
                         .toEntity(GuestInformationResponse.class);
 

@@ -3,6 +3,8 @@ package com.dineswift.Api_Auth.Service.service;
 import com.dineswift.Api_Auth.Service.exception.AuthenticationException;
 import com.dineswift.Api_Auth.Service.payload.*;
 import com.dineswift.Api_Auth.Service.utilities.JwtUtilities;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -48,7 +50,11 @@ public class AuthService {
                     tokenResponse.setAuthToken(tokenPair1.getAuthToken());
                     return tokenResponse;
                 })
-                .doOnError(error -> log.error("Authentication process failed", error));
+                .onErrorMap(error -> {
+                    log.error("Authentication process failed");
+                    String errorMessage = extractErrorMessage(error.getMessage());
+                    throw new AuthenticationException(errorMessage);
+                });
     }
 
     private Mono<TokenPair> authenticateWithRestaurantService(LoginRequest loginRequest) {
@@ -73,7 +79,9 @@ public class AuthService {
 
                     return Mono.just(tokenPair);
                 })
-                .doOnError(error -> log.error("Employee authentication failed with Restaurant Service", error));
+                .doOnError(error -> {
+                    log.error("Employee authentication failed with Restaurant Service");
+                });
     }
 
     private List<EmployeeRole> getEmployeeRoleName(EmployeeResponse employeeResponse) {
@@ -127,8 +135,9 @@ public class AuthService {
 
                     return Mono.just(tokenPair);
                 })
-                .doOnError(error -> log.error("User authentication failed with User Service", error));
-
+                .doOnError(error -> {
+                    log.error("User authentication failed with User Service", error);
+                });
     }
 
     private List<RoleName> getRoleName(UserResponse userResponse) {
@@ -184,5 +193,27 @@ public class AuthService {
                 .build();
         response.getHeaders().add(HttpHeaders.SET_COOKIE, deleteCookie.toString());
         log.info("User logged out successfully, refresh token cookie cleared");
+    }
+
+    public String extractErrorMessage(String errorMessage) {
+        String errorBody="";
+        try {
+            log.error("Error body from exception: {}", errorMessage);
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode rootNode = mapper.readTree(errorMessage);
+
+            if (rootNode.has("errors") && rootNode.get("errors").isArray()) {
+                for (JsonNode errorNode : rootNode.get("errors")) {
+                    log.error("Error detail: {}", errorNode.asText());
+                    errorBody = errorBody.concat(errorNode.asText()).concat(",");
+                }
+            }
+        } catch (Exception e) {
+            log.error("Failed to read error body from the Restaurant Service Response ", e);
+            throw new AuthenticationException(
+                    "Service call failed with status: " + errorMessage
+            );
+        }
+        return errorBody;
     }
 }

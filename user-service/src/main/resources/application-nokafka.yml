@@ -99,12 +99,11 @@ app:
     topic:
       email-verification-topic: email
       sms-verification-topic: sms
+      email-notification-topic: email-notification
+      sms-notification-topic: sms-notification
 
 
 eureka:
-  instance: localhost
-  prefer-ip-address: true
-  ip-address: 127:0.0.1
   client:
     service-url:
       defaultZone: http://localhost:8761/eureka/

@@ -23,6 +23,4 @@ public interface TableBookingRepository extends JpaRepository<TableBooking, UUID
 
     @Query("SELECT tb FROM TableBooking tb WHERE tb.tableBookingId = :tableBookingId AND tb.isActive = true")
     Optional<TableBooking> findByIdAndIsActive(UUID tableBookingId);
-
-    Page<TableBooking> findAllBySpec(Specification<TableBooking> spec, Pageable pageable);
 }
