@@ -55,6 +55,5 @@ public class WebClientConfig {
                         return Mono.just(response);
                     });
         }
-
 }
 
