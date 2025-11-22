@@ -18,7 +18,7 @@ import java.util.UUID;
 @RestController
 @RequiredArgsConstructor
 @Slf4j
-@RequestMapping("/refund")
+@RequestMapping("/restaurant/refund")
 public class RefundController {
 
     private final RefundService refundService;

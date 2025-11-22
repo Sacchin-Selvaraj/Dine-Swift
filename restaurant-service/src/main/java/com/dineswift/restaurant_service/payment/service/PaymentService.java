@@ -201,29 +201,20 @@ public class PaymentService {
 
     private void removeCartForUser(TableBooking booking) {
         log.info("Removing cart for userId: {}", booking.getGuestInformation().getUserId());
-        Pageable pageable = Pageable.ofSize(1);
-        Page<OrderItem> orderItems = orderItemRepository.findAllByTableBookingId(booking.getTableBookingId(),pageable);
-        if (!orderItems.hasContent()){
-            log.error("No order items found for bookingId: {}", booking.getTableBookingId());
-            throw new BookingException("No order items found for bookingId: " + booking.getTableBookingId());
-        }
-        UUID cartId = orderItems.getContent().getFirst().getCartId();
-        UUID userId = booking.getGuestInformation().getUserId();
-        log.info("Sending cart removal request for cartId: {} and userId: {}", cartId, userId);
-        sendCartRemovalRequest(userId,cartId);
+        sendCartRemovalRequest();
     }
 
-    private void sendCartRemovalRequest(UUID userId, UUID cartId) {
-        log.info("Calling cart service to remove cartId: {} for userId: {}", cartId, userId);
+    private void sendCartRemovalRequest() {
+        log.info("Calling cart service to remove cart");
         ResponseEntity<Void> response = restClient.put()
-                .uri("cart/update-cart/{userId}/clear-cart/{cartId}", userId, cartId)
+                .uri("/cart/clear-cart")
                 .retrieve()
                 .toBodilessEntity();
         if (response.getStatusCode().is2xxSuccessful()) {
-            log.info("Cart removal successful for cartId: {} and userId: {}", cartId, userId);
+            log.info("Cart removal successful for cart");
         } else {
-            log.error("Failed to remove cart for cartId: {} and userId: {}. Status code: {}", cartId, userId, response.getStatusCode());
-            throw new BookingException("Failed to remove cart for cartId: " + cartId + " and userId: " + userId);
+            log.error("Failed to remove cart for cart");
+            throw new BookingException("Failed to remove cart for cart");
         }
     }
 

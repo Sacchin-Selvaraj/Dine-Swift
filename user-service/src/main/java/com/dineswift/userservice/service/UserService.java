@@ -90,8 +90,8 @@ public class UserService {
         Page<Booking> bookings;
         log.info("Building booking specification");
         Specification<Booking> spec = Specification.<Booking>allOf()
-                .and(bookingSpecification.hasBookingStatus(bookingStatus)
-                .and(bookingSpecification.belongsToUser(userId)));
+               // .and(bookingSpecification.hasBookingStatus(bookingStatus)
+                .and(bookingSpecification.belongsToUser(userId));
 
         bookings = bookingRepository.findAll(spec, pageable);
 
@@ -171,8 +171,8 @@ public class UserService {
     }
 
     public UserResponse loginUser(@Valid LoginRequest loginRequest) {
-        User user=userRepository.findByEmail(loginRequest.getEmail()).orElseThrow(
-                ()-> new UserException("Invalid Email or Password")
+        User user=userRepository.findByEmailAndIsActive(loginRequest.getEmail()).orElseThrow(
+                ()-> new UserException("Invalid Email or Account is deactivated")
         );
 
         if (!passwordEncoder.matches(loginRequest.getPassword(),user.getPassword())){

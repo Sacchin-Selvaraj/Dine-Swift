@@ -26,7 +26,7 @@ public class RestaurantController {
 
     private final RestaurantService restaurantService;
 
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/create-restaurant")
     public ResponseEntity<MessageResponse> createRestaurant(@Valid @RequestBody RestaurantCreateRequest restaurantCreateRequest) {
         restaurantService.createRestaurant(restaurantCreateRequest);

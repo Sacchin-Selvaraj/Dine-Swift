@@ -5,9 +5,7 @@ import lombok.RequiredArgsConstructor;
 
 @Data
 @RequiredArgsConstructor
-public class TokenPair {
-
+public class LoginResponse {
     private String authToken;
-    private String refreshToken;
     private String authUsername;
 }

@@ -16,4 +16,16 @@ public class ExceptionHandler {
         ErrorResponse errorResponse = new ErrorResponse("AUTH_ERROR", request.getPath().value(), Collections.singletonList(ex.getMessage()));
         return ResponseEntity.status(401).body(errorResponse);
     }
+
+    @org.springframework.web.bind.annotation.ExceptionHandler(TokenException.class)
+    public ResponseEntity<ErrorResponse> handleTokenException(TokenException ex, ServerHttpRequest request) {
+        ErrorResponse errorResponse = new ErrorResponse("TOKEN_ERROR", request.getPath().value(), Collections.singletonList(ex.getMessage()));
+        return ResponseEntity.status(403).body(errorResponse);
+    }
+
+    @org.springframework.web.bind.annotation.ExceptionHandler(RemoteApiException.class)
+    public ResponseEntity<ErrorResponse> handleRemoteApiException(RemoteApiException ex, ServerHttpRequest request) {
+        ErrorResponse errorResponse = new ErrorResponse("REMOTE_API_ERROR", request.getPath().value(), Collections.singletonList(ex.getMessage()));
+        return ResponseEntity.status(502).body(errorResponse);
+    }
 }

@@ -9,6 +9,7 @@ import com.dineswift.userservice.model.response.CartDTO;
 import com.dineswift.userservice.model.response.restaurant_service.OrderItemDto;
 import com.dineswift.userservice.repository.CartRepository;
 import com.dineswift.userservice.repository.UserRepository;
+import com.dineswift.userservice.security.service.AuthService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,6 +31,8 @@ public class CartService {
     private final UserRepository userRepository;
     private final CartMapper cartMapper;
     private final RestClient restClient;
+    private final AuthService authService;
+    private final UserCommonService userCommonService;
 
     public boolean isValidCartId(UUID cartId) {
         log.info("Checking if cartId is valid: {}", cartId);
@@ -38,15 +41,18 @@ public class CartService {
         return exists;
     }
 
-    public CartDTO getCartDetails(UUID cartId) {
+    public CartDTO getCartDetails() {
 
-        Cart cart = cartRepository.findByIdAndIsActive(cartId)
-                .orElseThrow(() -> new IllegalArgumentException("Cart not found or inactive"));
+        UUID userId = authService.getAuthenticatedUserId();
+        log.info("Fetching cart details for userId={}", userId);
+        User loggedInUser = userCommonService.findValidUser(userId);
+
+        Cart cart = loggedInUser.getCart();
 
         CartDTO cartDto = cartMapper.toDto(cart);
-        log.info("Cart details fetched successfully for cartId={}: {}", cartId, cartDto);
-        List<OrderItemDto> orderItemDtos = fetchOrderItemsForCart(cartId);
-        log.info("Calculating Grand Total for cartId={}", cartId);
+        log.info("Cart details fetched successfully for cartId={}: {}", cart.getCartId(), cartDto);
+        List<OrderItemDto> orderItemDtos = fetchOrderItemsForCart(cart.getCartId());
+        log.info("Calculating Grand Total for cartId={}", cart.getCartId());
         BigDecimal grandTotalFromOrderItems = orderItemDtos.stream().map(OrderItemDto::getTotalPrice)
                 .reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
 
@@ -55,14 +61,14 @@ public class CartService {
 
         cart.setGrandTotal(grandTotalFromOrderItems);
         cartRepository.save(cart);
-        log.info("Cart grand total updated to {} for cartId={}", grandTotalFromOrderItems, cartId);
+        log.info("Cart grand total updated to {} for cartId={}", grandTotalFromOrderItems, cart.getCartId());
         return cartDto;
     }
 
     private List<OrderItemDto> fetchOrderItemsForCart(UUID cartId) {
         log.info("Fetching order items for cartId={}", cartId);
         return restClient.get()
-                .uri("order-items/get-order-items/{cartId}",cartId)
+                .uri("/order-items/get-order-items/{cartId}",cartId)
                 .header("Content-Type", "application/json")
                 .retrieve()
                 .body(new ParameterizedTypeReference<List<OrderItemDto>>() {
@@ -82,20 +88,16 @@ public class CartService {
         log.info("Cart total amount updated successfully for cartId={}", cartId);
     }
 
-    public void clearCart(UUID userId, UUID cartId) {
-       log.info("Clearing cart for userId={} and cartId={}", userId, cartId);
+    public void clearCart() {
+        UUID userId = authService.getAuthenticatedUserId();
+       log.info("Clearing cart for userId={}", userId);
         User existingUser = userRepository.findByIdAndIsActive(userId).orElseThrow(()-> new UserException("User not found or inactive"));
 
         Cart cart = existingUser.getCart();
-        if (!cart.getCartId().equals(cartId)) {
-            log.error("Cart ID mismatch for userId={}: expected={}, found={}", userId, cart.getCartId(), cartId);
-            return;
-        }
         Cart newCart = new Cart();
         newCart.setGrandTotal(BigDecimal.ZERO);
-        cartRepository.save(newCart);
         existingUser.setCart(newCart);
         userRepository.save(existingUser);
-        log.info("Cart cleared successfully for userId={} and cartId={}", userId, cartId);
+        log.info("Cart cleared successfully for userId={}", userId);
     }
 }

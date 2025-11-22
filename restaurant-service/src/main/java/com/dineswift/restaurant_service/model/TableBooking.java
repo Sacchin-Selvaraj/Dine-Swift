@@ -58,7 +58,6 @@ public class TableBooking {
     private DishStatus dishStatus;
 
     @NotNull(message = "Booking date is required")
-    @FutureOrPresent(message = "Booking date must be in the future or present")
     @Column(name = "booking_date", nullable = false)
     private LocalDate bookingDate;
 

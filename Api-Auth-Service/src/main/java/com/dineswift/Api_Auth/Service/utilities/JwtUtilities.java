@@ -1,6 +1,9 @@
 package com.dineswift.Api_Auth.Service.utilities;
 
+import com.dineswift.Api_Auth.Service.exception.TokenException;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import lombok.extern.slf4j.Slf4j;
@@ -63,12 +66,20 @@ public class JwtUtilities {
     }
 
     public Claims extractClaims(String token) {
-        log.info("Extracting claims from JWT token");
-        return Jwts.parser()
-                .verifyWith(generateKey())
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
+        try {
+            log.info("Extracting claims from JWT token");
+            return Jwts.parser()
+                    .verifyWith(generateKey())
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+        } catch (ExpiredJwtException e){
+            log.error("JWT token has expired: {}", e.getMessage());
+            return null;
+        } catch (JwtException | IllegalArgumentException e) {
+            log.error("Error while parsing JWT token: {}", e.getMessage());
+           return null;
+        }
     }
 
     public String extractUsername(String token) {

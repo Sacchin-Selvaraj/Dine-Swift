@@ -27,8 +27,6 @@ public final class BookingSpecification {
         if (userId==null){
             Specification.allOf();
         }
-        User existingUser = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
-        return (root, query, builder) -> builder.equal(root.get("user"), existingUser);
+        return (root, query, builder) -> builder.equal(root.get("user").get("userId"), userId);
     }
 }

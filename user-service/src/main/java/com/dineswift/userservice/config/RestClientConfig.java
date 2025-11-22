@@ -44,9 +44,11 @@ public class RestClientConfig {
                         log.info("Request Headers: {}", request.getHeaders());
                         return execution.execute(request,body);
                     } catch (HttpHostConnectException e) {
-                        throw new RemoteApiException("Unable to connect to remote service: " + e.getMessage());
+                        log.error("Unable to connect to remote service", e);
+                        throw new RemoteApiException("Unable to connect to remote service Please try again later");
                     } catch (Exception e){
-                        throw new RemoteApiException("Error during remote service call: " + e.getMessage());
+                        log.error("Error during remote service call", e);
+                        throw new RemoteApiException("Error during remote service call Please try again later");
                     }
                 })
                 .defaultStatusHandler(HttpStatusCode::isError,(request, response) -> {
@@ -70,7 +72,7 @@ public class RestClientConfig {
                     } catch (Exception e) {
                         log.error("Failed to read error body from the Restaurant Service Response ", e);
                         throw new RemoteApiException(
-                                "Service call failed with status: " + response.getStatusCode()
+                                "Service call failed Please try again later"
                         );
                     }
                     throw new RemoteApiException(errorBody);

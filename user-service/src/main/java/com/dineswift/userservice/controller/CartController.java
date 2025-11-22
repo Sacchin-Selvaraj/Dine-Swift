@@ -27,11 +27,11 @@ public class CartController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/get-cart/{cartId}")
+    @GetMapping("/get-cart-details")
     @PreAuthorize("hasRole('ROLE_USER')")
-    public ResponseEntity<CartDTO> getCartById(@PathVariable UUID cartId) {
-        log.info("Fetching cart details for cartId={}", cartId);
-        CartDTO cartDTO=cartService.getCartDetails(cartId);
+    public ResponseEntity<CartDTO> getCartById() {
+        log.info("Fetching cart details for cartId");
+        CartDTO cartDTO=cartService.getCartDetails();
         return ResponseEntity.ok(cartDTO);
     }
 
@@ -44,12 +44,11 @@ public class CartController {
         return ResponseEntity.ok().build();
     }
 
-    @PutMapping("/update-cart/{userId}/clear-cart/{cartId}")
+    @PutMapping("/clear-cart")
     @PreAuthorize("hasRole('ROLE_USER')")
-    public ResponseEntity<Void> clearCart(@PathVariable UUID userId,
-                                          @PathVariable UUID cartId) {
-        log.info("Request Received from the User Service to clear cart for userId: {} and cartId: {}", userId, cartId);
-        cartService.clearCart(userId, cartId);
+    public ResponseEntity<Void> clearCart() {
+        log.info("Request Received from the User Service to clear cart");
+        cartService.clearCart();
         return ResponseEntity.noContent().build();
     }
 }

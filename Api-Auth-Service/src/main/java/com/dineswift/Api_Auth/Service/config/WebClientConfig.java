@@ -1,5 +1,6 @@
 package com.dineswift.Api_Auth.Service.config;
 
+import com.dineswift.Api_Auth.Service.exception.RemoteApiException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.client.loadbalancer.LoadBalanced;
@@ -43,12 +44,8 @@ public class WebClientConfig {
                                     .flatMap(errorBody -> {
                                         log.error("Remote service call failed with status: {} and body: {}",
                                                 response.statusCode(), errorBody);
-                                        return Mono.error(new RuntimeException(errorBody));
-                                    })
-                                    .switchIfEmpty(Mono.error(new RuntimeException(
-                                            "Service call failed with status: " + response.statusCode()
-                                    )))
-                                    .then(Mono.error(new RuntimeException(
+                                        return Mono.error(new RemoteApiException(errorBody));
+                                    }).then(Mono.error(new RemoteApiException(
                                             "Service call failed with status: " + response.statusCode()
                                     )));
                         }

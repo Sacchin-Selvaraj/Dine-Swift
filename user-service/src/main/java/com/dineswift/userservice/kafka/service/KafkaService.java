@@ -74,7 +74,7 @@ public class KafkaService {
                 return false;
             });
         } catch (Exception e) {
-            log.error("Exception occurred while sending SMS verification: " + e.getMessage());
+            log.error("Exception occurred while sending SMS verification : " + e.getMessage());
             return CompletableFuture.completedFuture(false);
         }
 

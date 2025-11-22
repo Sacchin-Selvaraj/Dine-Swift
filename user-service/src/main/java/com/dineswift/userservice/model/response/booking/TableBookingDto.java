@@ -33,7 +33,4 @@ public class TableBookingDto {
     private LocalTime actualDineInTime;
     private LocalTime actualDineOutTime;
     private List<OrderItemDto> orderItems;
-    private RestaurantTableDto restaurantTableDto;
-    private RestaurantDto restaurantDto;
-    private GuestInformationDto guestInformationDto;
 }

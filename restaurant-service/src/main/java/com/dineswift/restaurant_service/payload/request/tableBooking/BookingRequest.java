@@ -20,7 +20,6 @@ public class BookingRequest {
     private UUID tableId;
 
     @NotNull(message = "Dine in time is required")
-    @FutureOrPresent(message = "Dine in time must be in the present or future")
     private LocalDateTime dineInTime;
 
     @NotNull(message = "Duration is required")

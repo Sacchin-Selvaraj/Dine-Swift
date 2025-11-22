@@ -5,11 +5,11 @@ import com.dineswift.restaurant_service.geocoding.payload.GeocodingResponse;
 import com.dineswift.restaurant_service.model.Coordinates;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
@@ -21,6 +21,7 @@ import java.util.Map;
 @Transactional
 public class GeocodingService {
 
+    private static final Logger log = LoggerFactory.getLogger(GeocodingService.class);
     private final RestTemplate restTemplate;
 
     @Value("${google.api.key}")
@@ -29,6 +30,7 @@ public class GeocodingService {
     private final String GOOGLE_API_URL = "https://maps.googleapis.com/maps/api/geocode/json?address={address}&key={apiKey}";
 
     public Coordinates getCoordinates(String address) {
+        log.info("Fetching coordinates for address: {}", address);
         Map<String, String> uriVariables = new HashMap<>();
         uriVariables.put("address", address);
         uriVariables.put("apiKey", apiKey);
@@ -39,7 +41,7 @@ public class GeocodingService {
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 GeocodingResponse geocodingResponse = response.getBody();
                 if (geocodingResponse.getResults() != null && !geocodingResponse.getResults().isEmpty()) {
-                    GeocodingResponse.Coordinate location = geocodingResponse.getResults().get(0).getGeometry().getLocation();
+                    GeocodingResponse.Location  location = geocodingResponse.getResults().get(0).getGeometry().getLocation();
                     Coordinates coords = new Coordinates();
                     coords.setLatitude(BigDecimal.valueOf(location.getLat()));
                     coords.setLongitude(BigDecimal.valueOf(location.getLng()));

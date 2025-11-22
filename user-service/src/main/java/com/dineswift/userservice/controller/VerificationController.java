@@ -3,6 +3,7 @@ package com.dineswift.userservice.controller;
 import com.dineswift.userservice.model.request.EmailUpdateRequest;
 import com.dineswift.userservice.model.request.PhoneNumberUpdateRequest;
 import com.dineswift.userservice.model.request.VerifyTokenRequest;
+import com.dineswift.userservice.model.response.MessageResponse;
 import com.dineswift.userservice.service.VerificationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -23,30 +24,30 @@ public class VerificationController {
 
     @PostMapping("/update-mail")
     @PreAuthorize("hasRole('ROLE_USER')")
-    public ResponseEntity<String> updateEmail(@Valid @RequestBody EmailUpdateRequest emailUpdateRequest) throws ExecutionException, InterruptedException {
+    public ResponseEntity<MessageResponse> updateEmail(@Valid @RequestBody EmailUpdateRequest emailUpdateRequest) throws ExecutionException, InterruptedException {
         String response=verificationService.updateEmail(emailUpdateRequest);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(MessageResponse.builder().message(response).build());
     }
 
     @PostMapping("/verify-mail")
     @PreAuthorize("hasRole('ROLE_USER')")
-    public ResponseEntity<String> verifyEmail(@Valid @RequestBody VerifyTokenRequest verifyEmailRequest){
+    public ResponseEntity<MessageResponse> verifyEmail(@Valid @RequestBody VerifyTokenRequest verifyEmailRequest){
         verificationService.verifyEmail(verifyEmailRequest);
-        return ResponseEntity.ok("Email have been updated Successfully");
+        return ResponseEntity.ok(MessageResponse.builder().message("Email have been updated Successfully").build());
     }
 
     @PostMapping("/update-phone-number")
     @PreAuthorize("hasRole('ROLE_USER')")
-    public ResponseEntity<String> updatePhoneNumber(@Valid @RequestBody PhoneNumberUpdateRequest phoneNumberUpdateRequest) {
+    public ResponseEntity<MessageResponse> updatePhoneNumber(@Valid @RequestBody PhoneNumberUpdateRequest phoneNumberUpdateRequest) {
         String response=verificationService.updatePhoneNumber(phoneNumberUpdateRequest);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(MessageResponse.builder().message(response).build());
     }
 
     @PostMapping("/verify-phone-number")
     @PreAuthorize("hasRole('ROLE_USER')")
-    public ResponseEntity<String> verifyPhoneNumber(@Valid @RequestBody VerifyTokenRequest verifyPhoneNumberRequest){
+    public ResponseEntity<MessageResponse> verifyPhoneNumber(@Valid @RequestBody VerifyTokenRequest verifyPhoneNumberRequest){
         verificationService.verifyPhoneNumber(verifyPhoneNumberRequest);
-        return ResponseEntity.ok("PhoneNumber have been updated Successfully");
+        return ResponseEntity.ok(MessageResponse.builder().message("PhoneNumber have been updated Successfully").build());
     }
 
 }

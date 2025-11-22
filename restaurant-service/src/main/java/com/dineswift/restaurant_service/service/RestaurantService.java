@@ -64,13 +64,13 @@ public class RestaurantService {
         Restaurant restaurant=restaurantMapper.toEntity(restaurantCreateRequest,employee);
         restaurant.setLastModifiedBy(authService.getAuthenticatedId());
 
-//        String fullAddress=String.format("%s, %s, %s, %s", restaurantCreateRequest.getAddress(),
-//                restaurantCreateRequest.getCity(),
-//                restaurantCreateRequest.getState(),
-//                restaurantCreateRequest.getCountry());
-//        Coordinates coordinates=geocodingService.getCoordinates(fullAddress);
-//        restaurant.setLatitude(coordinates.getLatitude());
-//        restaurant.setLongitude(coordinates.getLongitude());
+        String fullAddress=String.format("%s, %s, %s, %s", restaurantCreateRequest.getAddress(),
+                restaurantCreateRequest.getCity(),
+                restaurantCreateRequest.getState(),
+                restaurantCreateRequest.getCountry());
+        Coordinates coordinates=geocodingService.getCoordinates(fullAddress);
+        restaurant.setLatitude(coordinates.getLatitude());
+        restaurant.setLongitude(coordinates.getLongitude());
 
         employee.setRestaurant(restaurant);
         log.info("Setting Authenticated Employee as last modified by for Restaurant");

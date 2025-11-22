@@ -2,6 +2,7 @@ package com.dineswift.Api_Auth.Service.controller;
 
 
 import com.dineswift.Api_Auth.Service.payload.LoginRequest;
+import com.dineswift.Api_Auth.Service.payload.LoginResponse;
 import com.dineswift.Api_Auth.Service.payload.MessageResponse;
 import com.dineswift.Api_Auth.Service.payload.TokenResponse;
 import com.dineswift.Api_Auth.Service.service.AuthService;
@@ -22,8 +23,8 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/login")
-    public ResponseEntity<Mono<TokenResponse>> loginRequest(@RequestBody LoginRequest loginRequest, ServerHttpResponse response){
-        Mono<TokenResponse> authToken = authService.authenticateUser(loginRequest,response);
+    public ResponseEntity<Mono<LoginResponse>> loginRequest(@RequestBody LoginRequest loginRequest, ServerHttpResponse response){
+        Mono<LoginResponse> authToken = authService.authenticateUser(loginRequest,response);
         log.info("Generated Auth Token: {}", authToken);
         return ResponseEntity.ok(authToken);
     }

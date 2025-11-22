@@ -127,11 +127,11 @@ public class GatewayJwtFilter implements WebFilter {
 
     private Mono<Void> onAuthenticationFailure(ServerWebExchange exchange, String message) {
         log.error("Setting unauthorized response due to authentication failure");
-        exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+        exchange.getResponse().setStatusCode(HttpStatus.FORBIDDEN);
         exchange.getResponse().getHeaders().setContentType(MediaType.APPLICATION_JSON);
 
         String responseBody = String.format(
-                "{\"timestamp\": \"%s\", \"status\": 401, \"error\": \"Unauthorized\", \"message\": \"%s\"}",
+                "{\"timestamp\": \"%s\", \"status\": 403, \"error\": \"Forbidden\", \"message\": \"%s\"}",
                 Instant.now(), message
         );
 

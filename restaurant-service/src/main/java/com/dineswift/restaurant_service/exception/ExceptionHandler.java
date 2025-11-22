@@ -112,4 +112,10 @@ public class ExceptionHandler {
         ErrorResponse errorResponse = new ErrorResponse("Payment Details Not valid",List.of(ex.getMessage()));
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
+
+    @org.springframework.web.bind.annotation.ExceptionHandler(BookingException.class)
+    public ResponseEntity<ErrorResponse> handleBookingException(BookingException ex) {
+        ErrorResponse errorResponse = new ErrorResponse("Booking Details Not valid",List.of(ex.getMessage()));
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
 }

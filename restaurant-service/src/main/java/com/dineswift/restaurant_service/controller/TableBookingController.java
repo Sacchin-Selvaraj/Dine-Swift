@@ -40,7 +40,7 @@ public class TableBookingController {
         return ResponseEntity.ok(new MessageResponse(response));
     }
 
-    @PreAuthorize(("hasAnyRole('ROLE_USER', 'ROLE_ADMIN', 'ROLE_MANAGER','ROLE_CHEF', 'ROLE_WAITER')"))
+    @PreAuthorize(("hasAnyRole('USER', 'ROLE_ADMIN', 'ROLE_MANAGER','ROLE_CHEF', 'ROLE_WAITER')"))
     @GetMapping("/view-booking/{tableBookingId}")
     public ResponseEntity<TableBookingDto> viewBooking(@PathVariable UUID tableBookingId) {
         TableBookingDto bookingDetails = tableBookingService.viewBooking(tableBookingId);

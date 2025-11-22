@@ -29,7 +29,7 @@ public class AuthService {
     private final WebClient webClient;
     private final JwtUtilities jwtUtilities;
 
-    public Mono<TokenResponse> authenticateUser(LoginRequest loginRequest, ServerHttpResponse response) {
+    public Mono<LoginResponse> authenticateUser(LoginRequest loginRequest, ServerHttpResponse response) {
 
         log.info("Based on the login type, forwarding the request ");
         Mono<TokenPair> tokenPair=null;
@@ -46,9 +46,12 @@ public class AuthService {
                     ResponseCookie refreshCookie = getResponseCookie(tokenPair1.getRefreshToken());
                     response.getHeaders().add(HttpHeaders.SET_COOKIE, refreshCookie.toString());
 
-                    TokenResponse tokenResponse = new TokenResponse();
-                    tokenResponse.setAuthToken(tokenPair1.getAuthToken());
-                    return tokenResponse;
+                   LoginResponse loginResponse=new LoginResponse();
+                   loginResponse.setAuthToken(tokenPair1.getAuthToken());
+                   loginResponse.setAuthUsername(tokenPair1.getAuthUsername());
+                   log.info("LoginResponse prepared for AuthUser: {}", tokenPair1.getAuthUsername());
+                   return loginResponse;
+
                 })
                 .onErrorMap(error -> {
                     log.error("Authentication process failed");
@@ -74,6 +77,7 @@ public class AuthService {
                     String refreshToken = jwtUtilities.generateRefreshToken(claims, employeeResponse.getEmployeeName(),loginRequest.isRememberMe());
 
                     TokenPair tokenPair = new TokenPair();
+                    tokenPair.setAuthUsername(employeeResponse.getEmployeeName());
                     tokenPair.setAuthToken(authToken);
                     tokenPair.setRefreshToken(refreshToken);
 
@@ -130,6 +134,7 @@ public class AuthService {
                     String refreshToken = jwtUtilities.generateRefreshToken(claims, userResponse.getUsername(),loginRequest.isRememberMe());
 
                     TokenPair tokenPair = new TokenPair();
+                    tokenPair.setAuthUsername(userResponse.getUsername());
                     tokenPair.setAuthToken(authToken);
                     tokenPair.setRefreshToken(refreshToken);
 
@@ -173,8 +178,9 @@ public class AuthService {
         String newAuthToken = jwtUtilities.generateToken(claims, authUsername);
 
         log.info("New auth token generated successfully");
-        String newRefreshToken = jwtUtilities.generateRefreshToken(claims, authUsername, true);
-        response.getHeaders().add(HttpHeaders.SET_COOKIE, getResponseCookie(newRefreshToken).toString());
+
+        log.info("Using existing refresh token to set in cookie");
+        response.getHeaders().add(HttpHeaders.SET_COOKIE, getResponseCookie(refreshToken).toString());
 
         TokenResponse tokenResponse = new TokenResponse();
         tokenResponse.setAuthToken(newAuthToken);

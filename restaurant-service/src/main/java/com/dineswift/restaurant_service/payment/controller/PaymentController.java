@@ -15,7 +15,7 @@ import java.util.UUID;
 @RestController
 @RequiredArgsConstructor
 @Slf4j
-@RequestMapping("/payments")
+@RequestMapping("/restaurant/payments")
 public class PaymentController {
 
     private final PaymentService paymentService;
@@ -26,7 +26,7 @@ public class PaymentController {
         boolean isValid = paymentService.verifyPayment(paymentDetails);
         if(isValid){
             log.info("Payment verified successfully for paymentId: {}", paymentDetails.getPaymentId());
-            return ResponseEntity.status(HttpStatus.ACCEPTED).build();
+            return ResponseEntity.status(HttpStatus.ACCEPTED).body("Payment verified successfully");
         } else {
             log.warn("Payment verification failed for paymentId: {}", paymentDetails.getPaymentId());
            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Payment verification failed");
