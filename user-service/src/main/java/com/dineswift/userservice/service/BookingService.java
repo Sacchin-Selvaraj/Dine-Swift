@@ -3,6 +3,7 @@ package com.dineswift.userservice.service;
 import com.dineswift.userservice.exception.CartException;
 import com.dineswift.userservice.exception.UserException;
 import com.dineswift.userservice.model.entites.Booking;
+import com.dineswift.userservice.model.entites.BookingStatus;
 import com.dineswift.userservice.model.entites.User;
 import com.dineswift.userservice.model.request.BookingRequest;
 import com.dineswift.userservice.model.response.PaymentCreateResponse;
@@ -107,5 +108,19 @@ public class BookingService {
 
         log.info("Fetched booking details successfully for bookingId: {}", bookingId);
         return tableBookingDto.getBody();
+    }
+
+    public void updateBookingStatus(UUID tableBookingId, String status) {
+        log.info("Updating booking status for tableBookingId: {}", tableBookingId);
+        try {
+            Booking booking = bookingRepository.findByTableBookingId(tableBookingId)
+                    .orElseThrow(() -> new CartException("Booking not found with Table Booking ID: " + tableBookingId));
+
+            booking.setBookingStatus(BookingStatus.valueOf(status));
+            bookingRepository.save(booking);
+        } catch (IllegalArgumentException e) {
+            log.error("Invalid booking status provided: {}", status);
+        }
+        log.info("Booking status updated successfully for tableBookingId: {}", tableBookingId);
     }
 }

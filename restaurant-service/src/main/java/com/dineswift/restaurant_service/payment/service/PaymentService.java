@@ -4,6 +4,7 @@ import com.dineswift.restaurant_service.exception.BookingException;
 import com.dineswift.restaurant_service.exception.PaymentException;
 import com.dineswift.restaurant_service.model.*;
 import com.dineswift.restaurant_service.payload.response.tableBooking.PaymentCreateResponse;
+import com.dineswift.restaurant_service.payment.payload.request.BookingStatusUpdate;
 import com.dineswift.restaurant_service.payment.payload.request.PaymentDetails;
 import com.dineswift.restaurant_service.payment.repository.PaymentRepository;
 import com.dineswift.restaurant_service.payment.repository.PaymentRefundRepository;
@@ -189,14 +190,30 @@ public class PaymentService {
                 booking.setBookingStatus(BookingStatus.PAYMENT_PENDING);
                 booking.setIsUpfrontPaid(true);
                 removeCartForUser(booking);
+                updateBookingStatus(booking.getTableBookingId(), BookingStatus.PAYMENT_PENDING.name());
             }
             else {
                 booking.setBookingStatus(BookingStatus.ORDER_COMPLETED);
                 booking.setIsPendingAmountPaid(true);
+                updateBookingStatus(booking.getTableBookingId(), BookingStatus.ORDER_COMPLETED.name());
             }
             log.info("Updating booking status to {} for bookingId: {}", booking.getBookingStatus(), booking.getTableBookingId());
             paymentRepository.save(payment);
 
+    }
+
+    private void updateBookingStatus(UUID tableBookingId, String bookingStatus) {
+
+        log.info("Updating Booking Status in Booking Service");
+        BookingStatusUpdate statusUpdate = new BookingStatusUpdate();
+        statusUpdate.setTableBookingId(tableBookingId);
+        statusUpdate.setBookingStatus(bookingStatus);
+
+        ResponseEntity<Void> response = restClient.patch()
+                .uri("/booking/update-booking-status")
+                .body(statusUpdate)
+                .retrieve()
+                .toBodilessEntity();
     }
 
     private void removeCartForUser(TableBooking booking) {

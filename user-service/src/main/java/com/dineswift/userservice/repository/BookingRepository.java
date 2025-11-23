@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
@@ -19,4 +20,6 @@ public interface BookingRepository extends JpaRepository<Booking, UUID>, JpaSpec
 
     @Query("select b from Booking b where b.user.userId=:userId AND b.bookingStatus=:bookingStatus")
     Page<Booking> findByUser_UserIdAndBookingStatus( @Param("userId") UUID userId,@Param("bookingStatus") BookingStatus bookingStatus, Pageable pageable);
+
+    Optional<Booking> findByTableBookingId(UUID tableBookingId);
 }

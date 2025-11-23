@@ -2,6 +2,7 @@ package com.dineswift.userservice.controller;
 
 import com.dineswift.userservice.model.request.BookingRequest;
 import com.dineswift.userservice.model.response.PaymentCreateResponse;
+import com.dineswift.userservice.model.response.booking.BookingStatusUpdate;
 import com.dineswift.userservice.model.response.booking.TableBookingDto;
 import com.dineswift.userservice.service.BookingService;
 import jakarta.validation.Valid;
@@ -55,6 +56,14 @@ public class BookingController {
         TableBookingDto bookedTableDetails = bookingService.viewTableBooking(bookingId);
         log.info("Fetched booking details for tableBookingId: {}", bookingId);
         return ResponseEntity.ok(bookedTableDetails);
+    }
+
+    @PatchMapping("/update-booking-status")
+    public ResponseEntity<Void> updateBookingStatus(@RequestBody BookingStatusUpdate statusUpdate){
+        log.info("Received booking status update for bookingId: {}", statusUpdate.getTableBookingId());
+        bookingService.updateBookingStatus(statusUpdate.getTableBookingId(),statusUpdate.getBookingStatus());
+        log.info("Updated booking status for bookingId: {}", statusUpdate.getTableBookingId());
+        return ResponseEntity.ok().build();
     }
 
 }

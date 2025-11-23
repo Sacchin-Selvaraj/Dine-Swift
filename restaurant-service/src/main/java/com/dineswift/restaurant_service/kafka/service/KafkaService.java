@@ -86,7 +86,7 @@ public class KafkaService {
 
     }
 
-    public CompletableFuture<Boolean> sendEmailNotification(UUID userId, String status, String templateType, TableBooking existingBooking) {
+    public CompletableFuture<Boolean> sendEmailNotification(UUID userId, String status, String templateType, TableBooking existingBooking, boolean isBookingStatusUpdated) {
 
         try {
             if (userId == null || status == null || templateType == null) {
@@ -100,6 +100,8 @@ public class KafkaService {
                     .noOfGuest(existingBooking.getNoOfGuest())
                     .bookingDate(existingBooking.getBookingDate())
                     .grandTotal(existingBooking.getGrandTotal())
+                    .isBookingStatusUpdated(isBookingStatusUpdated)
+                    .tableBookingId(existingBooking.getTableBookingId())
                     .build();
             return kafkaTemplate.send(emailNotificationTopic,bookingStatusUpdateDetail).thenApply(res->{
                 log.info("Email Notification Message Published Successfully....");

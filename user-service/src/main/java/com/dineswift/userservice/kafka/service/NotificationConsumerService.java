@@ -3,6 +3,7 @@ package com.dineswift.userservice.kafka.service;
 import com.dineswift.notification_service.model.BookingStatusUpdateDetail;
 import com.dineswift.userservice.model.entites.User;
 import com.dineswift.userservice.notification.service.EmailService;
+import com.dineswift.userservice.service.BookingService;
 import com.dineswift.userservice.service.UserCommonService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +24,7 @@ public class NotificationConsumerService {
 
     private final EmailService emailService;
     private final UserCommonService userCommonService;
+    private final BookingService bookingService;
 
     @RetryableTopic(
             attempts = "4",
@@ -45,6 +47,10 @@ public class NotificationConsumerService {
                 "bookingDate", message.getBookingDate(),
                 "grandTotal", message.getGrandTotal()
         );
+
+        if (message.isBookingStatusUpdated()){
+            bookingService.updateBookingStatus(message.getTableBookingId(), message.getStatus());
+        }
 
         emailService.sendMail(
                 userDetail.getEmail(),

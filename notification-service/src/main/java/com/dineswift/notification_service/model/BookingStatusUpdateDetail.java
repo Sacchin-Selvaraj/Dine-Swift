@@ -23,5 +23,7 @@ public class BookingStatusUpdateDetail {
     private Integer noOfGuest;
     private LocalDate bookingDate;
     private BigDecimal grandTotal;
+    private boolean isBookingStatusUpdated;
+    private UUID tableBookingId;
 
 }
