@@ -151,30 +151,37 @@ public class VerificationService {
 
     public String forgotPassword(ForgotPasswordRequest forgotPasswordRequest) {
 
-        String employeeEmail = forgotPasswordRequest.getEmployeeEmail();
         String typeOfVerification = forgotPasswordRequest.getTypeOfVerification();
-        log.info("Initiating forgot password process for employeeEmail: {}", employeeEmail);
-        Employee registedEmployee=employeeRepository.findByEmailAndIsActive(employeeEmail)
-                .orElseThrow(()->new EmployeeException("Employee not found or inactive"));
+        log.info("Initiating forgot password process for employeeInput: {}", forgotPasswordRequest.getEmployeeInput());
+        Employee registedEmployee;
+        if (typeOfVerification.equalsIgnoreCase("Email")){
+            String employeeEmail = forgotPasswordRequest.getEmployeeInput();
+            registedEmployee=employeeRepository.findByEmailAndIsActive(employeeEmail)
+                    .orElseThrow(()->new EmployeeException("Employee not found or inactive"));
+        }else {
+            String phoneNumber = forgotPasswordRequest.getEmployeeInput();
+            registedEmployee=employeeRepository.findByPhoneNumberAndIsActive(phoneNumber)
+                    .orElseThrow(()->new EmployeeException("Employee not found or inactive"));
+        }
 
         String token = utilityService.generateNumericCode(6);
         VerificationToken verificationToken = setVerificationToken(token,registedEmployee,TokenType.FORGOT_PASSWORD);
 
-        log.info("Generated verification token for employeeEmail: {}", employeeEmail);
+        log.info("Generated verification token for employee");
         verificationRepository.save(verificationToken);
 
         if (typeOfVerification.equalsIgnoreCase("Email")){
-            kafkaService.sendEmailVerification(registedEmployee.getEmail(),token,registedEmployee.getEmployeeName(),"forgot-password").thenApply(status->{
+            kafkaService.sendEmailVerification(registedEmployee.getEmail(),token,registedEmployee.getEmployeeName(),"forget-password").thenApply(status->{
                 if (!status){
                     verificationToken.setTokenStatus(TokenStatus.FAILED);
-                    log.error("Failed to send forgot password email to {} for employeeEmail: {}", registedEmployee.getEmail(), employeeEmail);
+                    log.error("Failed to send forgot password email to {}", registedEmployee.getEmail());
                     throw new NotificationException("Failed to send Email");
                 }else {
                     verificationToken.setTokenStatus(TokenStatus.SENT);
                 }
                 return verificationRepository.save(verificationToken);
             });
-            log.info("Sent forgot password email to employeeEmail: {}", employeeEmail);
+            log.info("Sent forgot password email to employee");
         }else {
             if (registedEmployee.getPhoneNumber()==null){
                 throw new EmployeeException("Employee does not have a phone number associated");
@@ -183,14 +190,14 @@ public class VerificationService {
             smsStatus.thenApply(status->{
                 if (!status){
                     verificationToken.setTokenStatus(TokenStatus.FAILED);
-                    log.error("Failed to send forgot password SMS to {} for employeeEmail: {}", registedEmployee.getPhoneNumber(), employeeEmail);
+                    log.error("Failed to send forgot password SMS to {}", registedEmployee.getPhoneNumber());
                     throw new NotificationException("Failed to send SMS");
                 }else {
                     verificationToken.setTokenStatus(TokenStatus.SENT);
                 }
                 return verificationRepository.save(verificationToken);
             });
-            log.info("Sent forgot password SMS to employeeEmail: {}", employeeEmail);
+            log.info("Sent forgot password SMS to employee");
         }
 
         return "Verification code sent via " + typeOfVerification.toLowerCase();

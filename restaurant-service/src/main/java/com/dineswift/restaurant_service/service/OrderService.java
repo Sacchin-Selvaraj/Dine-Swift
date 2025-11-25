@@ -113,7 +113,7 @@ public class OrderService {
         }
 
         List<OrderItemDto> orderItemDtos = orderItems.stream().map(orderItemMapper::toDto).toList();
-        log.info("Order items fetched for cartId {}: {}", cartId, orderItemDtos);
+        log.info("Order items fetched for cartId {}", cartId);
         return orderItemDtos;
     }
 
@@ -145,7 +145,7 @@ public class OrderService {
     private void updateCartTotalAmount(UUID cartId, CartAmountUpdateRequest cartAmountUpdateRequest) {
         log.info("Updating cart total amount: cartId={}, totalAmount={}", cartId, cartAmountUpdateRequest);
         ResponseEntity<Void> response = restClient.patch()
-                .uri("cart/update-cart-amount/{cartId}",cartId)
+                .uri("/cart/update-cart-amount/{cartId}",cartId)
                 .body(cartAmountUpdateRequest)
                 .header("Content-Type", "application/json")
                 .retrieve()

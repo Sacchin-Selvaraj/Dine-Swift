@@ -8,8 +8,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ForgotPasswordRequest {
 
-    @NotBlank(message = "Employee email is required")
-    private String employeeEmail;
+    @NotBlank(message = "Employee email or PhoneNumber is required")
+    private String employeeInput;
 
     @NotBlank(message = "Type of verification is required")
     private String typeOfVerification;

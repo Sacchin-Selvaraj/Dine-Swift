@@ -67,7 +67,7 @@ public class KafkaService {
 
             return kafkaTemplate.send(smsVerificationTopic,smsVerificationDetail).thenApply(res->{
                 log.info("SMS Message Published Successfully....");
-                log.info("Topic Name: "+res.getRecordMetadata().topic());
+                log.info("Topic Name : "+res.getRecordMetadata().topic());
                 return true;
             }).exceptionally(throwable -> {
                 log.error("Exception occurred while sending SMS verification: " + throwable.getMessage());

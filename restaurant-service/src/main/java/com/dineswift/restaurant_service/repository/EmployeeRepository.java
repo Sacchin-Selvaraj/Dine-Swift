@@ -23,4 +23,7 @@ public interface EmployeeRepository extends JpaRepository<Employee, UUID> {
 
     @Query("SELECT emp FROM Employee emp where emp.email=:email AND emp.employeeIsActive=true")
     Optional<Employee> findByEmailAndIsActive(String email);
+
+    @Query("SELECT emp FROM Employee emp where emp.phoneNumber=:phoneNumber AND emp.employeeIsActive=true")
+    Optional<Employee> findByPhoneNumberAndIsActive(String phoneNumber);
 }

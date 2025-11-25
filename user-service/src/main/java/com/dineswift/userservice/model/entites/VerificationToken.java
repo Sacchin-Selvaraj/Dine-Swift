@@ -56,7 +56,7 @@ public class VerificationToken {
 
     @NotNull(message = "Created date is required")
     @PastOrPresent(message = "Created date must be in the past or present")
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @Column(name = "created_at", nullable = false)
     @UpdateTimestamp
     private LocalDateTime createdAt;
 

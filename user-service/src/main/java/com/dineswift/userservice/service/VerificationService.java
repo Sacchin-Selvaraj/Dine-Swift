@@ -153,9 +153,15 @@ public class VerificationService {
     }
 
     public String forgetPassword(ForgotPasswordRequest forgotPasswordRequest) {
+        log.info("Processing forget password request for user");
         String typeOfVerification=forgotPasswordRequest.getTypeOfVerification();
 
-        User user=userCommonService.findValidUserByEmail(forgotPasswordRequest.getUserEmail());
+        User user;
+        if (typeOfVerification.equalsIgnoreCase("Email")){
+            user=userCommonService.findValidUserByEmail(forgotPasswordRequest.getUserInput());
+        }else {
+            user=userCommonService.findValidUserByPhoneNumber(forgotPasswordRequest.getUserInput());
+        }
 
         String token = userCommonService.generateNumericCode(6);
         VerificationToken verificationToken = setVerificationToken(token,user,TokenType.FORGOT_PASSWORD);

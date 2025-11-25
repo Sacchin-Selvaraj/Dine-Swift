@@ -37,6 +37,7 @@ public class EmployeeCreateRequest {
             message = "Phone number must be valid and between 10-20 digits"
     )
     @NotBlank(message = "Phone Number is Required")
+    @Pattern(regexp = "^\\+[1-9]\\d{1,14}$", message = "Phone number must be in Standard format : +91phoneNumber")
     private String phoneNumber;
 
     private Set<RoleNameRequest> roles;

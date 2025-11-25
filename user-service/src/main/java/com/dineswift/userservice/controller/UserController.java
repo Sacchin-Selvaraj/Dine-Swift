@@ -33,9 +33,9 @@ public class UserController {
 
 
     @PostMapping("/sign-up")
-    public ResponseEntity<UserResponse> signUpUser(@Valid @RequestBody UserRequest userRequest){
-        UserResponse userResponse=userService.signUpUser(userRequest);
-        return ResponseEntity.status(HttpStatus.CREATED).body(userResponse);
+    public ResponseEntity<Void> signUpUser(@Valid @RequestBody UserRequest userRequest){
+        userService.signUpUser(userRequest);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @PostMapping("/login")
@@ -91,5 +91,12 @@ public class UserController {
     public ResponseEntity<GuestInformationResponse> getUserInfo(@PathVariable UUID userId) {
         GuestInformationResponse guestInformationResponse = userService.getUserInfo(userId);
         return ResponseEntity.ok(guestInformationResponse);
+    }
+
+    @GetMapping("/get-current-user-info")
+    @PreAuthorize("hasAnyRole('ROLE_USER')")
+    public ResponseEntity<UserDTO> getCurrentUserInfo() {
+        UserDTO userDTO = userService.getCurrentUserInfo();
+        return ResponseEntity.ok(userDTO);
     }
 }

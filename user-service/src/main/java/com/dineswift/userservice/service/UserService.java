@@ -142,7 +142,7 @@ public class UserService {
         }
     }
 
-    public UserResponse signUpUser(@Valid UserRequest userRequest) {
+    public void signUpUser(@Valid UserRequest userRequest) {
 
         try {
             verifyUser(userRequest);
@@ -160,9 +160,8 @@ public class UserService {
             user.setRoles(Set.of(role));
             user.setCart(cart);
 
-            User savedUser = userRepository.save(user);
+            userRepository.save(user);
             log.info("User account created successfully for username: {}", userRequest.getUsername());
-            return userMapper.toUserResponse(savedUser);
 
         } catch (DataIntegrityViolationException e){
             throw new DataIntegrityViolationException(e.getLocalizedMessage());
@@ -203,5 +202,14 @@ public class UserService {
         User user=userCommonService.findValidUser(userId);
         log.info("Successfully retrieved user information for userId: {}", userId);
         return userMapper.toGuestInformationResponse(user);
+    }
+
+
+    public UserDTO getCurrentUserInfo() {
+        UUID userId=authService.getAuthenticatedUserId();
+        log.info("Fetching current user information for userId: {}", userId);
+        User user=userCommonService.findValidUser(userId);
+        log.info("Successfully retrieved current user information for userId: {}", userId);
+        return userMapper.toDTO(user);
     }
 }

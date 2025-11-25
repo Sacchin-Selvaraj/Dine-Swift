@@ -37,4 +37,9 @@ public class UserCommonService {
         return userRepository.findByEmail(userEmail).orElseThrow(
                 () -> new UserException("User not found with email: " + userEmail));
     }
+
+    public User findValidUserByPhoneNumber(String userPhoneNumber) {
+        return userRepository.findByPhoneNumber(userPhoneNumber).orElseThrow(
+                () -> new UserException("User not found with phone number: " + userPhoneNumber));
+    }
 }
