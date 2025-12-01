@@ -77,7 +77,7 @@ public class VerificationService {
     public void verifyEmail( @Valid VerifyTokenRequest verifyEmailRequest) {
         UUID employeeId = authService.getAuthenticatedId();
         log.info("Verifying email token for employeeId: {}", employeeId);
-        VerificationToken verificationToken = verifyTokenExistence(verifyEmailRequest.getToken(),TokenType.FORGOT_PASSWORD);
+        VerificationToken verificationToken = verifyTokenExistence(verifyEmailRequest.getToken(),TokenType.EMAIL_VERIFICATION);
         Employee employee = verificationToken.getEmployee();
         employee.setEmail(verificationToken.getNewEmail());
 
@@ -135,7 +135,7 @@ public class VerificationService {
     public void verifyPhoneNumber( VerifyTokenRequest verifyPhoneNumberRequest) {
 
         UUID employeeId = authService.getAuthenticatedId();
-        VerificationToken verificationToken = verifyTokenExistence(verifyPhoneNumberRequest.getToken(),TokenType.FORGOT_PASSWORD);
+        VerificationToken verificationToken = verifyTokenExistence(verifyPhoneNumberRequest.getToken(),TokenType.PHONE_VERIFICATION);
         Employee employee = verificationToken.getEmployee();
         log.info("Updating phone number for employeeId: {}", employeeId);
         employee.setPhoneNumber(verificationToken.getNewPhonenumber());

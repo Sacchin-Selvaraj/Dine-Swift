@@ -4,10 +4,12 @@ import com.dineswift.restaurant_service.payload.request.menu.MenuCreateRequest;
 import com.dineswift.restaurant_service.payload.request.menu.MenuUpdateRequest;
 import com.dineswift.restaurant_service.payload.response.MessageResponse;
 import com.dineswift.restaurant_service.payload.response.menu.MenuDTO;
+import com.dineswift.restaurant_service.payload.response.menu.MenuDTOWoDish;
 import com.dineswift.restaurant_service.payload.response.menu.MenuResponse;
 import com.dineswift.restaurant_service.service.MenuService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -41,9 +43,9 @@ public class MenuController {
 
     @PreAuthorize(("hasRole('ROLE_ADMIN') or hasRole('ROLE_MANAGER')"))
     @PatchMapping("/update-menu/{menuId}")
-    public ResponseEntity<MenuDTO> updateMenu(@PathVariable UUID menuId, @RequestBody MenuUpdateRequest menuUpdateRequest) {
-        MenuDTO menuDTO = menuService.updateMenu(menuId, menuUpdateRequest);
-        return ResponseEntity.ok(menuDTO);
+    public ResponseEntity<Void> updateMenu(@PathVariable UUID menuId, @RequestBody MenuUpdateRequest menuUpdateRequest) {
+        menuService.updateMenu(menuId, menuUpdateRequest);
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping("/get-menu/{restaurantId}")
@@ -64,5 +66,14 @@ public class MenuController {
     public ResponseEntity<MenuDTO> getMenuDetails(@PathVariable UUID menuId) {
         MenuDTO menuDTO = menuService.getMenuDetails(menuId);
         return ResponseEntity.ok(menuDTO);
+    }
+
+    @GetMapping("/get-menus/{restaurantId}")
+    public ResponseEntity<Page<MenuDTOWoDish>> getMenusByRestaurantId(@PathVariable UUID restaurantId,
+                                                                      @RequestParam(name = "page", defaultValue = "0") int page,
+                                                                      @RequestParam(name = "size", defaultValue = "10") int size) {
+        log.info("Received request to get menus for restaurant with ID: {}", restaurantId);
+        Page<MenuDTOWoDish> menus = menuService.getMenusByRestaurantId(restaurantId, page, size);
+        return ResponseEntity.ok().body(menus);
     }
 }

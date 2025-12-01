@@ -19,6 +19,4 @@ public interface DishRepository extends JpaRepository<Dish, UUID>, JpaSpecificat
     @Query("SELECT d FROM Dish d WHERE d.id = :dishId AND d.isActive = true")
     Optional<Dish> findByIdAndIsActive(@Param("dishId") UUID dishId);
 
-    @Query("SELECT d FROM Dish d WHERE d.restaurant.restaurantId = :restaurantId AND d.isActive = true")
-    Page<Dish> findAllByRestaurant(Specification<Dish> spec, Pageable pageable, UUID restaurantId);
 }

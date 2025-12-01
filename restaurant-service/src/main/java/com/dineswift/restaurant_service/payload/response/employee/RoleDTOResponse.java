@@ -11,6 +11,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class RoleDTOResponse {
 
+    private UUID roleId;
     @NotBlank(message = "Role name is required")
     private RoleName roleName;
 }

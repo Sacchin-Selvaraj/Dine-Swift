@@ -1,5 +1,7 @@
 package com.dineswift.Api_Auth.Service.utilities;
 
+import com.dineswift.Api_Auth.Service.exception.TokenException;
+import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.ws.rs.core.HttpHeaders;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -43,10 +45,16 @@ public class GatewayJwtFilter implements WebFilter {
             return chain.filter(exchange);
         }
         log.info("Validating JWT token for protected endpoint: {}", path);
-        String authToken = extractToken(exchange);
-        if (authToken == null || !validateJwtToken(authToken)) {
-            log.error("Invalid or expired JWT token");
-            return onAuthenticationFailure(exchange,"Invalid or expired JWT token");
+        String authToken = null;
+        authToken = extractToken(exchange);
+        try {
+            if (authToken == null || !validateJwtToken(authToken,exchange)) {
+                log.error("Invalid JWT token");
+                return onAuthenticationFailure(exchange,"Invalid JWT token");
+            }
+        } catch (TokenException e) {
+            log.error("JWT Token is expired");
+            return onAuthenticationFailure(exchange,"JWT Token is expired");
         }
         log.info("JWT token is valid passing request to the next filter");
         Map<String,Object> claims = parseClaims(authToken);
@@ -87,7 +95,7 @@ public class GatewayJwtFilter implements WebFilter {
         return new UsernamePasswordAuthenticationToken(username,null,null);
     }
 
-    private boolean validateJwtToken(String authToken) {
+    private boolean validateJwtToken(String authToken,ServerWebExchange exchange) {
         log.info("Validating JWT token in JwtUtilities");
         return jwtUtilities.validateJwtToken(authToken);
     }
@@ -127,11 +135,11 @@ public class GatewayJwtFilter implements WebFilter {
 
     private Mono<Void> onAuthenticationFailure(ServerWebExchange exchange, String message) {
         log.error("Setting unauthorized response due to authentication failure");
-        exchange.getResponse().setStatusCode(HttpStatus.FORBIDDEN);
+        exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
         exchange.getResponse().getHeaders().setContentType(MediaType.APPLICATION_JSON);
 
         String responseBody = String.format(
-                "{\"timestamp\": \"%s\", \"status\": 403, \"error\": \"Forbidden\", \"message\": \"%s\"}",
+                "{\"timestamp\": \"%s\", \"status\": 401, \"error\": \"Unauthorized\", \"message\": \"%s\"}",
                 Instant.now(), message
         );
 

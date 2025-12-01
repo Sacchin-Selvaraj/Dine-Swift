@@ -2,6 +2,7 @@ package com.dineswift.restaurant_service.repository;
 
 import com.dineswift.restaurant_service.model.Menu;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -11,7 +12,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Repository
-public interface MenuRepository extends JpaRepository<Menu, UUID> {
+public interface MenuRepository extends JpaRepository<Menu, UUID> , JpaSpecificationExecutor<Menu> {
 
     boolean existsByMenuName(String menuName);
 
@@ -19,4 +20,6 @@ public interface MenuRepository extends JpaRepository<Menu, UUID> {
     Optional<Menu> findByIdAndIsActive(@Param("menuId") UUID menuId);
 
     List<Menu> findAllByRestaurant_RestaurantIdAndIsActive(UUID restaurantId, boolean isActive);
+
+
 }

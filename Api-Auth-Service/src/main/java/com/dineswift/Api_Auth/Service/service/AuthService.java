@@ -113,6 +113,7 @@ public class AuthService {
                 .secure(false)
                 .path("/auth/refresh-token")
                 .maxAge(Duration.ofDays(14))
+                .sameSite("Strict")
                 .build();
     }
 
@@ -196,6 +197,7 @@ public class AuthService {
                 .secure(false)
                 .path("/auth/refresh-token")
                 .maxAge(0)
+                .sameSite("Strict")
                 .build();
         response.getHeaders().add(HttpHeaders.SET_COOKIE, deleteCookie.toString());
         log.info("User logged out successfully, refresh token cookie cleared");

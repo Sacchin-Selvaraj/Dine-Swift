@@ -30,15 +30,13 @@ public class TableService {
     private final ReservationService reservationService;
     private final AuthService authService;
 
-    public RestaurantTableDto addTableToRestaurant(UUID restaurantId, TableCreateRequest tableCreateRequest) {
+    public void addTableToRestaurant(UUID restaurantId, TableCreateRequest tableCreateRequest) {
         log.info("Adding table to restaurant with ID: {}", restaurantId);
         RestaurantTable restaurantTable=tableMapper.toEntity(tableCreateRequest,restaurantId);
         restaurantTable.setCreatedBy(authService.getAuthenticatedId());
         restaurantTable.setLastModifiedBy(authService.getAuthenticatedId());
         RestaurantTable savedTable=tableRepository.save(restaurantTable);
         log.info("Table added with ID: {}", savedTable.getTableId());
-        return tableMapper.toDto(savedTable);
-
     }
 
     public void deleteTable(UUID tableId) {
@@ -51,7 +49,7 @@ public class TableService {
         log.info("Table deleted with ID: {}", tableId);
     }
 
-    public RestaurantTableDto updateTable(UUID tableId, TableUpdateRequest tableUpdateRequest) {
+    public void updateTable(UUID tableId, TableUpdateRequest tableUpdateRequest) {
         log.info("Updating table with ID:{}", tableId);
         RestaurantTable table = tableRepository.findById(tableId)
                 .orElseThrow(() -> new IllegalArgumentException("Table not found with ID: " + tableId));
@@ -60,7 +58,6 @@ public class TableService {
         updatedTable.setLastModifiedBy(authService.getAuthenticatedId());
         RestaurantTable savedTable = tableRepository.save(updatedTable);
         log.info("Table updated with ID: {}", savedTable.getTableId());
-        return tableMapper.toDto(savedTable);
     }
 
     public Page<RestaurantTableDto> getTablesByRestaurantId(UUID restaurantId, int page, int size) {

@@ -37,7 +37,7 @@ public class AuthController {
         return ResponseEntity.ok(newAuthToken);
     }
 
-    @PostMapping("/logout")
+    @GetMapping("/logout")
     public ResponseEntity<MessageResponse> logoutUser(ServerHttpResponse response){
         log.info("Received logout request");
         authService.logoutUser(response);

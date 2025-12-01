@@ -7,6 +7,7 @@ import com.dineswift.restaurant_service.model.Menu;
 import com.dineswift.restaurant_service.model.Restaurant;
 import com.dineswift.restaurant_service.payload.request.menu.MenuCreateRequest;
 import com.dineswift.restaurant_service.payload.response.menu.MenuDTO;
+import com.dineswift.restaurant_service.payload.response.menu.MenuDTOWoDish;
 import com.dineswift.restaurant_service.payload.response.menu.MenuNameResponse;
 import com.dineswift.restaurant_service.repository.DishRepository;
 import com.dineswift.restaurant_service.repository.RestaurantRepository;
@@ -65,5 +66,9 @@ public class MenuMapper {
 
     public MenuNameResponse toMenuNameResponse(Menu menu) {
         return modelMapper.map(menu, MenuNameResponse.class);
+    }
+
+    public MenuDTOWoDish toDTOWoDish(Menu menu) {
+        return modelMapper.map(menu, MenuDTOWoDish.class);
     }
 }

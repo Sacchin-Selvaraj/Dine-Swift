@@ -26,10 +26,10 @@ public class TableController {
 
     @PreAuthorize(("hasAnyRole('ROLE_ADMIN','ROLE_MANAGER')"))
     @PostMapping("/add-table/{restaurantId}" )
-    public ResponseEntity<RestaurantTableDto> addTableToRestaurant(@PathVariable UUID  restaurantId, @RequestBody TableCreateRequest tableCreateRequest) {
+    public ResponseEntity<Void> addTableToRestaurant(@PathVariable UUID  restaurantId, @RequestBody TableCreateRequest tableCreateRequest) {
         log.info("Received request to add table to restaurant with ID: {}", restaurantId);
-        RestaurantTableDto createdTable = tableService.addTableToRestaurant(restaurantId, tableCreateRequest);
-        return ResponseEntity.ok(createdTable);
+        tableService.addTableToRestaurant(restaurantId, tableCreateRequest);
+        return ResponseEntity.ok().build();
     }
 
     @PreAuthorize(("hasAnyRole('ROLE_ADMIN','ROLE_MANAGER')"))
@@ -42,10 +42,10 @@ public class TableController {
 
     @PreAuthorize(("hasAnyRole('ROLE_ADMIN','ROLE_MANAGER')"))
     @PatchMapping("/update-table/{tableId}" )
-    public ResponseEntity<RestaurantTableDto> updateTable(@PathVariable UUID  tableId, @RequestBody TableUpdateRequest tableUpdateRequest) {
+    public ResponseEntity<Void> updateTable(@PathVariable UUID  tableId, @RequestBody TableUpdateRequest tableUpdateRequest) {
         log.info("Received request to update table with ID: {}", tableId);
-        RestaurantTableDto updatedTable = tableService.updateTable(tableId, tableUpdateRequest);
-        return ResponseEntity.ok().body(updatedTable);
+        tableService.updateTable(tableId, tableUpdateRequest);
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping("/get-table/{restaurantId}" )

@@ -5,6 +5,7 @@ import com.dineswift.restaurant_service.payload.request.tableBooking.*;
 import com.dineswift.restaurant_service.payload.response.MessageResponse;
 import com.dineswift.restaurant_service.payload.response.orderItem.OrderItemDto;
 import com.dineswift.restaurant_service.payload.response.tableBooking.TableBookingDto;
+import com.dineswift.restaurant_service.payload.response.tableBooking.TableBookingDtoWoRestaurant;
 import com.dineswift.restaurant_service.service.TableBookingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -71,7 +72,7 @@ public class TableBookingController {
 
     @PreAuthorize("(hasAnyRole('ROLE_ADMIN', 'ROLE_MANAGER','ROLE_CHEF', 'ROLE_WAITER'))")
     @GetMapping("/get-table-booking-details/{restaurantId}")
-    public ResponseEntity<Page<TableBookingDto>> getTableBookingDetails(
+    public ResponseEntity<Page<TableBookingDtoWoRestaurant>> getTableBookingDetails(
             @PathVariable UUID restaurantId,
             @RequestParam(value = "page") Integer pageNo,
             @RequestParam(value = "size") Integer pageSize,
@@ -85,7 +86,7 @@ public class TableBookingController {
             @RequestParam(value = "sortBy",defaultValue = "bookingDate", required = false) String sortBy,
             @RequestParam(value = "sortDir",defaultValue = "asc", required = false) String sortDir
     ) {
-        Page<TableBookingDto> bookings = tableBookingService.getTableBookingDetails(
+        Page<TableBookingDtoWoRestaurant> bookings = tableBookingService.getTableBookingDetails(
                 restaurantId,
                 pageNo,
                 pageSize,
@@ -108,6 +109,14 @@ public class TableBookingController {
     public ResponseEntity<MessageResponse> updateBookingStatus(@PathVariable UUID tableBookingId, @RequestBody TableBookingStatusUpdateRequest statusUpdateRequest) {
         String responseFromUpdateRequest = tableBookingService.updateBookingStatus(tableBookingId, statusUpdateRequest);
         log.info("Updated booking status successfully for bookingId: {}", tableBookingId);
+        return ResponseEntity.ok(MessageResponse.builder().message(responseFromUpdateRequest).build());
+    }
+
+    @PreAuthorize(("hasAnyRole('ROLE_ADMIN', 'ROLE_MANAGER', 'ROLE_WAITER','ROLE_STAFF')"))
+    @PutMapping("/update-details/{tableBookingId}")
+    public ResponseEntity<MessageResponse> updateBookingDetails(@PathVariable UUID tableBookingId, @RequestBody TableBookingDetailsUpdateRequest detailsUpdateRequest) {
+        String responseFromUpdateRequest = tableBookingService.updateBookingDetails(tableBookingId, detailsUpdateRequest);
+        log.info("Updated booking details successfully for bookingId: {}", tableBookingId);
         return ResponseEntity.ok(MessageResponse.builder().message(responseFromUpdateRequest).build());
     }
 

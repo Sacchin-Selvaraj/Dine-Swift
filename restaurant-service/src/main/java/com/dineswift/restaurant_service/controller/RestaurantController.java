@@ -34,9 +34,9 @@ public class RestaurantController {
     }
     @PreAuthorize("hasAnyRole('ROLE_ADMIN','ROLE_MANAGER')")
     @PatchMapping("/edit-details/{restaurantId}")
-    public ResponseEntity<RestaurantDto> editRestaurantDetails(@PathVariable UUID restaurantId, @Valid @RequestBody RestaurantUpdateRequest restaurantUpdateRequest) {
-        RestaurantDto updatedRestaurant = restaurantService.editRestaurantDetails(restaurantId, restaurantUpdateRequest);
-        return ResponseEntity.ok(updatedRestaurant);
+    public ResponseEntity<MessageResponse> editRestaurantDetails(@PathVariable UUID restaurantId, @Valid @RequestBody RestaurantUpdateRequest restaurantUpdateRequest) {
+        restaurantService.editRestaurantDetails(restaurantId, restaurantUpdateRequest);
+        return ResponseEntity.ok(MessageResponse.builder().message("Restaurant Details Updated Successfully").build());
     }
 
     @GetMapping("/get-restaurants")
@@ -74,21 +74,28 @@ public class RestaurantController {
     }
 
     @PreAuthorize("hasAnyRole('ROLE_ADMIN','ROLE_MANAGER')")
-    @PostMapping("upload-image/{restaurantId}")
-    public CompletableFuture<ResponseEntity<MessageResponse>> uploadRestaurantImage(@PathVariable UUID restaurantId,@RequestParam("imageFile") MultipartFile imageFile) throws ExecutionException, InterruptedException {
+    @PostMapping("/upload-image/{restaurantId}")
+    public ResponseEntity<MessageResponse> uploadRestaurantImage(@PathVariable UUID restaurantId,@RequestParam("imageFile") MultipartFile imageFile) throws ExecutionException, InterruptedException {
         CompletableFuture<Void> result = restaurantService.uploadRestaurantImage(restaurantId, imageFile);
-        return result.thenApply(res-> ResponseEntity.ok(MessageResponse.builder().message("Image uploaded successfully").build()));
+        return ResponseEntity.ok(MessageResponse.builder().message("Image uploaded successfully").build());
     }
 
     @PreAuthorize("hasAnyRole('ROLE_ADMIN')")
-    @DeleteMapping("delete-image/{imageId}")
-    public CompletableFuture<ResponseEntity<MessageResponse>> deleteRestaurantImage(@PathVariable UUID imageId) {
+    @DeleteMapping("/delete-image/{imageId}")
+    public ResponseEntity<MessageResponse> deleteRestaurantImage(@PathVariable UUID imageId) {
         CompletableFuture<Void> result = restaurantService.deleteRestaurantImage(imageId);
-        return result.thenApply(res -> ResponseEntity.ok(MessageResponse.builder().message("Image deleted successfully").build()));
+        return ResponseEntity.ok(MessageResponse.builder().message("Image deleted successfully").build());
     }
 
     @GetMapping("/get-images/{restaurantId}")
     public ResponseEntity<?> getRestaurantImages(@PathVariable UUID restaurantId) {
         return ResponseEntity.ok(restaurantService.getRestaurantImages(restaurantId));
+    }
+
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN','ROLE_MANAGER')")
+    @GetMapping("/get-employee-restaurant")
+    public ResponseEntity<RestaurantDto> getEmployeeRestaurant() {
+        RestaurantDto restaurantDto = restaurantService.getEmployeeRestaurant();
+        return new ResponseEntity<>(restaurantDto, HttpStatus.OK);
     }
 }

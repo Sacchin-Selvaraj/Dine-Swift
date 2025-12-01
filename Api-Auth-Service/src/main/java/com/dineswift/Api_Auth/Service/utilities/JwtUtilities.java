@@ -75,7 +75,7 @@ public class JwtUtilities {
                     .getPayload();
         } catch (ExpiredJwtException e){
             log.error("JWT token has expired: {}", e.getMessage());
-            return null;
+            throw new TokenException("JWT token has expired");
         } catch (JwtException | IllegalArgumentException e) {
             log.error("Error while parsing JWT token: {}", e.getMessage());
            return null;

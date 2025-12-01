@@ -17,6 +17,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Component
@@ -47,9 +48,19 @@ public class EmployeeMapper {
             employee.setPhoneNumber(employeeCreateRequest.getPhoneNumber());
         employee.setEmployeeIsActive(true);
         if (employeeCreateRequest.getRoles()!=null){
-            employee.setRoles(getRoles(employeeCreateRequest.getRoles()));
+            employee.setRoles(getRolesByUUID(employeeCreateRequest.getRoles()));
         }
         return employee;
+    }
+
+    private Set<Role> getRolesByUUID(Set<UUID> roles) {
+        Set<Role> roleSet = new HashSet<>();
+        for (UUID roleId : roles) {
+            Role role = roleRepository.findById(roleId)
+                    .orElseThrow(() -> new RoleException("Role not found with id: " + roleId));
+            roleSet.add(role);
+        }
+        return roleSet;
     }
 
     public Set<Role> getRoles(Set<RoleNameRequest> roles) {
@@ -70,6 +81,7 @@ public class EmployeeMapper {
     public RoleDTOResponse toRoleDTO(Role role) {
         RoleDTOResponse roleDTOResponse=new RoleDTOResponse();
         roleDTOResponse.setRoleName(role.getRoleName());
+        roleDTOResponse.setRoleId(role.getRoleId());
         return roleDTOResponse;
     }
 

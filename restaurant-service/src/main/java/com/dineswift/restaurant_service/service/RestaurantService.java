@@ -116,7 +116,7 @@ public class RestaurantService {
         }
     }
 
-    public RestaurantDto editRestaurantDetails(UUID restaurantId, @Valid RestaurantUpdateRequest restaurantUpdateRequest) {
+    public void editRestaurantDetails(UUID restaurantId, @Valid RestaurantUpdateRequest restaurantUpdateRequest) {
         if (restaurantId == null || restaurantUpdateRequest == null) {
             throw new RestaurantException("Invalid Restaurant Update data");
         }
@@ -126,8 +126,6 @@ public class RestaurantService {
         restaurant=restaurantMapper.updateEntity(restaurant, restaurantUpdateRequest);
         restaurantRepository.save(restaurant);
         restaurant.setLastModifiedBy(authService.getAuthenticatedId());
-        return restaurantMapper.toDTO(restaurant);
-
     }
 
     public void deactivateRestaurant(UUID restaurantId) {
@@ -221,4 +219,20 @@ public class RestaurantService {
         return restaurantImages.stream().map(restaurantMapper::toImageDTO).toList();
     }
 
+    public RestaurantDto getEmployeeRestaurant() {
+        log.info("Fetching restaurant for authenticated employee");
+        UUID employeeId = authService.getAuthenticatedId();
+        if (employeeId == null) {
+            log.error("Authenticated Employee Id not found");
+            throw new EmployeeException("Authenticated Employee Id not found");
+        }
+        Employee loggedInEmployee = employeeRepository.findByIdAndIsActive(employeeId)
+                .orElseThrow(() -> new EmployeeException("Employee not found with id: " + employeeId));
+        Restaurant restaurant = loggedInEmployee.getRestaurant();
+        if (restaurant == null || !restaurant.getIsActive()) {
+            log.error("No active restaurant associated with employee id: {}", employeeId);
+            throw new RestaurantException("No active restaurant associated with the employee");
+        }
+        return restaurantMapper.toDTO(restaurant);
+    }
 }

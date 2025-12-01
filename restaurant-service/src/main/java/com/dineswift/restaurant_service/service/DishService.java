@@ -23,6 +23,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -109,12 +111,13 @@ public class DishService {
 
     }
 
-    public CompletableFuture<Void> uploadRestaurantImage(UUID dishId, MultipartFile imageFile) {
+    public void uploadRestaurantImage(UUID dishId, MultipartFile imageFile) {
+
+        log.info("Initiating image upload for dish id: {}", dishId);
         if (dishId == null || imageFile == null) {
             throw new DishException("Invalid request to upload image");
         }
-
-         return imageService.uploadImage(imageFile,"dish").thenAcceptAsync(res->{
+        imageService.uploadImage(imageFile,"dish").thenAccept(res->{
             if (res!=null && (Boolean) res.get("isSuccessful")){
                 saveDishImageDetails(dishId,res);
                 log.info("Image uploaded successfully for dish id: {}", dishId);
@@ -130,20 +133,20 @@ public class DishService {
     }
 
     private void saveDishImageDetails(UUID dishId, Map<String, Object> res) {
+        log.info("Saving image details for dish id: {}", dishId);
         Dish dish = dishRepository.findByIdAndIsActive(dishId).orElseThrow(() -> new DishException("Dish not found with id: " + dishId));
-        dish.setLastModifiedBy(authService.getAuthenticatedId());
         log.info("Saving image details for dish: {}", dish.getDishName());
         DishImage dishImage = dishMapper.toImageEntity(res, dish);
         dishImageRepository.save(dishImage);
     }
 
-    public CompletableFuture<Void> deleteRestaurantImage(UUID imageId) {
+    public void deleteRestaurantImage(UUID imageId) {
         if (imageId == null) {
-            return CompletableFuture.failedFuture(new DishException("Invalid request to delete image"));
+            throw new DishException("Invalid request to delete image");
         }
         DishImage dishImage = dishImageRepository.findById(imageId).orElseThrow(() -> new DishException("Image not found with id: " + imageId));
 
-        return imageService.deleteImage(dishImage.getPublicId()).thenAcceptAsync(res -> {
+        imageService.deleteImage(dishImage.getPublicId()).thenAcceptAsync(res -> {
             if (res != null && (Boolean) res.get("isSuccessful")) {
                 dishImageRepository.delete(dishImage);
                 log.info("Image deleted successfully for image id: {}", imageId);
@@ -187,6 +190,7 @@ public class DishService {
             Pageable pageable = PageRequest.of(pageNo,pageSize,sort);
 
             Specification<Dish> spec = Specification.<Dish>allOf().
+                    and(DishSpecification.hasRestaurantId(restaurantId)).
                     and(DishSpecification.hasDishName(dishName)).
                     and(DishSpecification.hasMinPrice(minPrice).
                     and(DishSpecification.hasMaxPrice(maxPrice))).
@@ -196,7 +200,7 @@ public class DishService {
                     and(DishSpecification.isVeg(isVeg)).
                     and(DishSpecification.isActive(true));
 
-            Page<Dish> dishes = dishRepository.findAllByRestaurant(spec, pageable,restaurantId);
+            Page<Dish> dishes = dishRepository.findAll(spec,pageable);
 
             if (dishes.getContent().isEmpty()){
                 return Page.empty();

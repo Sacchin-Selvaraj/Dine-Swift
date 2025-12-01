@@ -27,16 +27,16 @@ public class DishController {
 
     @PreAuthorize(("hasRole('ROLE_ADMIN') or hasRole('ROLE_MANAGER')"))
     @PostMapping("/add-dish/{restaurantId}")
-    public ResponseEntity<String> addDish(@Valid @RequestBody DishAddRequest dishAddRequest, @PathVariable  UUID restaurantId) {
+    public ResponseEntity<MessageResponse> addDish(@Valid @RequestBody DishAddRequest dishAddRequest, @PathVariable  UUID restaurantId) {
         String response = dishService.addDish(dishAddRequest,restaurantId);
-        return new ResponseEntity<>(response,HttpStatus.CREATED);
+        return new ResponseEntity<>(MessageResponse.builder().message(response).build(),HttpStatus.CREATED);
     }
 
     @PreAuthorize(("hasRole('ROLE_ADMIN') or hasRole('ROLE_MANAGER')"))
     @DeleteMapping("/delete-dish/{dishId}")
-    public ResponseEntity<String> deleteDish(@PathVariable UUID dishId) {
+    public ResponseEntity<MessageResponse> deleteDish(@PathVariable UUID dishId) {
         String response = dishService.deleteDish(dishId);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(MessageResponse.builder().message(response).build());
     }
 
     @PreAuthorize(("hasRole('ROLE_ADMIN') or hasRole('ROLE_MANAGER')"))
@@ -45,7 +45,6 @@ public class DishController {
         DishDTO updatedDish = dishService.updateDish(dishId, dishUpdateRequest);
         return ResponseEntity.ok(updatedDish);
     }
-
 
     @GetMapping("/search-dish")
     public ResponseEntity<Page<DishDTO>> searchDishes(
@@ -67,16 +66,16 @@ public class DishController {
 
     @PreAuthorize(("hasRole('ROLE_ADMIN') or hasRole('ROLE_MANAGER')"))
     @PostMapping("/upload-image/{dishId}")
-    public CompletableFuture<ResponseEntity<String>> uploadRestaurantImage(@PathVariable UUID dishId,@RequestParam("imageFile") MultipartFile imageFile) throws ExecutionException, InterruptedException {
-        CompletableFuture<Void> result = dishService.uploadRestaurantImage(dishId, imageFile);
-        return result.thenApply(res-> new ResponseEntity<>("Image uploaded successfully",HttpStatus.ACCEPTED));
+    public ResponseEntity<MessageResponse> uploadRestaurantImage(@PathVariable UUID dishId,@RequestParam("imageFile") MultipartFile imageFile) throws ExecutionException, InterruptedException {
+        dishService.uploadRestaurantImage(dishId, imageFile);
+        return new ResponseEntity<>(MessageResponse.builder().message("Image uploaded successfully").build(),HttpStatus.ACCEPTED);
     }
 
     @PreAuthorize(("hasRole('ROLE_ADMIN') or hasRole('ROLE_MANAGER')"))
     @DeleteMapping("/delete-image/{imageId}")
-    public CompletableFuture<ResponseEntity<MessageResponse>> deleteRestaurantImage(@PathVariable UUID imageId) {
-        CompletableFuture<Void> result = dishService.deleteRestaurantImage(imageId);
-        return result.thenApply(res -> ResponseEntity.ok(new MessageResponse("Image deleted successfully")));
+    public ResponseEntity<MessageResponse> deleteRestaurantImage(@PathVariable UUID imageId) {
+        dishService.deleteRestaurantImage(imageId);
+        return ResponseEntity.ok(new MessageResponse("Image deleted successfully"));
     }
 
     @PreAuthorize("hasAnyRole('ROLE_USER','ROLE_ADMIN','ROLE_MANAGER')")

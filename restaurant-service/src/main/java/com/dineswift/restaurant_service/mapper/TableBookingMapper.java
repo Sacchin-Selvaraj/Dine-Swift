@@ -4,6 +4,7 @@ import com.dineswift.restaurant_service.model.OrderItem;
 import com.dineswift.restaurant_service.model.TableBooking;
 import com.dineswift.restaurant_service.payload.response.tableBooking.GuestInformationDto;
 import com.dineswift.restaurant_service.payload.response.tableBooking.TableBookingDto;
+import com.dineswift.restaurant_service.payload.response.tableBooking.TableBookingDtoWoRestaurant;
 import com.dineswift.restaurant_service.repository.OrderItemRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -50,5 +51,19 @@ public class TableBookingMapper {
         log.info("Mapping completed for TableBookingDto with OrderItems");
         return tableBookingDto;
 
+    }
+
+    public TableBookingDtoWoRestaurant toDtoWoRestaurant(TableBooking tableBooking) {
+        log.info("Mapping TableBooking entity to TableBookingDtoWoRestaurant");
+        TableBookingDtoWoRestaurant dto = modelMapper.map(tableBooking, TableBookingDtoWoRestaurant.class);
+
+        dto.setRestaurantTableDto(tableMapper.toDto(tableBooking.getRestaurantTable()));
+
+
+
+        log.info("Mapping for Guest Information");
+        dto.setGuestInformationDto(modelMapper.map(tableBooking.getGuestInformation(), GuestInformationDto.class));
+        log.info("Mapping completed for TableBookingDtoWoRestaurant");
+        return dto;
     }
 }

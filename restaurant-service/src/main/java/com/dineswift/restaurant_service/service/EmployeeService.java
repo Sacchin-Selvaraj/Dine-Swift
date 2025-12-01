@@ -19,6 +19,10 @@ import com.dineswift.restaurant_service.security.service.AuthService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -40,9 +44,10 @@ public class EmployeeService {
     private final RestaurantRepository restaurantRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthService authService;
+    private final EmployeeSpecification employeeSpecification;
 
 
-    public EmployeeDto createEmployee(EmployeeCreateRequest employeeCreateRequest) {
+    public void createEmployee(EmployeeCreateRequest employeeCreateRequest) {
         log.info("Creating new employee with name: {}", employeeCreateRequest.getEmployeeName());
         verifyUser(employeeCreateRequest);
 
@@ -52,8 +57,6 @@ public class EmployeeService {
         employee.setRoles(Set.of(role));
         Employee savedEmployee = employeeRepository.save(employee);
         log.info("Employee created successfully with id: {}", savedEmployee.getEmployeeId());
-        return employeeMapper.toDTO(savedEmployee);
-
     }
 
     private void verifyUser(EmployeeCreateRequest employeeCreateRequest) {
@@ -132,7 +135,7 @@ public class EmployeeService {
             throw new EmployeeException("New password and confirm password do not match");
         }
         Employee employee = employeeRepository.findById(employeeId).orElseThrow(() -> new EmployeeException("Employee not found with provided Id"));
-        if (!employee.getPassword().equals(passwordChangeRequest.getOldPassword())) {
+        if (!passwordEncoder.matches(passwordChangeRequest.getOldPassword(), employee.getPassword())) {
             log.error("Old password is incorrect for employee id: {}", employeeId);
             throw new EmployeeException("Old password is incorrect");
         }
@@ -157,7 +160,7 @@ public class EmployeeService {
         return employee.getEmployeeName();
     }
 
-    public EmployeeDto removeRolesFromEmployee(UUID employeeId, RoleRequest roleRemovalRequest) {
+    public void removeRolesFromEmployee(UUID employeeId, RoleRequest roleRemovalRequest) {
         if (employeeId == null || roleRemovalRequest == null || roleRemovalRequest.getRoleIds().isEmpty()) {
             log.info("Invalid request to remove roles from employee");
             throw new EmployeeException("Invalid request to remove roles from employee");
@@ -168,9 +171,8 @@ public class EmployeeService {
                 role -> !roleRemovalRequest.getRoleIds().contains(role.getRoleId())).collect(Collectors.toSet());
 
         employee.setRoles(updatedRoles);
-        employee = employeeRepository.save(employee);
+        employeeRepository.save(employee);
         log.info("Roles removed successfully from employee id: {}", employeeId);
-        return employeeMapper.toDTO(employee);
     }
 
     public List<RoleDTOResponse> getAllRoles() {
@@ -183,7 +185,7 @@ public class EmployeeService {
     }
 
 
-    public EmployeeDto addRolesToEmployee(UUID employeeId, RoleRequest roleAddRequest) {
+    public void addRolesToEmployee(UUID employeeId, RoleRequest roleAddRequest) {
         if (employeeId==null || roleAddRequest==null || roleAddRequest.getRoleIds().isEmpty()){
             log.error("Invalid request to add roles to employee");
             throw new EmployeeException("Invalid request to add roles to employee");
@@ -195,8 +197,8 @@ public class EmployeeService {
             throw new RoleException("No valid roles found to add");
         }
         employee.getRoles().addAll(rolesToAdd);
-        employee=employeeRepository.save(employee);
-        return employeeMapper.toDTO(employee);
+        employeeRepository.save(employee);
+        log.info("Roles added successfully to employee id: {}", employeeId);
     }
 
     public EmployeeResponse authenticateEmployee(LoginRequest loginRequest) {
@@ -211,5 +213,59 @@ public class EmployeeService {
 
         log.info("Employee authenticated successfully with Email: {}", loginRequest.getEmail());
         return employeeMapper.toEmployeeResponse(registeredEmployee);
+    }
+
+    public List<EmployeeDto> getAllEmployees() {
+        log.info("Fetching all active employees");
+        UUID employeeId = authService.getAuthenticatedId();
+        Employee loggedInEmployee = employeeRepository.findByIdAndIsActive(employeeId).orElseThrow(()->
+                new EmployeeException("Logged in employee not found"));
+        log.info("Logged in employee belongs to restaurant id: {}", loggedInEmployee.getRestaurant().getRestaurantId());
+        List<Employee> employees = employeeRepository.findAllByRestaurant(loggedInEmployee.getRestaurant());
+
+        log.info("Employees fetched successfully for restaurant id: {}", loggedInEmployee.getRestaurant().getRestaurantId());
+        return employees.stream().map(employeeMapper::toDTO).collect(Collectors.toList());
+    }
+
+
+    public Page<EmployeeDto> getEmployeesPaginated(int page, int size) {
+        log.info("Fetching paginated employees: page {}, size {}", page, size);
+        UUID employeeId = authService.getAuthenticatedId();
+        Employee loggedInEmployee = employeeRepository.findByIdAndIsActive(employeeId).orElseThrow(()->
+                new EmployeeException("Logged in employee not found"));
+        log.info("Logged in employee belongs to restaurant id: {}", loggedInEmployee.getRestaurant().getRestaurantId());
+
+        Pageable pageable = PageRequest.of(page, size);
+
+        Specification<Employee> spec = employeeSpecification.hasRestaurant(loggedInEmployee.getRestaurant())
+                .and(employeeSpecification.isActive());
+        Page<Employee> employees = employeeRepository.findAll(spec,pageable);
+
+        log.info("Paginated employees fetched successfully for restaurant id: {}", loggedInEmployee.getRestaurant().getRestaurantId());
+        return employees.map(employeeMapper::toDTO);
+    }
+
+    public void deleteOwnAccount() {
+        log.info("Getting Employee Id from security context for account deletion");
+        UUID employeeId = authService.getAuthenticatedId();
+        if (employeeId == null) {
+            throw new EmployeeException("Employee Id is null");
+        }
+        Employee employee = employeeRepository.findById(employeeId).orElseThrow(() -> new EmployeeException("Employee not found"));
+        isAdmin(employee);
+        log.info("Deleting own account for employee id: {}", employeeId);
+        employee.setEmployeeIsActive(false);
+        employeeRepository.save(employee);
+    }
+
+    public EmployeeDto getCurrentEmployee() {
+        log.info("Getting current authenticated employee details");
+        UUID employeeId = authService.getAuthenticatedId();
+        if (employeeId == null) {
+            throw new EmployeeException("Employee Id is null");
+        }
+        Employee employee = employeeRepository.findByIdAndIsActive(employeeId).orElseThrow(() -> new EmployeeException("Employee not found"));
+        log.info("Current employee details fetched successfully for employee id: {}", employeeId);
+        return employeeMapper.toDTO(employee);
     }
 }

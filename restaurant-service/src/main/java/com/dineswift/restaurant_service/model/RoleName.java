@@ -6,7 +6,8 @@ public enum RoleName {
     ROLE_STAFF("Staff"),
     ROLE_CHEF("Chef"),
     ROLE_WAITER("Waiter"),
-    ROLE_CASHIER("Cashier");
+    ROLE_CASHIER("Cashier"),
+    ROLE_USER("User");
 
     private final String displayName;
 

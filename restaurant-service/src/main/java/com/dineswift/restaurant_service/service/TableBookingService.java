@@ -10,6 +10,7 @@ import com.dineswift.restaurant_service.model.*;
 import com.dineswift.restaurant_service.payload.request.tableBooking.*;
 import com.dineswift.restaurant_service.payload.response.orderItem.OrderItemDto;
 import com.dineswift.restaurant_service.payload.response.tableBooking.TableBookingDto;
+import com.dineswift.restaurant_service.payload.response.tableBooking.TableBookingDtoWoRestaurant;
 import com.dineswift.restaurant_service.payment.service.PaymentService;
 import com.dineswift.restaurant_service.repository.*;
 import com.dineswift.restaurant_service.security.service.AuthService;
@@ -314,10 +315,10 @@ public class TableBookingService {
         return newOrderItem;
     }
 
-    public Page<TableBookingDto> getTableBookingDetails(UUID restaurantId, Integer pageNo, Integer pageSize,
-                                                        String tableNumber, LocalDate bookingDate, LocalTime dineInTime,
-                                                        Integer duration, Integer noOfGuest, String bookingStatus,
-                                                        String dishStatus, String sortBy, String sortDir) {
+    public Page<TableBookingDtoWoRestaurant> getTableBookingDetails(UUID restaurantId, Integer pageNo, Integer pageSize,
+                                                                    String tableNumber, LocalDate bookingDate, LocalTime dineInTime,
+                                                                    Integer duration, Integer noOfGuest, String bookingStatus,
+                                                                    String dishStatus, String sortBy, String sortDir) {
         log.info("Fetching table booking details for restaurantId: {}", restaurantId);
         Restaurant restaurant = restaurantRepository.findByIdAndIsActive(restaurantId).orElseThrow(()->
                 new RestaurantException("Restaurant not found with ID: " + restaurantId));
@@ -343,7 +344,7 @@ public class TableBookingService {
             throw new TableBookingException("No bookings found for the given criteria in restaurant ID: " + restaurantId);
         }
 
-        Page<TableBookingDto> bookingDtosPage = bookingsPage.map(tableBookingMapper::toDto);
+        Page<TableBookingDtoWoRestaurant> bookingDtosPage = bookingsPage.map(tableBookingMapper::toDtoWoRestaurant);
         log.info("Fetched {} bookings for restaurantId: {}", bookingDtosPage.getTotalElements(), restaurantId);
         return bookingDtosPage;
     }
@@ -381,5 +382,36 @@ public class TableBookingService {
                 log.error("Failed to send email notification for userId: {}", userId);
             }
         });
+    }
+
+    public String updateBookingDetails(UUID tableBookingId, TableBookingDetailsUpdateRequest detailsUpdateRequest) {
+        log.info("Updating booking details for booking ID: {}", tableBookingId);
+        TableBooking existingBooking = tableBookingRepository.findByIdAndIsActive(tableBookingId)
+                .orElseThrow(() -> new TableBookingException("Booking not found with ID: " + tableBookingId));
+
+        if (detailsUpdateRequest.getActualDineInTime()!=null) {
+            log.info("Updating Dine In Time ");
+            existingBooking.setActualDineInTime(detailsUpdateRequest.getActualDineInTime());
+        }
+
+        if (detailsUpdateRequest.getActualDineOutTime()!=null) {
+            log.info("Updating Dine Out Time ");
+            existingBooking.setActualDineOutTime(detailsUpdateRequest.getActualDineOutTime());
+        }
+
+        if (detailsUpdateRequest.getIsUpfrontPaid()!=null) {
+            log.info("Updating Is Upfront Paid from {} to {}", existingBooking.getIsUpfrontPaid(), detailsUpdateRequest.getIsUpfrontPaid());
+            existingBooking.setIsUpfrontPaid(detailsUpdateRequest.getIsUpfrontPaid());
+        }
+
+        if (detailsUpdateRequest.getIsPendingAmountPaid()!=null) {
+            log.info("Updating Is Pending Amount Paid from {} to {}", existingBooking.getIsPendingAmountPaid(), detailsUpdateRequest.getIsPendingAmountPaid());
+            existingBooking.setIsPendingAmountPaid(detailsUpdateRequest.getIsPendingAmountPaid());
+        }
+
+        existingBooking.setLastModifiedBy(authService.getAuthenticatedId());
+        tableBookingRepository.save(existingBooking);
+        log.info("Booking details updated successfully for booking ID: {}", tableBookingId);
+        return "Table Booking details updated successfully.";
     }
 }

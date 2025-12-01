@@ -4,7 +4,17 @@ package com.dineswift.restaurant_service.service;
 import com.dineswift.restaurant_service.model.Dish;
 import org.springframework.data.jpa.domain.Specification;
 
+import java.util.UUID;
+
 public final class DishSpecification {
+
+    public static Specification<Dish> hasRestaurantId(UUID restaurantId) {
+        if (restaurantId== null) {
+            return Specification.allOf();
+        }
+        return (root, query, builder) ->
+                builder.equal(root.get("restaurant").get("restaurantId"), restaurantId);
+    }
 
     public static Specification<Dish> hasDishName(String dishName) {
         if (dishName == null || dishName.trim().isEmpty()) {

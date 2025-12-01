@@ -6,11 +6,16 @@ import com.dineswift.restaurant_service.model.Menu;
 import com.dineswift.restaurant_service.payload.request.menu.MenuCreateRequest;
 import com.dineswift.restaurant_service.payload.request.menu.MenuUpdateRequest;
 import com.dineswift.restaurant_service.payload.response.menu.MenuDTO;
+import com.dineswift.restaurant_service.payload.response.menu.MenuDTOWoDish;
 import com.dineswift.restaurant_service.payload.response.menu.MenuResponse;
 import com.dineswift.restaurant_service.repository.MenuRepository;
 import com.dineswift.restaurant_service.security.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -24,6 +29,7 @@ public class MenuService {
     private final MenuRepository menuRepository;
     private final MenuMapper menuMapper;
     private final AuthService authService;
+    private final MenuSpecification menuSpecification;
 
     public void addMenu(MenuCreateRequest menuCreateRequest, UUID restaurantId) {
         log.info("Adding new menu: {}", menuCreateRequest.getMenuName());
@@ -46,7 +52,7 @@ public class MenuService {
         log.info("Menu deleted successfully: {}", menuId);
     }
 
-    public MenuDTO updateMenu(UUID menuId, MenuUpdateRequest menuUpdateRequest) {
+    public void updateMenu(UUID menuId, MenuUpdateRequest menuUpdateRequest) {
         log.info("Updating menu with ID: {}", menuId);
         Menu menu = menuRepository.findByIdAndIsActive(menuId).orElseThrow(() -> new MenuException("menu not found with provided Id"));
 
@@ -65,7 +71,6 @@ public class MenuService {
         menu.setLastModifiedBy(authService.getAuthenticatedId());
         menuRepository.save(menu);
         log.info("menu updated successfully: {}", menuId);
-        return menuMapper.toDTO(menu);
     }
 
     public MenuResponse getMenuByRestaurantId(UUID restaurantId) {
@@ -98,5 +103,22 @@ public class MenuService {
         Menu menu = menuRepository.findByIdAndIsActive(menuId)
                 .orElseThrow(() -> new MenuException("menu not found with provided Id"));
         return menuMapper.toDTO(menu);
+    }
+
+    public Page<MenuDTOWoDish> getMenusByRestaurantId(UUID restaurantId, int page, int size) {
+        log.info("Fetching menus for restaurant with ID: {}", restaurantId);
+
+        Pageable pageable = PageRequest.of(page,size);
+
+        Specification<Menu> spec = menuSpecification.hasRestaurantId(restaurantId)
+                .and(menuSpecification.isActive());
+
+        Page<Menu> menusPage = menuRepository.findAll(spec, pageable);
+        if (menusPage.isEmpty()) {
+            log.warn("No menus found for restaurant with ID: {}", restaurantId);
+            throw new MenuException("No menus found for restaurant with ID: " + restaurantId);
+        }
+        log.info("Fetched {} menus for restaurant with ID: {}", menusPage.getTotalElements(), restaurantId);
+        return menusPage.map(menuMapper::toDTOWoDish);
     }
 }
