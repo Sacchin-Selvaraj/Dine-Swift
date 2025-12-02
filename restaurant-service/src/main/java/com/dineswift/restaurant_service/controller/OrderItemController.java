@@ -1,5 +1,6 @@
 package com.dineswift.restaurant_service.controller;
 
+import com.dineswift.restaurant_service.payload.request.orderItem.AddOrderItem;
 import com.dineswift.restaurant_service.payload.response.orderItem.OrderItemDto;
 import com.dineswift.restaurant_service.service.OrderService;
 import lombok.RequiredArgsConstructor;
@@ -21,13 +22,11 @@ public class OrderItemController {
     private final OrderService orderService;
 
     @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_USER')")
-    @PostMapping("/add-item/{cartId}/{dishId}/{quantity}")
-    public ResponseEntity<Void> addItemToOrderItem(@PathVariable UUID cartId,
-                                              @PathVariable UUID dishId,
-                                              @PathVariable Integer quantity) {
-        log.info("Adding item to cart: cartId={}, dishId={}, quantity={}", cartId, dishId, quantity);
-        orderService.addItemToOrderItem(cartId, dishId, quantity);
-        return ResponseEntity.created(null).build();
+    @PostMapping("/add-item")
+    public ResponseEntity<Void> addItemToOrderItem(@RequestBody AddOrderItem addOrderItemRequest) {
+        log.info("Adding item to cart");
+        orderService.addItemToOrderItem(addOrderItemRequest);
+        return ResponseEntity.ok().build();
     }
 
     @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_USER')")

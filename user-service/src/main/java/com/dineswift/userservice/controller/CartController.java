@@ -51,4 +51,12 @@ public class CartController {
         cartService.clearCart();
         return ResponseEntity.noContent().build();
     }
+
+    @PreAuthorize("hasRole('ROLE_USER')")
+    @GetMapping("/current-cart-id")
+    public ResponseEntity<UUID> getCurrentCartId() {
+        log.info("Fetching current cart ID for user");
+        UUID cartId = cartService.getCurrentCartId();
+        return ResponseEntity.ok(cartId);
+    }
 }

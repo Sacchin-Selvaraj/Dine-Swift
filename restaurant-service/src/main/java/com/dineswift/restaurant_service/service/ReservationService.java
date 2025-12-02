@@ -19,10 +19,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -85,8 +82,12 @@ public class ReservationService {
             LocalTime slotEndTime = slot.getEndTime();
             while (!slotStartTime.plusMinutes(durationInMinutes).isAfter(slotEndTime)) {
                 LocalTime gapEndTime = slotStartTime.plusMinutes(durationInMinutes);
+                if (gapEndTime.isBefore(slot.getStartTime())) {
+                    break;
+                }
                 addDividedSlot( slot, slotStartTime, gapEndTime, dividedSlotsByDuration);
                 slotStartTime = gapEndTime;
+
             }
             LocalTime gapEndTime = slotStartTime.plusMinutes(durationInMinutes);
             if (gapEndTime.isAfter(slotEndTime) && slotStartTime.isBefore(slotEndTime)) {
@@ -156,7 +157,7 @@ public class ReservationService {
        if (checkAvailableSlots.getDurationInMinutes()==null)
            availableTimeSlots.add(availableTimeSlot);
        else
-              availableTimeSlots = divideSlotsByDuration(List.of(availableTimeSlot), checkAvailableSlots.getDurationInMinutes());
+           availableTimeSlots = divideSlotsByDuration(List.of(availableTimeSlot), checkAvailableSlots.getDurationInMinutes());
 
         availableSlots.setAvailableTimeSlots(availableTimeSlots);
 
@@ -179,10 +180,15 @@ public class ReservationService {
     }
 
     private static void addDividedSlot(AvailableTimeSlot slot, LocalTime slotStartTime, LocalTime gapEndTime, List<AvailableTimeSlot> dividedSlotsByDuration) {
+       log.info("Adding divided slot from {} to {}", slotStartTime, gapEndTime);
+        long durationMinutes = Duration.between(slotStartTime, gapEndTime).toMinutes();
+        if (durationMinutes<15)
+            return;
+
         AvailableTimeSlot dividedSlot = new AvailableTimeSlot();
         dividedSlot.setStartTime(slotStartTime);
         dividedSlot.setEndTime(gapEndTime);
-        dividedSlot.setSlotDurationMinutes(Duration.between(slotStartTime,gapEndTime).toMinutes());
+        dividedSlot.setSlotDurationMinutes(durationMinutes);
         dividedSlot.setNumberOfAvailableSeats(slot.getNumberOfAvailableSeats());
         dividedSlotsByDuration.add(dividedSlot);
     }

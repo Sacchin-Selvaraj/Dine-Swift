@@ -6,6 +6,7 @@ import com.dineswift.restaurant_service.exception.OrderItemException;
 import com.dineswift.restaurant_service.mapper.OrderItemMapper;
 import com.dineswift.restaurant_service.model.Dish;
 import com.dineswift.restaurant_service.model.OrderItem;
+import com.dineswift.restaurant_service.payload.request.orderItem.AddOrderItem;
 import com.dineswift.restaurant_service.payload.request.orderItem.CartAmountUpdateRequest;
 import com.dineswift.restaurant_service.payload.response.orderItem.OrderItemDto;
 import com.dineswift.restaurant_service.repository.DishRepository;
@@ -36,10 +37,13 @@ public class OrderService {
     private final OrderItemMapper orderItemMapper;
     private final RestClient restClient;
 
-    public void addItemToOrderItem(UUID cartId, UUID dishId, Integer quantity) {
+    public void addItemToOrderItem(AddOrderItem addOrderItemRequest) {
+        UUID dishId = addOrderItemRequest.getDishId();
+        Integer quantity = addOrderItemRequest.getQuantity();
         log.info("Checking quantity: {}", quantity);
         checkQuantity(quantity);
-        checkCartIdIsValid(cartId);
+
+        UUID cartId = getCartIdFromUserService();
 
         Dish dish = dishRepository.findByIdAndIsActive(dishId).orElseThrow(() -> new DishException("Dish not found or inactive"));
         log.info("Dish found: {}", dish.getDishName());
@@ -61,6 +65,21 @@ public class OrderService {
         OrderItem updatedOrderItem = orderItemMapper.toEntity(cartId, dish, quantity);
         log.info("OrderItem created: {}", updatedOrderItem);
         orderItemRepository.save(updatedOrderItem);
+    }
+
+    private UUID getCartIdFromUserService() {
+        log.info("Fetching cartId from User-Service");
+        ResponseEntity<UUID> response = restClient.get()
+                .uri("/cart/current-cart-id")
+                .retrieve()
+                .toEntity(UUID.class);
+        UUID cartId = response.getBody();
+        if (cartId == null) {
+            log.error("Failed to retrieve cartId from User-Service");
+            throw new OrderItemException("Failed to retrieve cart ID from User Service");
+        }
+        log.info("Retrieved cartId: {}", cartId);
+        return cartId;
     }
 
     private static CartAmountUpdateRequest getCartAmountUpdateRequest(Integer quantity, Dish dish) {
@@ -133,7 +152,7 @@ public class OrderService {
     private void checkCartIdIsValid(UUID cartId) {
         log.info("Check whether the CartId is present in User Service or not: {}", cartId);
         ResponseEntity<Boolean> response = restClient.get()
-                .uri("cart/valid-cartId/{cartId}", cartId)
+                .uri("/cart/valid-cartId/{cartId}", cartId)
                 .retrieve().toEntity(Boolean.class);
         if (response.getBody()==null || !response.getBody()) {
             log.error("Invalid cartId: {}", cartId);

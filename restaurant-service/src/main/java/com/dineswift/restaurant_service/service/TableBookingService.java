@@ -15,6 +15,7 @@ import com.dineswift.restaurant_service.payment.service.PaymentService;
 import com.dineswift.restaurant_service.repository.*;
 import com.dineswift.restaurant_service.security.service.AuthService;
 import jakarta.transaction.Transactional;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -64,9 +65,11 @@ public class TableBookingService {
             throw new TableBookingException("Number of guests exceeds table capacity.");
         }
 
+        checkSlotAvailability(bookingRequest, bookingTable);
+
         List<OrderItem> orderItems = getOrderItemsByCartId(cartId);
 
-        checkSlotAvailability(bookingRequest, bookingTable);
+        checkOrderItemsBelongToRestaurant(orderItems, bookingTable.getRestaurant());
 
         log.info("Slot available. Proceeding with booking for cartId: {}", cartId);
         TableBooking newBooking = bookTable(bookingRequest, bookingTable, orderItems);
@@ -75,6 +78,16 @@ public class TableBookingService {
         orderItems.forEach(item -> item.setTableBooking(newBooking));
 
         return tableBookingMapper.toDto(newBooking,orderItems);
+    }
+
+    private void checkOrderItemsBelongToRestaurant(List<OrderItem> orderItems, Restaurant restaurant) {
+        log.info("Checking if all order items belong to the restaurant ID: {}", restaurant.getRestaurantId());
+        for (OrderItem item : orderItems) {
+            if (!item.getRestaurant().getRestaurantId().equals(restaurant.getRestaurantId())) {
+                log.error("Order item ID: {} does not belong to restaurant ID: {}", item.getOrderItemsId(), restaurant.getRestaurantId());
+                throw new TableBookingException("All order items must belong to the selected restaurant.");
+            }
+        }
     }
 
     private TableBooking bookTable(BookingRequest bookingRequest, RestaurantTable bookingTable, List<OrderItem> orderItems) {

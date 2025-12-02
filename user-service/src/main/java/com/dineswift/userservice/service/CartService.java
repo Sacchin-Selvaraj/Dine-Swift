@@ -100,4 +100,13 @@ public class CartService {
         userRepository.save(existingUser);
         log.info("Cart cleared successfully for userId={}", userId);
     }
+
+    public UUID getCurrentCartId() {
+        UUID userId = authService.getAuthenticatedUserId();
+        log.info("Fetching current cart ID for userId={}", userId);
+        User loggedInUser = userCommonService.findValidUser(userId);
+        UUID cartId = loggedInUser.getCart().getCartId();
+        log.info("Current cart ID for userId={} is cartId={}", userId, cartId);
+        return cartId;
+    }
 }

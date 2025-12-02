@@ -13,6 +13,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -65,7 +67,17 @@ public class TableController {
     }
 
     @GetMapping("/available-slot/{tableId}" )
-    public ResponseEntity<AvailableSlots> getAvailableSlot(@PathVariable UUID  tableId, @RequestBody CheckAvailableSlots checkAvailableSlots) {
+    public ResponseEntity<AvailableSlots> getAvailableSlot(@PathVariable UUID  tableId,
+                                                           @RequestParam LocalDate reservationDate,
+                                                           @RequestParam LocalTime reservationTime,
+                                                           @RequestParam long durationInMinutes,
+                                                           @RequestParam int numberOfGuests
+                                                           ) {
+        CheckAvailableSlots checkAvailableSlots = new CheckAvailableSlots();
+        checkAvailableSlots.setReservationDate(reservationDate);
+        checkAvailableSlots.setReservationTime(reservationTime);
+        checkAvailableSlots.setDurationInMinutes(durationInMinutes);
+        checkAvailableSlots.setNumberOfGuests(numberOfGuests);
         log.info("Received request to get available slot for table with ID: {}", tableId);
         AvailableSlots availableSlot = tableService.getAvailableSlot(tableId, checkAvailableSlots);
         return ResponseEntity.ok().body(availableSlot);
