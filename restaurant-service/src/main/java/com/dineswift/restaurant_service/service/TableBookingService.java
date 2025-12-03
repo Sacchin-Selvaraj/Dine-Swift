@@ -92,9 +92,9 @@ public class TableBookingService {
 
     private TableBooking bookTable(BookingRequest bookingRequest, RestaurantTable bookingTable, List<OrderItem> orderItems) {
         TableBooking newBooking = new TableBooking();
-        newBooking.setDineInTime(bookingRequest.getDineInTime().toLocalTime());
+        newBooking.setDineInTime(bookingRequest.getDineInTime());
         newBooking.setDuration(bookingRequest.getDuration());
-        newBooking.setDineOutTime(bookingRequest.getDineInTime().plusMinutes(bookingRequest.getDuration()).toLocalTime());
+        newBooking.setDineOutTime(bookingRequest.getDineInTime().plusMinutes(bookingRequest.getDuration()));
         newBooking.setNoOfGuest(bookingRequest.getNoOfGuest());
         newBooking.setBookingStatus(BookingStatus.UPFRONT_PAYMENT_PENDING);
         newBooking.setDishStatus(DishStatus.PENDING);
@@ -157,8 +157,8 @@ public class TableBookingService {
     private void checkSlotAvailability(BookingRequest bookingRequest, RestaurantTable bookingTable) {
 
         log.info("Checking Availability for tableId: {} on date: {} at time: {}", bookingTable.getTableId(), bookingRequest.getBookingDate(), bookingRequest.getDineInTime());
-        LocalTime bookingStartTime = bookingRequest.getDineInTime().toLocalTime();
-        LocalTime bookingEndTime = bookingRequest.getDineInTime().plusMinutes(bookingRequest.getDuration()).toLocalTime();
+        LocalTime bookingStartTime = bookingRequest.getDineInTime();
+        LocalTime bookingEndTime = bookingRequest.getDineInTime().plusMinutes(bookingRequest.getDuration());
 
         LocalTime restaurantOpeningTime = bookingTable.getRestaurant().getOpeningTime();
         LocalTime restaurantClosingTime = bookingTable.getRestaurant().getClosingTime();

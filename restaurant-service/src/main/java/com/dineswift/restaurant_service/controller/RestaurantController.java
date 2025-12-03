@@ -98,4 +98,10 @@ public class RestaurantController {
         RestaurantDto restaurantDto = restaurantService.getEmployeeRestaurant();
         return new ResponseEntity<>(restaurantDto, HttpStatus.OK);
     }
+
+    @GetMapping("/get-restaurant/{restaurantId}")
+    public ResponseEntity<RestaurantDto> getRestaurantById(@PathVariable UUID restaurantId) {
+        RestaurantDto restaurantDto = restaurantService.getRestaurantById(restaurantId);
+        return new ResponseEntity<>(restaurantDto, HttpStatus.OK);
+    }
 }

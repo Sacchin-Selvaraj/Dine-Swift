@@ -27,4 +27,6 @@ public class RestaurantTableDto {
     private ZonedDateTime lastModifiedDate;
 
     private UUID lastModifiedBy;
+
+    private UUID restaurantId;
 }

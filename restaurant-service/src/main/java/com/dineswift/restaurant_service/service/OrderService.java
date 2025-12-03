@@ -128,7 +128,7 @@ public class OrderService {
         List<OrderItem> orderItems = orderItemRepository.findAllByCartId(cartId);
         if (orderItems.isEmpty()){
             log.error("No order items found for cartId: {}", cartId);
-            throw new OrderItemException("No order items found for the given cart ID");
+            throw new OrderItemException("No order items found !!!");
         }
 
         List<OrderItemDto> orderItemDtos = orderItems.stream().map(orderItemMapper::toDto).toList();

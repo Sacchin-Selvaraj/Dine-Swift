@@ -46,7 +46,9 @@ public class TableMapper {
     }
 
     public RestaurantTableDto toDto(RestaurantTable savedTable) {
-        return modelMapper.map(savedTable, RestaurantTableDto.class);
+        RestaurantTableDto restaurantTableDto = modelMapper.map(savedTable, RestaurantTableDto.class);
+        restaurantTableDto.setRestaurantId(savedTable.getRestaurant().getRestaurantId());
+        return restaurantTableDto;
     }
 
     public RestaurantTable toUpdateEntity(RestaurantTable table, TableUpdateRequest tableUpdateRequest) {

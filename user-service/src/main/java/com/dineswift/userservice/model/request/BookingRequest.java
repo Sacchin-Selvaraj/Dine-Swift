@@ -20,7 +20,7 @@ public class BookingRequest {
     private UUID tableId;
 
     @NotNull(message = "Dine in time is required")
-    private LocalDateTime dineInTime;
+    private LocalTime dineInTime;
 
     @NotNull(message = "Duration is required")
     private Integer duration;

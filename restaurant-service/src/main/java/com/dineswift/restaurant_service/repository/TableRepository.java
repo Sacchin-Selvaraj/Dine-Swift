@@ -28,4 +28,6 @@ public interface TableRepository extends JpaRepository<RestaurantTable, UUID> {
     @Query("SELECT rt FROM RestaurantTable rt WHERE rt.tableNumber = :tableNumber AND rt.isActive = true")
     Optional<RestaurantTable> findByTableNumber(String tableNumber);
 
+    @Query("SELECT rt FROM RestaurantTable rt WHERE rt.restaurant = :restaurant AND rt.isActive = true")
+    Page<RestaurantTable> findAllByRestaurantAndIsActive(Pageable pageable, Restaurant restaurant);
 }

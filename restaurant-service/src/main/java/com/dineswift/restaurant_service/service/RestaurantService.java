@@ -235,4 +235,14 @@ public class RestaurantService {
         }
         return restaurantMapper.toDTO(restaurant);
     }
+
+    public RestaurantDto getRestaurantById(UUID restaurantId) {
+        log.info("Fetching restaurant by id: {}", restaurantId);
+        if (restaurantId == null) {
+            throw new RestaurantException("Invalid Restaurant Id");
+        }
+        Restaurant restaurant = restaurantRepository.findByIdAndIsActive(restaurantId)
+                .orElseThrow(() -> new RestaurantException("Restaurant not found with id: " + restaurantId));
+        return restaurantMapper.toDTO(restaurant);
+    }
 }

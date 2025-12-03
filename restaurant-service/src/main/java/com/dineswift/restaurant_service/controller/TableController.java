@@ -70,7 +70,7 @@ public class TableController {
     public ResponseEntity<AvailableSlots> getAvailableSlot(@PathVariable UUID  tableId,
                                                            @RequestParam LocalDate reservationDate,
                                                            @RequestParam LocalTime reservationTime,
-                                                           @RequestParam long durationInMinutes,
+                                                           @RequestParam(required = false) Long durationInMinutes,
                                                            @RequestParam int numberOfGuests
                                                            ) {
         CheckAvailableSlots checkAvailableSlots = new CheckAvailableSlots();
@@ -82,4 +82,15 @@ public class TableController {
         AvailableSlots availableSlot = tableService.getAvailableSlot(tableId, checkAvailableSlots);
         return ResponseEntity.ok().body(availableSlot);
     }
+
+    @GetMapping("/get-table-check-out/{orderItemId}" )
+    public ResponseEntity<Page<RestaurantTableDto>> getTableByOrderItem(@PathVariable UUID  orderItemId,
+                                                             @RequestParam(name = "page", defaultValue = "0") int page,
+                                                             @RequestParam(name = "size", defaultValue = "6") int size) {
+        log.info("Received request to get table with Order ID: {}", orderItemId);
+        Page<RestaurantTableDto> tables = tableService.getTablesByOrderItem(orderItemId, page, size);
+        return ResponseEntity.ok().body(tables);
+    }
+
+
 }

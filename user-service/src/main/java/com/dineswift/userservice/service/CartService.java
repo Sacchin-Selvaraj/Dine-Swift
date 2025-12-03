@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 import java.util.UUID;
 
@@ -56,10 +57,10 @@ public class CartService {
         BigDecimal grandTotalFromOrderItems = orderItemDtos.stream().map(OrderItemDto::getTotalPrice)
                 .reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
 
-        cartDto.setGrandTotal(grandTotalFromOrderItems);
+        cartDto.setGrandTotal(grandTotalFromOrderItems.setScale(2, RoundingMode.HALF_UP));
         cartDto.setOrderItems(orderItemDtos);
 
-        cart.setGrandTotal(grandTotalFromOrderItems);
+        cart.setGrandTotal(grandTotalFromOrderItems.setScale(2,RoundingMode.HALF_UP));
         cartRepository.save(cart);
         log.info("Cart grand total updated to {} for cartId={}", grandTotalFromOrderItems, cart.getCartId());
         return cartDto;

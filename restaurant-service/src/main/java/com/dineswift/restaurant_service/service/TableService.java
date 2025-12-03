@@ -1,12 +1,18 @@
 package com.dineswift.restaurant_service.service;
 
+import com.dineswift.restaurant_service.exception.OrderItemException;
+import com.dineswift.restaurant_service.exception.RestaurantException;
 import com.dineswift.restaurant_service.mapper.TableMapper;
+import com.dineswift.restaurant_service.model.OrderItem;
+import com.dineswift.restaurant_service.model.Restaurant;
 import com.dineswift.restaurant_service.model.RestaurantTable;
 import com.dineswift.restaurant_service.payload.request.table.CheckAvailableSlots;
 import com.dineswift.restaurant_service.payload.request.table.TableCreateRequest;
 import com.dineswift.restaurant_service.payload.request.table.TableUpdateRequest;
 import com.dineswift.restaurant_service.payload.response.table.AvailableSlots;
 import com.dineswift.restaurant_service.payload.response.table.RestaurantTableDto;
+import com.dineswift.restaurant_service.repository.OrderItemRepository;
+import com.dineswift.restaurant_service.repository.RestaurantRepository;
 import com.dineswift.restaurant_service.repository.TableRepository;
 import com.dineswift.restaurant_service.security.service.AuthService;
 import jakarta.transaction.Transactional;
@@ -26,6 +32,8 @@ import java.util.UUID;
 public class TableService {
 
     private final TableRepository tableRepository;
+    private final RestaurantRepository restaurantRepository;
+    private final OrderItemRepository orderItemRepository;
     private final TableMapper tableMapper;
     private final ReservationService reservationService;
     private final AuthService authService;
@@ -63,8 +71,10 @@ public class TableService {
     public Page<RestaurantTableDto> getTablesByRestaurantId(UUID restaurantId, int page, int size) {
         log.info("Fetching tables for restaurant with ID: {}", restaurantId);
 
+        Restaurant restaurant = restaurantRepository.findByIdAndIsActive(restaurantId).orElseThrow(()-> new RestaurantException("Restaurant not found with ID or inactive: " + restaurantId));
         Pageable pageable = Pageable.ofSize(size).withPage(page);
-        Page<RestaurantTable> restaurantTables = tableRepository.findAllAndIsActive(pageable);
+
+        Page<RestaurantTable> restaurantTables = tableRepository.findAllByRestaurantAndIsActive(pageable, restaurant);
         if (restaurantTables.isEmpty()) {
             log.warn("No tables found for restaurant with ID: {}", restaurantId);
             throw new IllegalArgumentException("No tables found for restaurant with ID: " + restaurantId);
@@ -97,5 +107,21 @@ public class TableService {
         AvailableSlots availableSlot = reservationService.getAvailableSlot(restaurantTable, restaurantTable.getRestaurant(), checkAvailableSlots);
         log.info("Fetched available slot for table with ID: {}", tableId);
         return availableSlot;
+    }
+
+    public Page<RestaurantTableDto> getTablesByOrderItem(UUID orderItemId, int page, int size) {
+        log.info("Fetching tables for order item with ID: {}", orderItemId);
+        OrderItem orderItem = orderItemRepository.findById(orderItemId).orElseThrow(()-> new OrderItemException("Order item not found with ID: " + orderItemId));
+
+        Restaurant restaurant = orderItem.getRestaurant();
+
+        Pageable pageable = Pageable.ofSize(size).withPage(page);
+        Page<RestaurantTable> restaurantTables = tableRepository.findAllByRestaurantAndIsActive(pageable,restaurant);
+        if (restaurantTables.isEmpty()) {
+            log.warn("No tables found for order item with ID: {}", orderItemId);
+            throw new IllegalArgumentException("No tables found for order item with ID: " + orderItemId);
+        }
+        log.info("Fetched {} tables for order item with ID: {}", restaurantTables.getTotalElements(), orderItemId);
+        return restaurantTables.map(tableMapper::toDto);
     }
 }
