@@ -41,9 +41,9 @@ public class DishController {
 
     @PreAuthorize(("hasRole('ROLE_ADMIN') or hasRole('ROLE_MANAGER')"))
     @PatchMapping("/update-dish/{dishId}")
-    public ResponseEntity<DishDTO> updateDish(@PathVariable UUID dishId, @Valid @RequestBody DishUpdateRequest dishUpdateRequest) {
-        DishDTO updatedDish = dishService.updateDish(dishId, dishUpdateRequest);
-        return ResponseEntity.ok(updatedDish);
+    public ResponseEntity<MessageResponse> updateDish(@PathVariable UUID dishId, @Valid @RequestBody DishUpdateRequest dishUpdateRequest) {
+        dishService.updateDish(dishId, dishUpdateRequest);
+        return ResponseEntity.ok(MessageResponse.builder().message("Dish updated successfully").build());
     }
 
     @GetMapping("/search-dish")

@@ -189,7 +189,6 @@ public class PaymentService {
             if (!booking.getIsUpfrontPaid()) {
                 booking.setBookingStatus(BookingStatus.PAYMENT_PENDING);
                 booking.setIsUpfrontPaid(true);
-                removeCartForUser(booking);
                 updateBookingStatus(booking.getTableBookingId(), BookingStatus.PAYMENT_PENDING.name());
             }
             else {
@@ -216,24 +215,6 @@ public class PaymentService {
                 .toBodilessEntity();
     }
 
-    private void removeCartForUser(TableBooking booking) {
-        log.info("Removing cart for userId: {}", booking.getGuestInformation().getUserId());
-        sendCartRemovalRequest();
-    }
-
-    private void sendCartRemovalRequest() {
-        log.info("Calling cart service to remove cart");
-        ResponseEntity<Void> response = restClient.put()
-                .uri("/cart/clear-cart")
-                .retrieve()
-                .toBodilessEntity();
-        if (response.getStatusCode().is2xxSuccessful()) {
-            log.info("Cart removal successful for cart");
-        } else {
-            log.error("Failed to remove cart for cart");
-            throw new BookingException("Failed to remove cart for cart");
-        }
-    }
 
     private void handleFailedPayment(PaymentDetails paymentDetails, com.razorpay.Payment paymentData) {
         log.info("Handling failed payment for orderId: {}", paymentDetails.getOrderId());

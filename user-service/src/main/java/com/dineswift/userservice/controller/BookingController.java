@@ -4,6 +4,7 @@ import com.dineswift.userservice.model.request.BookingRequest;
 import com.dineswift.userservice.model.response.PaymentCreateResponse;
 import com.dineswift.userservice.model.response.booking.BookingStatusUpdate;
 import com.dineswift.userservice.model.response.booking.TableBookingDto;
+import com.dineswift.userservice.model.response.booking.TableBookingResponse;
 import com.dineswift.userservice.service.BookingService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -24,11 +25,11 @@ public class BookingController {
 
     @PostMapping("/book-table/{cartId}")
     @PreAuthorize("hasRole('ROLE_USER')")
-    public ResponseEntity<TableBookingDto> bookTable(@PathVariable UUID cartId,@Valid @RequestBody BookingRequest bookingRequest){
+    public ResponseEntity<TableBookingResponse> bookTable(@PathVariable UUID cartId, @Valid @RequestBody BookingRequest bookingRequest){
         log.info("Received booking request for cartId: {}", cartId);
-        TableBookingDto tableBookingDto = bookingService.bookTable(cartId, bookingRequest);
+        TableBookingResponse tableBookingResponse = bookingService.bookTable(cartId, bookingRequest);
         log.info("Booking successful for cartId: {}", cartId);
-        return ResponseEntity.ok(tableBookingDto);
+        return ResponseEntity.ok(tableBookingResponse);
     }
 
     @PostMapping("/pay-now/{tableBookingId}")

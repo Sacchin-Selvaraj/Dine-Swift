@@ -8,6 +8,7 @@ import com.dineswift.userservice.model.entites.User;
 import com.dineswift.userservice.model.request.BookingRequest;
 import com.dineswift.userservice.model.response.PaymentCreateResponse;
 import com.dineswift.userservice.model.response.booking.TableBookingDto;
+import com.dineswift.userservice.model.response.booking.TableBookingResponse;
 import com.dineswift.userservice.repository.BookingRepository;
 import com.dineswift.userservice.repository.CartRepository;
 import com.dineswift.userservice.repository.UserRepository;
@@ -35,24 +36,24 @@ public class BookingService {
     private final AuthService authService;
 
 
-    public TableBookingDto bookTable(UUID cartId, BookingRequest bookingRequest) {
+    public TableBookingResponse bookTable(UUID cartId, BookingRequest bookingRequest) {
         log.info("Processing booking for cartId: {}", cartId);
         boolean isValidCart=cartRepository.existsByIdAndIsActive(cartId);
         if (!isValidCart)
             throw new CartException("Invalid or inactive cart ID: " + cartId);
 
-        TableBookingDto tableBookingDto = createBookingResponse(cartId, bookingRequest);
+        TableBookingResponse tableBookingResponse = createBookingResponse(cartId, bookingRequest);
         log.info("Booking processed successfully for cartId: {}", cartId);
-        createBookingRecord(cartId, bookingRequest, tableBookingDto);
-        return tableBookingDto;
+        createBookingRecord(cartId, bookingRequest, tableBookingResponse);
+        return tableBookingResponse;
     }
 
-    private void createBookingRecord(UUID cartId, BookingRequest bookingRequest, TableBookingDto tableBookingDto) {
+    private void createBookingRecord(UUID cartId, BookingRequest bookingRequest, TableBookingResponse tableBookingResponse) {
         log.info("Creating booking record for cartId: {}", cartId);
         Booking newBooking = new Booking();
-        newBooking.setTableBookingId(tableBookingDto.getTableBookingId());
+        newBooking.setTableBookingId(tableBookingResponse.getTableBookingId());
         newBooking.setBookingDate(bookingRequest.getBookingDate());
-        newBooking.setBookingStatus(tableBookingDto.getBookingStatus());
+        newBooking.setBookingStatus(tableBookingResponse.getBookingStatus());
 
         log.info("Fetching authenticated user for booking record creation");
         UUID userId = authService.getAuthenticatedUserId();
@@ -62,17 +63,17 @@ public class BookingService {
         log.info("Booking record created successfully with ID: {}", newBooking.getBookingId());
     }
 
-    private TableBookingDto createBookingResponse(UUID cartId, BookingRequest bookingRequest) {
+    private TableBookingResponse createBookingResponse(UUID cartId, BookingRequest bookingRequest) {
         log.info("Sending Booking Request to Restaurant Service for cartId: {}", cartId);
 
-        TableBookingDto tableBookingDto = restClient.post()
+        TableBookingResponse tableBookingResponse = restClient.post()
                 .uri("/table-booking/create-order/{cartId}",cartId)
                 .body(bookingRequest)
                 .contentType(MediaType.APPLICATION_JSON)
                 .retrieve()
-                .body(TableBookingDto.class);
+                .body(TableBookingResponse.class);
         log.info("Received tableBookingDto from Restaurant Service for cartId: {}", cartId);
-        return tableBookingDto;
+        return tableBookingResponse;
     }
 
 

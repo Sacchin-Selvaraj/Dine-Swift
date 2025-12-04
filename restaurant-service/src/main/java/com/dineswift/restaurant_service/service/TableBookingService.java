@@ -1,5 +1,6 @@
 package com.dineswift.restaurant_service.service;
 
+import com.dineswift.restaurant_service.exception.BookingException;
 import com.dineswift.restaurant_service.exception.DishException;
 import com.dineswift.restaurant_service.exception.RestaurantException;
 import com.dineswift.restaurant_service.exception.TableBookingException;
@@ -11,6 +12,7 @@ import com.dineswift.restaurant_service.payload.request.tableBooking.*;
 import com.dineswift.restaurant_service.payload.response.orderItem.OrderItemDto;
 import com.dineswift.restaurant_service.payload.response.tableBooking.TableBookingDto;
 import com.dineswift.restaurant_service.payload.response.tableBooking.TableBookingDtoWoRestaurant;
+import com.dineswift.restaurant_service.payload.response.tableBooking.TableBookingResponse;
 import com.dineswift.restaurant_service.payment.service.PaymentService;
 import com.dineswift.restaurant_service.repository.*;
 import com.dineswift.restaurant_service.security.service.AuthService;
@@ -23,7 +25,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClient;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -51,9 +55,10 @@ public class TableBookingService {
     private final PaymentService paymentService;
     private final TableBookingSpecification tableBookingSpecification;
     private final KafkaService kafkaService;
+    private final RestClient restClient;
 
 
-    public TableBookingDto createOrder(UUID cartId, BookingRequest bookingRequest) {
+    public TableBookingResponse createOrder(UUID cartId, BookingRequest bookingRequest) {
 
         log.info("Creating order for cartId: {}", cartId);
         UUID tableId = bookingRequest.getTableId();
@@ -71,13 +76,16 @@ public class TableBookingService {
 
         checkOrderItemsBelongToRestaurant(orderItems, bookingTable.getRestaurant());
 
+        log.info("All checks passed. Proceeding to remove cart and create booking.");
+        sendCartRemovalRequest();
+
         log.info("Slot available. Proceeding with booking for cartId: {}", cartId);
         TableBooking newBooking = bookTable(bookingRequest, bookingTable, orderItems);
 
         log.info("Set table booking to order items so that they are linked");
         orderItems.forEach(item -> item.setTableBooking(newBooking));
 
-        return tableBookingMapper.toDto(newBooking,orderItems);
+        return tableBookingMapper.toBookingResponse(newBooking);
     }
 
     private void checkOrderItemsBelongToRestaurant(List<OrderItem> orderItems, Restaurant restaurant) {
@@ -87,6 +95,20 @@ public class TableBookingService {
                 log.error("Order item ID: {} does not belong to restaurant ID: {}", item.getOrderItemsId(), restaurant.getRestaurantId());
                 throw new TableBookingException("All order items must belong to the selected restaurant.");
             }
+        }
+    }
+
+    private void sendCartRemovalRequest() {
+        log.info("Calling cart service to remove cart");
+        ResponseEntity<Void> response = restClient.put()
+                .uri("/cart/clear-cart")
+                .retrieve()
+                .toBodilessEntity();
+        if (response.getStatusCode().is2xxSuccessful()) {
+            log.info("Cart removal successful for cart");
+        } else {
+            log.error("Failed to remove cart for cart");
+            throw new BookingException("Failed to remove cart");
         }
     }
 
@@ -232,7 +254,7 @@ public class TableBookingService {
 
     public TableBookingDto viewBooking(UUID tableBookingId) {
         log.info("Viewing booking with ID: {}", tableBookingId);
-        TableBooking existingBooking = tableBookingRepository.findByIdAndIsActive(tableBookingId)
+        TableBooking existingBooking = tableBookingRepository.findById(tableBookingId)
                 .orElseThrow(() -> new TableBookingException("Booking not found with ID: " + tableBookingId));
 
         TableBookingDto bookingDto = tableBookingMapper.toDto(existingBooking);

@@ -60,9 +60,9 @@ public class UserController {
 
     @PatchMapping("/update-users")
     @PreAuthorize(value = "hasRole('ROLE_USER')")
-    public ResponseEntity<UserDTO> updateUsers(@Valid @RequestBody UserDetailsRequest userDetailsRequest){
-        UserDTO userDTO=userService.updateDetails(userDetailsRequest);
-        return ResponseEntity.ok(userDTO);
+    public ResponseEntity<MessageResponse> updateUsers(@Valid @RequestBody UserDetailsRequest userDetailsRequest){
+        userService.updateDetails(userDetailsRequest);
+        return ResponseEntity.ok(MessageResponse.builder().message("User details have been updated Successfully").build());
     }
 
     @DeleteMapping("/delete")

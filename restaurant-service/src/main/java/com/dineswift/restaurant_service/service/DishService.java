@@ -67,7 +67,7 @@ public class DishService {
         return "Dish deleted successfully";
     }
 
-    public DishDTO updateDish(UUID dishId, @Valid DishUpdateRequest dishUpdateRequest) {
+    public void updateDish(UUID dishId, @Valid DishUpdateRequest dishUpdateRequest) {
 
         Dish dish = dishRepository.findById(dishId).orElseThrow(()-> new DishException("Dish not found with id: "+dishId));
 
@@ -75,7 +75,6 @@ public class DishService {
         dish.setLastModifiedBy(authService.getAuthenticatedId());
         Dish updatedDish = dishRepository.save(dish);
         log.info("Dish updated successfully: {}", updatedDish.getDishName());
-        return dishMapper.toDTO(updatedDish);
     }
 
     public Page<DishDTO> searchDishes(Integer pageNo, Integer pageSize, String sortBy,

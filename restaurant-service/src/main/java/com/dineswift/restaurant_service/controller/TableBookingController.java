@@ -6,6 +6,7 @@ import com.dineswift.restaurant_service.payload.response.MessageResponse;
 import com.dineswift.restaurant_service.payload.response.orderItem.OrderItemDto;
 import com.dineswift.restaurant_service.payload.response.tableBooking.TableBookingDto;
 import com.dineswift.restaurant_service.payload.response.tableBooking.TableBookingDtoWoRestaurant;
+import com.dineswift.restaurant_service.payload.response.tableBooking.TableBookingResponse;
 import com.dineswift.restaurant_service.service.TableBookingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,8 +29,8 @@ public class TableBookingController {
 
     @PreAuthorize(("hasAnyRole('ROLE_USER')"))
     @PostMapping("/create-order/{cartId}")
-    public ResponseEntity<TableBookingDto> bookTable(@PathVariable UUID cartId, @RequestBody BookingRequest bookingRequest){
-        TableBookingDto bookingDto = tableBookingService.createOrder(cartId, bookingRequest);
+    public ResponseEntity<TableBookingResponse> bookTable(@PathVariable UUID cartId, @RequestBody BookingRequest bookingRequest){
+        TableBookingResponse bookingDto = tableBookingService.createOrder(cartId, bookingRequest);
         log.info("Order created successfully for cartId: {}", cartId);
         return ResponseEntity.ok(bookingDto);
     }
