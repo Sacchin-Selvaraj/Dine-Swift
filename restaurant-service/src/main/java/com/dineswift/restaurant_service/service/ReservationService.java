@@ -11,7 +11,6 @@ import com.dineswift.restaurant_service.payload.response.table.AvailableTimeSlot
 import com.dineswift.restaurant_service.repository.RestaurantRepository;
 import com.dineswift.restaurant_service.repository.TableBookingRepository;
 import com.dineswift.restaurant_service.repository.TableRepository;
-import com.dineswift.restaurant_service.security.service.AuthService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

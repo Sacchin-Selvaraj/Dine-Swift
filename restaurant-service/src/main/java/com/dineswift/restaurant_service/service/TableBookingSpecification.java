@@ -99,4 +99,7 @@ public final class TableBookingSpecification {
         return (root, query, criteriaBuilder) ->
                 criteriaBuilder.equal(root.get("dishStatus"), finalDishStatus);
     }
+
+
+
 }

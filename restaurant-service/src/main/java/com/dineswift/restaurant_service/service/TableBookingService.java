@@ -26,6 +26,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.config.core.GrantedAuthorityDefaults;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
@@ -34,6 +37,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZonedDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
@@ -211,12 +215,25 @@ public class TableBookingService {
         if (!existingBooking.getIsActive()){
             throw new TableBookingException("Booking is already cancelled with ID: " + tableBookingId);
         }
-        log.info("Is booking eligible for cancellation check");
-        String refundStatus = checkIsPaymentDone(existingBooking);
-        existingBooking.setBookingStatus(BookingStatus.CANCELLED_BY_CUSTOMER);
+
+        log.info("Setting booking status to CANCELLED based on Role and User");
+        Collection<? extends GrantedAuthority> authorityDefaults = SecurityContextHolder.getContext().getAuthentication().getAuthorities();
+        boolean isAdminOrManager = authorityDefaults.stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch(role -> role.equals("ROLE_ADMIN") || role.equals("ROLE_MANAGER"));
+        if (isAdminOrManager)
+            existingBooking.setBookingStatus(BookingStatus.CANCELLED_BY_RESTAURANT);
+        else if(existingBooking.getGuestInformation().getUserId().equals(authService.getAuthenticatedId()))
+            existingBooking.setBookingStatus(BookingStatus.CANCELLED_BY_CUSTOMER);
+        else
+            throw new TableBookingException("You are not authorized to cancel this booking");
+
         existingBooking.setDishStatus(DishStatus.CANCELLED);
         existingBooking.setIsActive(false);
         existingBooking.setLastModifiedBy(authService.getAuthenticatedId());
+
+        log.info("Is booking eligible for cancellation check");
+        String refundStatus = checkIsPaymentDone(existingBooking);
 
         GuestInformation guestInformation = existingBooking.getGuestInformation();
         guestInformation.setCancellationFee(existingBooking.getUpfrontAmount());
@@ -227,6 +244,8 @@ public class TableBookingService {
             guestInformation.setCancellationReason("Not Specified by User");
 
         guestInformation.setCancellationTime(ZonedDateTime.now());
+
+        sendNotificationViaKafka(guestInformation.getUserId(), existingBooking.getBookingStatus().name(), existingBooking,true);
 
         tableBookingRepository.save(existingBooking);
         log.info("Booking cancelled successfully with ID: {}", tableBookingId);
