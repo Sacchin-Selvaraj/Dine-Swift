@@ -47,6 +47,18 @@ spring:
       preferred-networks: 127.0.0.1
       ignored-interfaces: .*
 
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+      username: ${REDIS_USERNAME}
+      password: ${REDIS_PASSWORD}
+      ssl:
+        enabled: true
+      timeout: 60000
+  cache:
+    type: redis
+
 
   jpa:
     hibernate:

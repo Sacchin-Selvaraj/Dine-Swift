@@ -17,6 +17,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -73,7 +74,12 @@ public class UserService {
         if (request.getPincode() != null) user.setPincode(request.getPincode());
     }
 
-
+    @Cacheable(
+            value = "booking:pages",
+            key = "T(java.lang.String).format('%s:%d:%d:%s:%s', " +
+                    "@authService.getAuthenticatedUserId(), #pageNumber, #limit, #sortField, #sortOrder)",
+            unless = "#result == null || #result.isEmpty()"
+    )
     public Page<BookingDTO> getBookings(Integer pageNumber, Integer limit, BookingStatus bookingStatus, LocalDate bookingDate, String sortField, String sortOrder) {
         log.info("Get Bookings from the UserService");
 
