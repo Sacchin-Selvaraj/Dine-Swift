@@ -104,4 +104,10 @@ public class RestaurantController {
         RestaurantDto restaurantDto = restaurantService.getRestaurantById(restaurantId);
         return new ResponseEntity<>(restaurantDto, HttpStatus.OK);
     }
+
+    @GetMapping("/get-restaurant-tableBooking/{tableBookingId}")
+    public ResponseEntity<RestaurantDto> getRestaurantByTableBookingId(@PathVariable UUID tableBookingId) {
+        RestaurantDto restaurantDto = restaurantService.getRestaurantByTableBookingId(tableBookingId);
+        return new ResponseEntity<>(restaurantDto, HttpStatus.OK);
+    }
 }

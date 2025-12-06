@@ -1,6 +1,8 @@
 package com.dineswift.restaurant_service.mapper;
 
+import com.dineswift.restaurant_service.model.Payment;
 import com.dineswift.restaurant_service.model.PaymentRefund;
+import com.dineswift.restaurant_service.payment.payload.response.PaymentDto;
 import com.dineswift.restaurant_service.payment.payload.response.PaymentRefundDto;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -14,5 +16,9 @@ public class PaymentMapper {
 
     public PaymentRefundDto toDto(PaymentRefund paymentRefund){
         return modelMapper.map(paymentRefund, PaymentRefundDto.class);
+    }
+
+    public PaymentDto convertToDto(Payment payment) {
+        return modelMapper.map(payment, PaymentDto.class);
     }
 }

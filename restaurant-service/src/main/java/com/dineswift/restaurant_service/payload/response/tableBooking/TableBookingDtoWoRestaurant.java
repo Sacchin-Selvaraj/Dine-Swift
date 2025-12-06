@@ -2,6 +2,7 @@ package com.dineswift.restaurant_service.payload.response.tableBooking;
 
 import com.dineswift.restaurant_service.model.BookingStatus;
 import com.dineswift.restaurant_service.model.DishStatus;
+import com.dineswift.restaurant_service.model.TablePaymentStatus;
 import com.dineswift.restaurant_service.payload.dto.RestaurantDto;
 import com.dineswift.restaurant_service.payload.response.orderItem.OrderItemDto;
 import com.dineswift.restaurant_service.payload.response.table.RestaurantTableDto;
@@ -26,6 +27,7 @@ public class TableBookingDtoWoRestaurant {
     private Integer noOfGuest;
     private BookingStatus bookingStatus;
     private DishStatus dishStatus;
+    private TablePaymentStatus tablePaymentStatus;
     private LocalDate bookingDate;
     private BigDecimal grandTotal;
     private BigDecimal pendingAmount;

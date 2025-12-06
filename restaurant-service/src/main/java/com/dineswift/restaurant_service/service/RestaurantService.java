@@ -13,6 +13,7 @@ import com.dineswift.restaurant_service.payload.request.restaurant.RestaurantUpd
 import com.dineswift.restaurant_service.repository.EmployeeRepository;
 import com.dineswift.restaurant_service.repository.RestaurantImageRepository;
 import com.dineswift.restaurant_service.repository.RestaurantRepository;
+import com.dineswift.restaurant_service.repository.TableBookingRepository;
 import com.dineswift.restaurant_service.security.service.AuthService;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
@@ -42,6 +43,7 @@ public class RestaurantService {
 
     private final RestaurantRepository restaurantRepository;
     private final EmployeeRepository employeeRepository;
+    private final TableBookingRepository tableBookingRepository;
     private final RestaurantMapper restaurantMapper;
     private final ImageService imageService;
     private final RestaurantImageRepository restaurantImageRepository;
@@ -244,5 +246,15 @@ public class RestaurantService {
         Restaurant restaurant = restaurantRepository.findByIdAndIsActive(restaurantId)
                 .orElseThrow(() -> new RestaurantException("Restaurant not found with id: " + restaurantId));
         return restaurantMapper.toDTO(restaurant);
+    }
+
+    public RestaurantDto getRestaurantByTableBookingId(UUID tableBookingId) {
+        log.info("Fetching restaurant by table booking id: {}", tableBookingId);
+        if (tableBookingId == null) {
+            throw new RestaurantException("Invalid Table Booking Id");
+        }
+        TableBooking existingBooking = tableBookingRepository.findById(tableBookingId)
+                .orElseThrow(() -> new RestaurantException("Restaurant not found for table booking id: " + tableBookingId));
+        return restaurantMapper.toDTO(existingBooking.getRestaurant());
     }
 }

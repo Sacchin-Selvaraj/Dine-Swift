@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.UUID;
 
 @Slf4j
@@ -51,10 +52,11 @@ public class UserController {
             @RequestParam(name = "page") Integer page,
             @RequestParam(name = "limit") Integer limit,
             @RequestParam(name = "bookingStatus",required = false) BookingStatus bookingStatus,
+            @RequestParam(name = "bookingDate",required = false) LocalDate bookingDate,
             @RequestParam(name = "sortField",defaultValue = "bookingDate" ,required = false) String sortField,
             @RequestParam(name = "sortOrder",defaultValue = "asc" ,required = false) String sortOrder
     ){
-        Page<BookingDTO> bookingDTOS=userService.getBookings(page,limit,bookingStatus,sortField,sortOrder);
+        Page<BookingDTO> bookingDTOS=userService.getBookings(page,limit,bookingStatus,bookingDate,sortField,sortOrder);
         return ResponseEntity.ok(bookingDTOS);
     }
 

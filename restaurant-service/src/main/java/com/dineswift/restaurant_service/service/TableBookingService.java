@@ -122,8 +122,9 @@ public class TableBookingService {
         newBooking.setDuration(bookingRequest.getDuration());
         newBooking.setDineOutTime(bookingRequest.getDineInTime().plusMinutes(bookingRequest.getDuration()));
         newBooking.setNoOfGuest(bookingRequest.getNoOfGuest());
-        newBooking.setBookingStatus(BookingStatus.UPFRONT_PAYMENT_PENDING);
+        newBooking.setBookingStatus(BookingStatus.WAITING_LIST);
         newBooking.setDishStatus(DishStatus.PENDING);
+        newBooking.setTablePaymentStatus(TablePaymentStatus.UPFRONT_PAYMENT_PENDING);
         newBooking.setBookingDate(bookingRequest.getBookingDate());
 
         log.info("Calculate the total amount for the order items");
@@ -259,12 +260,15 @@ public class TableBookingService {
         if (currentDateTime.isBefore(refundDeadLine)){
             if (existingBooking.getIsUpfrontPaid()){
                 paymentService.processRefund(existingBooking);
+                existingBooking.setTablePaymentStatus(TablePaymentStatus.REFUNDED);
                 return "Refund is being processed for booking ID: " + existingBooking.getTableBookingId();
             }else {
+                existingBooking.setTablePaymentStatus(TablePaymentStatus.NO_REFUND);
                 log.info("No payment done yet. No refund applicable for booking ID: {}", existingBooking.getTableBookingId());
                 return "No payment done yet. No refund applicable.";
             }
         }else {
+            existingBooking.setTablePaymentStatus(TablePaymentStatus.NO_REFUND);
             log.info("Cancellation request is on or after booking date. No refund applicable for booking ID: {}", existingBooking.getTableBookingId());
             return "Cancellation request is on or after booking date. No refund applicable.";
         }
@@ -281,7 +285,7 @@ public class TableBookingService {
         return bookingDto;
     }
 
-    public OrderItemDto updateOrderItem(UUID orderItemsId, QuantityUpdateRequest quantityUpdateRequest) {
+    public void updateOrderItem(UUID orderItemsId, QuantityUpdateRequest quantityUpdateRequest) {
         log.info("Updating order item with ID: {}", orderItemsId);
         OrderItem existingItem = orderItemRepository.findById(orderItemsId)
                 .orElseThrow(() -> new TableBookingException("Order item not found with ID: " + orderItemsId));
@@ -311,7 +315,6 @@ public class TableBookingService {
        log.info("Updating quantity from {} to {}", existingItem.getQuantity(), quantityUpdateRequest.getNewQuantity());
        existingItem.setQuantity(quantityUpdateRequest.getNewQuantity());
        orderItemRepository.save(existingItem);
-       return orderItemMapper.toDtoAfterBooking(existingItem);
     }
 
     public void removeOrderItem(UUID orderItemsId) {
@@ -334,7 +337,7 @@ public class TableBookingService {
         log.info("Order item removed successfully with ID: {}", orderItemsId);
     }
 
-    public OrderItemDto addOrderItem(UUID tableBookingId, AddOrderItemRequest addOrderItemRequest) {
+    public void addOrderItem(UUID tableBookingId, AddOrderItemRequest addOrderItemRequest) {
         log.info("Adding order item to booking with ID: {}", tableBookingId);
         TableBooking existingBooking = tableBookingRepository.findByIdAndIsActive(tableBookingId)
                 .orElseThrow(() -> new TableBookingException("Booking not found with ID: " + tableBookingId));
@@ -344,7 +347,8 @@ public class TableBookingService {
             log.error("Cannot add item as the dish is already being prepared or preparing for booking ID: {}", tableBookingId);
             throw new TableBookingException("Cannot add item as the dish is already being prepared or preparing. you can order from the restaurant separately.");
         }
-        Dish dish = dishRepository.findByIdAndIsActive(addOrderItemRequest.getDishId()).orElseThrow(()->new DishException("Dish not found with ID: "+addOrderItemRequest.getDishId()));
+        Dish dish = dishRepository.findByIdAndIsActive(addOrderItemRequest.getDishId())
+                .orElseThrow(()->new DishException("Dish not found with ID: "+addOrderItemRequest.getDishId()));
 
         OrderItem newOrderItem = createNewOrderItem(existingBooking, dish, addOrderItemRequest.getQuantity());
 
@@ -354,7 +358,6 @@ public class TableBookingService {
 
         OrderItem savedItem = orderItemRepository.save(newOrderItem);
         log.info("Order item added successfully to booking ID: {}", tableBookingId);
-        return orderItemMapper.toDtoAfterBooking(savedItem);
     }
 
     private OrderItem createNewOrderItem(TableBooking existingBooking, Dish dish, Integer quantity) {

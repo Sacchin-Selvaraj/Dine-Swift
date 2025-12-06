@@ -2,6 +2,7 @@ package com.dineswift.userservice.model.response.booking;
 
 import com.dineswift.userservice.model.entites.BookingStatus;
 import com.dineswift.userservice.model.entites.DishStatus;
+import com.dineswift.userservice.model.entites.TablePaymentStatus;
 import com.dineswift.userservice.model.response.restaurant_service.OrderItemDto;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -24,6 +25,7 @@ public class TableBookingDto {
     private Integer noOfGuest;
     private BookingStatus bookingStatus;
     private DishStatus dishStatus;
+    private TablePaymentStatus tablePaymentStatus;
     private LocalDate bookingDate;
     private BigDecimal grandTotal;
     private BigDecimal pendingAmount;

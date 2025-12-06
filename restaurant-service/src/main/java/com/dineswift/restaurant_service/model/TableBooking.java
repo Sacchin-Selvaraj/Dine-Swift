@@ -56,6 +56,10 @@ public class TableBooking {
     @Column(name = "dish_status", length = 50)
     private DishStatus dishStatus;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "table_payment_status", length = 50)
+    private TablePaymentStatus tablePaymentStatus;
+
     @NotNull(message = "Booking date is required")
     @Column(name = "booking_date", nullable = false)
     private LocalDate bookingDate;

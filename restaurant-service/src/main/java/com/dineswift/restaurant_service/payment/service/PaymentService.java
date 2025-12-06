@@ -2,10 +2,12 @@ package com.dineswift.restaurant_service.payment.service;
 
 import com.dineswift.restaurant_service.exception.BookingException;
 import com.dineswift.restaurant_service.exception.PaymentException;
+import com.dineswift.restaurant_service.mapper.PaymentMapper;
 import com.dineswift.restaurant_service.model.*;
 import com.dineswift.restaurant_service.payload.response.tableBooking.PaymentCreateResponse;
 import com.dineswift.restaurant_service.payment.payload.request.BookingStatusUpdate;
 import com.dineswift.restaurant_service.payment.payload.request.PaymentDetails;
+import com.dineswift.restaurant_service.payment.payload.response.PaymentDto;
 import com.dineswift.restaurant_service.payment.repository.PaymentRepository;
 import com.dineswift.restaurant_service.payment.repository.PaymentRefundRepository;
 import com.dineswift.restaurant_service.repository.OrderItemRepository;
@@ -45,6 +47,7 @@ public class PaymentService {
     private final PaymentRefundRepository paymentRefundRepository;
     private final OrderItemRepository orderItemRepository;
     private final RestClient restClient;
+    private final PaymentMapper paymentMapper;
 
     @Value("${razorpay.api.secret}")
     private String secretKey;
@@ -187,14 +190,14 @@ public class PaymentService {
 
             TableBooking booking = payment.getTableBooking();
             if (!booking.getIsUpfrontPaid()) {
-                booking.setBookingStatus(BookingStatus.PAYMENT_PENDING);
+                booking.setTablePaymentStatus(TablePaymentStatus.PAYMENT_PENDING);
                 booking.setIsUpfrontPaid(true);
-                updateBookingStatus(booking.getTableBookingId(), BookingStatus.PAYMENT_PENDING.name());
+                //updateBookingStatus(booking.getTableBookingId(), BookingStatus.PAYMENT_PENDING.name());
             }
             else {
-                booking.setBookingStatus(BookingStatus.ORDER_COMPLETED);
+                booking.setTablePaymentStatus(TablePaymentStatus.PAYMENT_COMPLETED);
                 booking.setIsPendingAmountPaid(true);
-                updateBookingStatus(booking.getTableBookingId(), BookingStatus.ORDER_COMPLETED.name());
+                //updateBookingStatus(booking.getTableBookingId(), BookingStatus.ORDER_COMPLETED.name());
             }
             log.info("Updating booking status to {} for bookingId: {}", booking.getBookingStatus(), booking.getTableBookingId());
             paymentRepository.save(payment);
@@ -224,12 +227,9 @@ public class PaymentService {
         failerPayment.setPaymentMethod(getPaymentMethodFromId(paymentData));
         failerPayment.setTransactionId(paymentDetails.getPaymentId());
 
-        log.info("Fetching failure reason from Razorpay for paymentId: {}", paymentDetails.getPaymentId());
+        log.info("Fetching failure reason from Razorpay for paymentsId: {}", paymentDetails.getPaymentId());
         String failureReason = getPaymentFailureReason(paymentData);
         failerPayment.setFailureReason(failureReason);
-
-        TableBooking failedBooking = failerPayment.getTableBooking();
-        failedBooking.setBookingStatus(BookingStatus.PAYMENT_PENDING);
 
         paymentRepository.save(failerPayment);
 
@@ -317,7 +317,7 @@ public class PaymentService {
             log.info("Refund created in Razorpay with ID: {}", Optional.ofNullable(refund.get("id")));
             createRefundRecord(existingBooking,successfulPayment,refund);
         } catch (RazorpayException e) {
-            log.error("Error fetching payment details from Razorpay: " + e.getMessage());
+            log.error("Error fetching payments details from Razorpay: " + e.getMessage());
             throw new PaymentException("Error processing refund from Razorpay, please try again later. Error Message : " + e.getMessage());
         }
     }
@@ -335,5 +335,14 @@ public class PaymentService {
         paymentRefund.setReason("Customer requested refund for table booking ID: " + existingBooking.getTableBookingId());
         paymentRefundRepository.save(paymentRefund);
         log.info("Refund record created successfully in database for paymentId: {}", successfulPayment.getPaymentId());
+    }
+
+    public Page<PaymentDto> getPaymentDetails(UUID tableBookingId, int page, int size) {
+        log.info("Fetching payment details for bookingId: {}", tableBookingId);
+        Pageable pageable = Pageable.ofSize(size).withPage(page);
+        Page<Payment> paymentPage = paymentRepository.findAllByTableBooking_TableBookingId(tableBookingId, pageable);
+        Page<PaymentDto> paymentDtoPage = paymentPage.map(paymentMapper::convertToDto);
+        log.info("Fetched {} payment records for bookingId: {}", paymentDtoPage.getTotalElements(), tableBookingId);
+        return paymentDtoPage;
     }
 }

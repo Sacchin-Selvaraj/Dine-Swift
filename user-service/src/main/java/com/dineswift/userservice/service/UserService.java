@@ -26,6 +26,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.*;
 
 @Service
@@ -73,7 +74,7 @@ public class UserService {
     }
 
 
-    public Page<BookingDTO> getBookings(Integer pageNumber, Integer limit, BookingStatus bookingStatus, String sortField, String sortOrder) {
+    public Page<BookingDTO> getBookings(Integer pageNumber, Integer limit, BookingStatus bookingStatus, LocalDate bookingDate, String sortField, String sortOrder) {
         log.info("Get Bookings from the UserService");
 
         UUID userId = authService.getAuthenticatedUserId();
@@ -90,7 +91,8 @@ public class UserService {
         Page<Booking> bookings;
         log.info("Building booking specification");
         Specification<Booking> spec = Specification.<Booking>allOf()
-               // .and(bookingSpecification.hasBookingStatus(bookingStatus)
+                .and(bookingSpecification.hasBookingStatus(bookingStatus))
+                .and(bookingSpecification.hasBookingDate(bookingDate))
                 .and(bookingSpecification.belongsToUser(userId));
 
         bookings = bookingRepository.findAll(spec, pageable);

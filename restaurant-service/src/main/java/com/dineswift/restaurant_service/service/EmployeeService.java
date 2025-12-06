@@ -233,8 +233,11 @@ public class EmployeeService {
         UUID employeeId = authService.getAuthenticatedId();
         Employee loggedInEmployee = employeeRepository.findByIdAndIsActive(employeeId).orElseThrow(()->
                 new EmployeeException("Logged in employee not found"));
-        log.info("Logged in employee belongs to restaurant id: {}", loggedInEmployee.getRestaurant().getRestaurantId());
-
+        log.info("Logged in employee and check the restaurant ");
+        if (loggedInEmployee.getRestaurant()==null){
+            log.error("Logged in employee does not belong to any restaurant");
+            throw new EmployeeException("Logged in employee does not have active restaurant");
+        }
         Pageable pageable = PageRequest.of(page, size);
 
         Specification<Employee> spec = employeeSpecification.hasRestaurant(loggedInEmployee.getRestaurant())

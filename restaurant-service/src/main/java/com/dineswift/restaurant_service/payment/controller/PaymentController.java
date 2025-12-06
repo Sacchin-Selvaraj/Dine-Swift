@@ -2,9 +2,11 @@ package com.dineswift.restaurant_service.payment.controller;
 
 import com.dineswift.restaurant_service.payload.response.tableBooking.PaymentCreateResponse;
 import com.dineswift.restaurant_service.payment.payload.request.PaymentDetails;
+import com.dineswift.restaurant_service.payment.payload.response.PaymentDto;
 import com.dineswift.restaurant_service.payment.service.PaymentService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -38,6 +40,16 @@ public class PaymentController {
         PaymentCreateResponse paymentCreateDetails = paymentService.generatePayNow(tableBookingId);
         log.info("Generated pay-now link for bookingId: {}", tableBookingId);
         return ResponseEntity.ok(paymentCreateDetails);
+    }
+
+    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN')")
+    @GetMapping("/get-payment-details/{tableBookingId}")
+    public ResponseEntity<Page<PaymentDto>> getPaymentDetails(@PathVariable UUID tableBookingId,
+                                                              @RequestParam(defaultValue = "0") int page,
+                                                              @RequestParam(defaultValue = "6") int size) {
+        Page<PaymentDto> paymentDtos = paymentService.getPaymentDetails(tableBookingId, page, size);
+        log.info("Fetched payment details for bookingId: {}", tableBookingId);
+        return ResponseEntity.ok(paymentDtos);
     }
 
 }

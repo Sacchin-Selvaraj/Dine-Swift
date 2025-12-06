@@ -54,7 +54,7 @@ public class GatewayJwtFilter implements WebFilter {
             }
         } catch (TokenException e) {
             log.error("JWT Token is expired");
-            return onAuthenticationFailure(exchange,"JWT Token is expired");
+            return onAuthenticationFailure(exchange,"Token is expired Please log in again");
         }
         log.info("JWT token is valid passing request to the next filter");
         Map<String,Object> claims = parseClaims(authToken);

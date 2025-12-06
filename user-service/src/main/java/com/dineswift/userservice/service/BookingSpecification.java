@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDate;
 import java.util.UUID;
 
 @Component
@@ -18,15 +19,22 @@ public final class BookingSpecification {
 
     public Specification<Booking> hasBookingStatus(BookingStatus bookingStatus) {
         if (bookingStatus == null){
-            Specification.allOf();
+           return Specification.allOf();
         }
         return (root, query, builder) -> builder.equal(root.get("bookingStatus"), bookingStatus);
     }
 
     public Specification<Booking> belongsToUser(UUID userId) {
         if (userId==null){
-            Specification.allOf();
+           return Specification.allOf();
         }
         return (root, query, builder) -> builder.equal(root.get("user").get("userId"), userId);
+    }
+
+    public Specification<Booking> hasBookingDate(LocalDate bookingDate) {
+        if (bookingDate == null){
+           return Specification.allOf();
+        }
+        return (root, query, builder) -> builder.greaterThanOrEqualTo(root.get("bookingDate"), bookingDate);
     }
 }

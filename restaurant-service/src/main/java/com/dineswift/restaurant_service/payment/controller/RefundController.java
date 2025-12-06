@@ -1,6 +1,5 @@
 package com.dineswift.restaurant_service.payment.controller;
 
-import com.dineswift.restaurant_service.model.PaymentRefund;
 import com.dineswift.restaurant_service.payment.payload.response.PaymentRefundDto;
 import com.dineswift.restaurant_service.payment.service.RefundService;
 import lombok.RequiredArgsConstructor;

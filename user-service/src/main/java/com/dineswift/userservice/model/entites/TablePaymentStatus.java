@@ -1,4 +1,4 @@
-package com.dineswift.restaurant_service.model;
+package com.dineswift.userservice.model.entites;
 
 public enum TablePaymentStatus {
     PAYMENT_FAILED,
@@ -6,7 +6,6 @@ public enum TablePaymentStatus {
     CANCELLED,
     REFUNDED,
     PARTIALLY_REFUNDED,
-    NO_REFUND,
     UPFRONT_PAYMENT_PENDING,
     UPFRONT_PAYMENT_COMPLETED,
     PAYMENT_PENDING,
