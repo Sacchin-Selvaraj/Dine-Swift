@@ -74,8 +74,23 @@ services:
     networks:
       - spring-network
 
+  redis:
+    image: redis:8.4.0-alpine
+    container_name: redis-cache
+    ports:
+      - "6379:6379"
+    command: >
+      redis-server
+      --maxmemory 500mb
+      --maxmemory-policy allkeys-lru
+    volumes:
+      - redis-data:/data
+    networks:
+      - spring-network
+
 volumes:
   postgres-data:
+  redis-data:
 
 networks:
   spring-network:

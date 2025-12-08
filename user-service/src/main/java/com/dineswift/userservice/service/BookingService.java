@@ -89,7 +89,6 @@ public class BookingService {
 
     }
 
-    @CacheEvict( value = { "booking:pages", "booking:details" }, allEntries = true)
     public PaymentCreateResponse getPaymentCreateResponse(UUID tableBookingId) {
         ResponseEntity<PaymentCreateResponse> responseEntity = restClient.post()
                 .uri("/payments/pay-now/{tableBookingId}", tableBookingId)

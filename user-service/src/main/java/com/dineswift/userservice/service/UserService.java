@@ -17,6 +17,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
@@ -47,7 +48,8 @@ public class UserService {
     private final AuthService authService;
 
 
-    public UserDTO updateDetails(UserDetailsRequest userDetailsRequest) {
+    @CacheEvict(value = {"user:details", "user:info", "user:byId"}, key = "@authService.getAuthenticatedUserId()")
+    public void updateDetails(UserDetailsRequest userDetailsRequest) {
 
         UUID userId=authService.getAuthenticatedUserId();
         log.info("Updating user details for userId: {}", userId);
@@ -57,7 +59,7 @@ public class UserService {
 
         userRepository.save(user);
         log.info("User details updated successfully for userId: {}", userId);
-        return userMapper.toDTO(user);
+        userMapper.toDTO(user);
     }
 
     private void updateUserFromRequest(User user, UserDetailsRequest request) {
@@ -80,7 +82,7 @@ public class UserService {
                     "@authService.getAuthenticatedUserId(), #pageNumber, #limit, #sortField, #sortOrder)",
             unless = "#result == null || #result.isEmpty()"
     )
-    public Page<BookingDTO> getBookings(Integer pageNumber, Integer limit, BookingStatus bookingStatus, LocalDate bookingDate, String sortField, String sortOrder) {
+    public CustomPageDto<BookingDTO> getBookings(Integer pageNumber, Integer limit, BookingStatus bookingStatus, LocalDate bookingDate, String sortField, String sortOrder) {
         log.info("Get Bookings from the UserService");
 
         UUID userId = authService.getAuthenticatedUserId();
@@ -104,9 +106,13 @@ public class UserService {
         bookings = bookingRepository.findAll(spec, pageable);
 
         log.info("Fetched {} bookings", bookings.getNumberOfElements());
-        return bookings.map(booking -> modelMapper.map(booking,BookingDTO.class));
+
+        Page<BookingDTO> bookingDTOS = bookings.map(booking -> modelMapper.map(booking,BookingDTO.class));
+
+        return new CustomPageDto<>(bookingDTOS);
     }
 
+    @CacheEvict(value = {"user:details", "user:info", "user:byId"}, key = "@authService.getAuthenticatedUserId()")
     public void deactivateUser() {
         log.info("Deactivating user account");
         UUID userId = authService.getAuthenticatedUserId();
@@ -116,6 +122,7 @@ public class UserService {
         userRepository.save(user);
     }
 
+    @CacheEvict(value = {"user:details", "user:info", "user:byId"}, key = "@authService.getAuthenticatedUserId()")
     public void updateUsername(UsernameUpdateRequest usernameRequest) {
         UUID userId=authService.getAuthenticatedUserId();
         log.info("Updating username for userId: {}", userId);
@@ -205,6 +212,11 @@ public class UserService {
         userRepository.save(user);
     }
 
+    @Cacheable(
+            value = "user:info",
+            key = "#userId",
+            unless = "#result == null"
+    )
     public GuestInformationResponse getUserInfo(UUID userId) {
         log.info("Fetching user information for userId: {}", userId);
         User user=userCommonService.findValidUser(userId);
@@ -213,6 +225,9 @@ public class UserService {
     }
 
 
+    @Cacheable(value = "user:details",
+            key = "@authService.getAuthenticatedUserId()",
+            unless = "#result == null")
     public UserDTO getCurrentUserInfo() {
         UUID userId=authService.getAuthenticatedUserId();
         log.info("Fetching current user information for userId: {}", userId);

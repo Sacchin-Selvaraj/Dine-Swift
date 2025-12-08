@@ -6,6 +6,7 @@ import com.dineswift.restaurant_service.payload.response.MessageResponse;
 import com.dineswift.restaurant_service.payload.response.menu.MenuDTO;
 import com.dineswift.restaurant_service.payload.response.menu.MenuDTOWoDish;
 import com.dineswift.restaurant_service.payload.response.menu.MenuResponse;
+import com.dineswift.restaurant_service.service.CustomPageDto;
 import com.dineswift.restaurant_service.service.MenuService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -69,11 +70,11 @@ public class MenuController {
     }
 
     @GetMapping("/get-menus/{restaurantId}")
-    public ResponseEntity<Page<MenuDTOWoDish>> getMenusByRestaurantId(@PathVariable UUID restaurantId,
-                                                                      @RequestParam(name = "page", defaultValue = "0") int page,
-                                                                      @RequestParam(name = "size", defaultValue = "10") int size) {
+    public ResponseEntity<CustomPageDto<MenuDTOWoDish>> getMenusByRestaurantId(@PathVariable UUID restaurantId,
+                                                                               @RequestParam(name = "page", defaultValue = "0") int page,
+                                                                               @RequestParam(name = "size", defaultValue = "10") int size) {
         log.info("Received request to get menus for restaurant with ID: {}", restaurantId);
-        Page<MenuDTOWoDish> menus = menuService.getMenusByRestaurantId(restaurantId, page, size);
+        CustomPageDto<MenuDTOWoDish> menus = menuService.getMenusByRestaurantId(restaurantId, page, size);
         return ResponseEntity.ok().body(menus);
     }
 }

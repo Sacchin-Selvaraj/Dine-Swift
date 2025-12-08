@@ -4,7 +4,10 @@ import com.dineswift.restaurant_service.payload.request.dish.DishAddRequest;
 import com.dineswift.restaurant_service.payload.request.dish.DishUpdateRequest;
 import com.dineswift.restaurant_service.payload.response.MessageResponse;
 import com.dineswift.restaurant_service.payload.response.dish.DishDTO;
+import com.dineswift.restaurant_service.service.CustomPageDto;
 import com.dineswift.restaurant_service.service.DishService;
+import com.dineswift.restaurant_service.service.records.DishSearchFilter;
+import com.dineswift.restaurant_service.service.records.DishSearchFilterByRestaurant;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -47,7 +50,7 @@ public class DishController {
     }
 
     @GetMapping("/search-dish")
-    public ResponseEntity<Page<DishDTO>> searchDishes(
+    public ResponseEntity<CustomPageDto<DishDTO>> searchDishes(
             @RequestParam(value = "page") Integer pageNo,
             @RequestParam(value = "size") Integer pageSize,
             @RequestParam(value = "sortBy", required = false, defaultValue = "dishName") String sortBy,
@@ -60,7 +63,12 @@ public class DishController {
             @RequestParam(value = "discount", required = false) Double discount,
             @RequestParam(value = "isVeg", required = false) Boolean isVeg
     ){
-        Page<DishDTO> dishDTOS = dishService.searchDishes(pageNo, pageSize, sortBy, sortDir, dishName, minPrice, maxPrice, minRating, maxRating, discount, isVeg);
+        DishSearchFilter filter = new DishSearchFilter(
+                pageNo, pageSize, sortBy, sortDir,
+                dishName, minPrice, maxPrice, minRating, maxRating,
+                discount, isVeg
+        );
+        CustomPageDto<DishDTO> dishDTOS = dishService.searchDishes(filter);
         return ResponseEntity.ok(dishDTOS);
     }
 
@@ -86,7 +94,7 @@ public class DishController {
     }
 
     @GetMapping("/search-dish-restaurant/{restaurantId}")
-    public ResponseEntity<Page<DishDTO>> searchDishByRestaurant(
+    public ResponseEntity<CustomPageDto<DishDTO>> searchDishByRestaurant(
             @PathVariable UUID restaurantId,
             @RequestParam(value = "page") Integer pageNo,
             @RequestParam(value = "size") Integer pageSize,
@@ -100,7 +108,13 @@ public class DishController {
             @RequestParam(value = "discount", required = false) Double discount,
             @RequestParam(value = "isVeg", required = false) Boolean isVeg
     ){
-        Page<DishDTO> dishDTOS = dishService.searchDishesByRestaurant(restaurantId,pageNo, pageSize, sortBy, sortDir, dishName, minPrice, maxPrice, minRating, maxRating, discount, isVeg);
+        DishSearchFilterByRestaurant filter = new DishSearchFilterByRestaurant(
+                restaurantId, pageNo, pageSize, sortBy, sortDir,
+                dishName, minPrice, maxPrice, minRating, maxRating,
+                discount, isVeg
+        );
+
+        CustomPageDto<DishDTO> dishDTOS = dishService.searchDishesByRestaurant(filter);
         return ResponseEntity.ok(dishDTOS);
     }
 

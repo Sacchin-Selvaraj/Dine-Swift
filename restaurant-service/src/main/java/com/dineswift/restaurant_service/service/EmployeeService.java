@@ -19,6 +19,8 @@ import com.dineswift.restaurant_service.security.service.AuthService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -47,6 +49,7 @@ public class EmployeeService {
     private final EmployeeSpecification employeeSpecification;
 
 
+
     public void createEmployee(EmployeeCreateRequest employeeCreateRequest) {
         log.info("Creating new employee with name: {}", employeeCreateRequest.getEmployeeName());
         verifyUser(employeeCreateRequest);
@@ -73,7 +76,11 @@ public class EmployeeService {
             throw new EmployeeException("Email already registered!");
         }
     }
-
+    @Cacheable(
+            value = "restaurant:employeeById",
+            key = "#employeeId",
+            unless = "#result == null"
+    )
     public EmployeeDto getEmployee(UUID employeeId) {
         if (employeeId == null) {
             throw new EmployeeException("Invalid request with employee id");
@@ -83,6 +90,10 @@ public class EmployeeService {
         return employeeMapper.toDTO(employee);
     }
 
+    @CacheEvict(
+            value = {"restaurant:employeeById","restaurant:employeesPaginated"},
+            key = "@authService.getAuthenticatedId()"
+    )
     public void changeUsername(EmployeeNameRequest employeeNameRequest) {
         log.info("Getting Employee Id from security context for username change");
         UUID employeeId = authService.getAuthenticatedId();
@@ -97,7 +108,10 @@ public class EmployeeService {
         employee.setEmployeeName(employeeNameRequest.getEmployeeName());
         employeeRepository.save(employee);
     }
-
+    @CacheEvict(
+            value = {"restaurant:employeeById","restaurant:employeesPaginated"},
+            allEntries = true
+    )
     public void deleteEmployee(UUID employeeId) {
         if (employeeId == null) {
             throw new EmployeeException("Invalid request with employee id");
@@ -144,6 +158,10 @@ public class EmployeeService {
         employeeRepository.save(employee);
     }
 
+    @CacheEvict(
+            value = {"restaurant:employeesPaginated"},
+            allEntries = true
+    )
     public String createEmployer(EmployeeCreateRequest employeeCreateRequest, UUID restaurantId) {
         if (restaurantId == null) {
             throw new EmployeeException("Invalid Restaurant id or Restaurant Id not found");
@@ -160,6 +178,10 @@ public class EmployeeService {
         return employee.getEmployeeName();
     }
 
+    @CacheEvict(
+            value = {"restaurant:employeeById","restaurant:employeesPaginated"},
+            allEntries = true
+    )
     public void removeRolesFromEmployee(UUID employeeId, RoleRequest roleRemovalRequest) {
         if (employeeId == null || roleRemovalRequest == null || roleRemovalRequest.getRoleIds().isEmpty()) {
             log.info("Invalid request to remove roles from employee");
@@ -175,6 +197,11 @@ public class EmployeeService {
         log.info("Roles removed successfully from employee id: {}", employeeId);
     }
 
+    @Cacheable(
+            value = "restaurant:employee:allRoles",
+            key = "'allRoles'",
+            unless = "#result == null || #result.isEmpty()"
+    )
     public List<RoleDTOResponse> getAllRoles() {
         List<Role> roles=roleRepository.findAll();
         if (roles.isEmpty()){
@@ -184,7 +211,10 @@ public class EmployeeService {
         return roles.stream().map(employeeMapper::toRoleDTO).collect(Collectors.toList());
     }
 
-
+    @CacheEvict(
+            value = {"restaurant:employeeById","restaurant:employeesPaginated"},
+            allEntries = true
+    )
     public void addRolesToEmployee(UUID employeeId, RoleRequest roleAddRequest) {
         if (employeeId==null || roleAddRequest==null || roleAddRequest.getRoleIds().isEmpty()){
             log.error("Invalid request to add roles to employee");
@@ -228,7 +258,12 @@ public class EmployeeService {
     }
 
 
-    public Page<EmployeeDto> getEmployeesPaginated(int page, int size) {
+    @Cacheable(
+            value = "restaurant:employeesPaginated",
+            key = "'page:' + #page + ':size:' + #size",
+            unless = "#result == null || #result.isEmpty()"
+    )
+    public CustomPageDto<EmployeeDto> getEmployeesPaginated(int page, int size) {
         log.info("Fetching paginated employees: page {}, size {}", page, size);
         UUID employeeId = authService.getAuthenticatedId();
         Employee loggedInEmployee = employeeRepository.findByIdAndIsActive(employeeId).orElseThrow(()->
@@ -240,14 +275,17 @@ public class EmployeeService {
         }
         Pageable pageable = PageRequest.of(page, size);
 
-        Specification<Employee> spec = employeeSpecification.hasRestaurant(loggedInEmployee.getRestaurant())
-                .and(employeeSpecification.isActive());
+        Specification<Employee> spec = employeeSpecification.hasRestaurant(loggedInEmployee.getRestaurant());
         Page<Employee> employees = employeeRepository.findAll(spec,pageable);
 
         log.info("Paginated employees fetched successfully for restaurant id: {}", loggedInEmployee.getRestaurant().getRestaurantId());
-        return employees.map(employeeMapper::toDTO);
+        return new CustomPageDto<>(employees.map(employeeMapper::toDTO));
     }
 
+    @CacheEvict(
+            value = {"restaurant:employeeById","restaurant:employeesPaginated"},
+            allEntries = true
+    )
     public void deleteOwnAccount() {
         log.info("Getting Employee Id from security context for account deletion");
         UUID employeeId = authService.getAuthenticatedId();
@@ -261,6 +299,11 @@ public class EmployeeService {
         employeeRepository.save(employee);
     }
 
+    @Cacheable(
+            value = "restaurant:employeeById",
+            key = "@authService.getAuthenticatedId()",
+            unless = "#result == null"
+    )
     public EmployeeDto getCurrentEmployee() {
         log.info("Getting current authenticated employee details");
         UUID employeeId = authService.getAuthenticatedId();

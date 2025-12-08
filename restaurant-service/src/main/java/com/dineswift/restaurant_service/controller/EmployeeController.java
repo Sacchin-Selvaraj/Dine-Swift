@@ -6,6 +6,7 @@ import com.dineswift.restaurant_service.payload.dto.EmployeeDto;
 import com.dineswift.restaurant_service.payload.response.MessageResponse;
 import com.dineswift.restaurant_service.payload.response.employee.EmployeeResponse;
 import com.dineswift.restaurant_service.payload.response.employee.RoleDTOResponse;
+import com.dineswift.restaurant_service.service.CustomPageDto;
 import com.dineswift.restaurant_service.service.EmployeeService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -97,10 +98,10 @@ public class EmployeeController {
     }
 
     @GetMapping("/get-all-employees")
-    public ResponseEntity<Page<EmployeeDto>> getEmployeesPaginated(
+    public ResponseEntity<CustomPageDto<EmployeeDto>> getEmployeesPaginated(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        Page<EmployeeDto> employees = employeeService.getEmployeesPaginated(page, size);
+        CustomPageDto<EmployeeDto> employees = employeeService.getEmployeesPaginated(page, size);
         return ResponseEntity.ok(employees);
     }
 

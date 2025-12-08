@@ -16,6 +16,7 @@ import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -66,6 +67,7 @@ public class VerificationService {
     }
 
 
+    @CacheEvict(value = {"user:details", "user:info", "user:byId"}, key = "@authService.getAuthenticatedUserId()")
     public void verifyEmail(@Valid VerifyTokenRequest verifyEmailRequest) {
 
         UUID userId=authService.getAuthenticatedUserId();
@@ -129,6 +131,7 @@ public class VerificationService {
         return verificationToken;
     }
 
+    @CacheEvict(value = {"user:details", "user:info", "user:byId"}, key = "@authService.getAuthenticatedUserId()")
     public void verifyPhoneNumber(VerifyTokenRequest verifyPhoneNumberRequest) {
 
         UUID userId=authService.getAuthenticatedUserId();

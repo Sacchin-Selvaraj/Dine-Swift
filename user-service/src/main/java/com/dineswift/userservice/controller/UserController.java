@@ -3,6 +3,7 @@ package com.dineswift.userservice.controller;
 import com.dineswift.userservice.model.entites.BookingStatus;
 import com.dineswift.userservice.model.request.*;
 import com.dineswift.userservice.model.response.*;
+import com.dineswift.userservice.service.CustomPageDto;
 import com.dineswift.userservice.service.UserService;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
@@ -29,7 +30,7 @@ public class UserController {
     @GetMapping("/greet")
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     public String greet(){
-        return "Hello World";
+        return "Hello World !!!";
     }
 
 
@@ -48,7 +49,7 @@ public class UserController {
 
     @GetMapping("/bookings")
     @PreAuthorize("hasRole('ROLE_USER')")
-    public ResponseEntity<Page<BookingDTO>> getBookings(
+    public ResponseEntity<CustomPageDto<BookingDTO>> getBookings(
             @RequestParam(name = "page") Integer page,
             @RequestParam(name = "limit") Integer limit,
             @RequestParam(name = "bookingStatus",required = false) BookingStatus bookingStatus,
@@ -56,7 +57,7 @@ public class UserController {
             @RequestParam(name = "sortField",defaultValue = "bookingDate" ,required = false) String sortField,
             @RequestParam(name = "sortOrder",defaultValue = "asc" ,required = false) String sortOrder
     ){
-        Page<BookingDTO> bookingDTOS=userService.getBookings(page,limit,bookingStatus,bookingDate,sortField,sortOrder);
+        CustomPageDto<BookingDTO> bookingDTOS=userService.getBookings(page,limit,bookingStatus,bookingDate,sortField,sortOrder);
         return ResponseEntity.ok(bookingDTOS);
     }
 

@@ -98,6 +98,7 @@ public class MenuService {
         log.info("Dish {} removed from menu {}", dishId, menuId);
     }
 
+
     public MenuDTO getMenuDetails(UUID menuId) {
         log.info("Fetching details for menu ID: {}", menuId);
         Menu menu = menuRepository.findByIdAndIsActive(menuId)
@@ -105,7 +106,7 @@ public class MenuService {
         return menuMapper.toDTO(menu);
     }
 
-    public Page<MenuDTOWoDish> getMenusByRestaurantId(UUID restaurantId, int page, int size) {
+    public CustomPageDto<MenuDTOWoDish> getMenusByRestaurantId(UUID restaurantId, int page, int size) {
         log.info("Fetching menus for restaurant with ID: {}", restaurantId);
 
         Pageable pageable = PageRequest.of(page,size);
@@ -119,6 +120,6 @@ public class MenuService {
             throw new MenuException("No menus found for restaurant with ID: " + restaurantId);
         }
         log.info("Fetched {} menus for restaurant with ID: {}", menusPage.getTotalElements(), restaurantId);
-        return menusPage.map(menuMapper::toDTOWoDish);
+        return new CustomPageDto<>(menusPage.map(menuMapper::toDTOWoDish));
     }
 }

@@ -2,6 +2,7 @@ package com.dineswift.userservice.controller;
 
 import com.dineswift.userservice.model.request.CartAmountUpdateRequest;
 import com.dineswift.userservice.model.response.CartDTO;
+import com.dineswift.userservice.security.service.AuthService;
 import com.dineswift.userservice.service.CartService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +19,7 @@ import java.util.UUID;
 public class CartController {
 
     private final CartService cartService;
+    private final AuthService authService;
 
     @GetMapping("/valid-cartId/{cartId}")
     @PreAuthorize("hasRole('ROLE_USER')")
@@ -31,7 +33,7 @@ public class CartController {
     @PreAuthorize("hasRole('ROLE_USER')")
     public ResponseEntity<CartDTO> getCartById() {
         log.info("Fetching cart details for cartId");
-        CartDTO cartDTO=cartService.getCartDetails();
+        CartDTO cartDTO=cartService.getCartDetails(authService.getAuthenticatedUserId());
         return ResponseEntity.ok(cartDTO);
     }
 

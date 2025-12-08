@@ -3,7 +3,7 @@ package com.dineswift.userservice.service;
 import com.dineswift.userservice.exception.UserException;
 import com.dineswift.userservice.model.entites.User;
 import com.dineswift.userservice.repository.UserRepository;
-import jakarta.validation.constraints.NotBlank;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
@@ -19,6 +19,11 @@ public class UserCommonService {
         this.userRepository = userRepository;
     }
 
+    @Cacheable(
+            value = "user:byId",
+            key = "#userId",
+            unless = "#result == null"
+    )
     public User findValidUser(UUID userId){
 
         return userRepository.findById(userId).orElseThrow(

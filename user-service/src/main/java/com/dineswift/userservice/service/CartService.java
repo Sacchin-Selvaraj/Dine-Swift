@@ -13,6 +13,8 @@ import com.dineswift.userservice.security.service.AuthService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
@@ -42,9 +44,11 @@ public class CartService {
         return exists;
     }
 
-    public CartDTO getCartDetails() {
+    @Cacheable(value = "cart:details",
+            key = "#root.methodName + '_' + #userId",
+            unless = "#result == null")
+    public CartDTO getCartDetails(UUID userId) {
 
-        UUID userId = authService.getAuthenticatedUserId();
         log.info("Fetching cart details for userId={}", userId);
         User loggedInUser = userCommonService.findValidUser(userId);
 
@@ -76,6 +80,9 @@ public class CartService {
                 });
     }
 
+
+    @CacheEvict(value = "cart:details",
+            key = "'getCartDetails_' + @authService.getAuthenticatedUserId()")
     public void updateCartTotalAmount(UUID cartId, CartAmountUpdateRequest cartAmountUpdateRequest) {
         log.info("Updating cart total amount for cartId={} with request={}", cartId, cartAmountUpdateRequest);
         Cart cart = cartRepository.findByIdAndIsActive(cartId)
@@ -89,12 +96,13 @@ public class CartService {
         log.info("Cart total amount updated successfully for cartId={}", cartId);
     }
 
+    @CacheEvict(value = "cart:details",
+            key = "'getCartDetails_' + @authService.getAuthenticatedUserId()")
     public void clearCart() {
         UUID userId = authService.getAuthenticatedUserId();
        log.info("Clearing cart for userId={}", userId);
         User existingUser = userRepository.findByIdAndIsActive(userId).orElseThrow(()-> new UserException("User not found or inactive"));
 
-        Cart cart = existingUser.getCart();
         Cart newCart = new Cart();
         newCart.setGrandTotal(BigDecimal.ZERO);
         existingUser.setCart(newCart);

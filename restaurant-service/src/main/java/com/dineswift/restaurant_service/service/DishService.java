@@ -14,24 +14,25 @@ import com.dineswift.restaurant_service.repository.DishImageRepository;
 import com.dineswift.restaurant_service.repository.DishRepository;
 import com.dineswift.restaurant_service.repository.RestaurantRepository;
 import com.dineswift.restaurant_service.security.service.AuthService;
+import com.dineswift.restaurant_service.service.records.DishSearchFilter;
+import com.dineswift.restaurant_service.service.records.DishSearchFilterByRestaurant;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 
 @Service
 @RequiredArgsConstructor
@@ -46,6 +47,10 @@ public class DishService {
     private final DishImageRepository dishImageRepository;
     private final AuthService authService;
 
+    @CacheEvict(
+            value = {"restaurant:dishes","restaurant:dishesByRestaurant"},
+            allEntries = true
+    )
     public String addDish(DishAddRequest dishAddRequest, UUID restaurantId) {
 
         Restaurant restaurant = restaurantRepository.findByIdAndIsActive(restaurantId).orElseThrow(()-> new RestaurantException("Restaurant not found with id: "+restaurantId));
@@ -58,6 +63,10 @@ public class DishService {
         return "Dish added successfully";
     }
 
+    @CacheEvict(
+            value = {"restaurant:dishes","restaurant:dishesByRestaurant"},
+            allEntries = true
+    )
     public String deleteDish(UUID dishId) {
         Dish dish = dishRepository.findByIdAndIsActive(dishId).orElseThrow(() -> new RestaurantException("Dish not found with id: " + dishId));
         dish.setIsActive(false);
@@ -67,6 +76,10 @@ public class DishService {
         return "Dish deleted successfully";
     }
 
+    @CacheEvict(
+            value = {"restaurant:dishes","restaurant:dishesByRestaurant"},
+            allEntries = true
+    )
     public void updateDish(UUID dishId, @Valid DishUpdateRequest dishUpdateRequest) {
 
         Dish dish = dishRepository.findById(dishId).orElseThrow(()-> new DishException("Dish not found with id: "+dishId));
@@ -77,32 +90,34 @@ public class DishService {
         log.info("Dish updated successfully: {}", updatedDish.getDishName());
     }
 
-    public Page<DishDTO> searchDishes(Integer pageNo, Integer pageSize, String sortBy,
-                                      String sortDir, String dishName, Double minPrice,
-                                      Double maxPrice, Double minRating, Double maxRating,
-                                      Double discount, Boolean isVeg) {
+    @Cacheable(
+            value = "restaurant:dishes",
+            key = "#filter.hashCode()",
+            unless = "#result == null || #result.isEmpty()"
+    )
+    public CustomPageDto<DishDTO> searchDishes(DishSearchFilter filter) {
 
         try {
-            Sort sort = sortDir.equalsIgnoreCase("asc")?Sort.by(sortBy).ascending():Sort.by(sortBy).descending();
+            Sort sort = filter.sortDir().equalsIgnoreCase("asc")?Sort.by(filter.sortBy()).ascending():Sort.by(filter.sortBy()).descending();
 
-            Pageable pageable = PageRequest.of(pageNo,pageSize,sort);
+            Pageable pageable = PageRequest.of(filter.pageNo(),filter.pageSize(),sort);
 
             Specification<Dish> spec = Specification.<Dish>allOf().
-                    and(DishSpecification.hasDishName(dishName)).
-                    and(DishSpecification.hasMinPrice(minPrice).
-                    and(DishSpecification.hasMaxPrice(maxPrice))).
-                    and(DishSpecification.hasDishMinRating(minRating)).
-                    and(DishSpecification.hasDishMaxRating(maxRating)).
-                    and(DishSpecification.hasDiscount(discount)).
-                    and(DishSpecification.isVeg(isVeg)).
+                    and(DishSpecification.hasDishName(filter.dishName())).
+                    and(DishSpecification.hasMinPrice(filter.minPrice()).
+                    and(DishSpecification.hasMaxPrice(filter.maxPrice()))).
+                    and(DishSpecification.hasDishMinRating(filter.minRating())).
+                    and(DishSpecification.hasDishMaxRating(filter.maxRating())).
+                    and(DishSpecification.hasDiscount(filter.discount())).
+                    and(DishSpecification.isVeg(filter.isVeg())).
                     and(DishSpecification.isActive(true));
 
             Page<Dish> dishes = dishRepository.findAll(spec, pageable);
 
             if (dishes.getContent().isEmpty()){
-                return Page.empty();
+                return new CustomPageDto<>(Page.empty());
             }else {
-                return dishes.map(dishMapper::toDTO);
+                return new CustomPageDto<>(dishes.map(dishMapper::toDTO));
             }
         } catch (Exception e) {
             throw new DishException("Dish retrieval failed: " + e.getMessage());
@@ -110,6 +125,10 @@ public class DishService {
 
     }
 
+    @CacheEvict(
+            value = {"restaurant:dishes","restaurant:dishesByRestaurant"},
+            allEntries = true
+    )
     public void uploadRestaurantImage(UUID dishId, MultipartFile imageFile) {
 
         log.info("Initiating image upload for dish id: {}", dishId);
@@ -139,6 +158,10 @@ public class DishService {
         dishImageRepository.save(dishImage);
     }
 
+    @CacheEvict(
+            value = {"restaurant:dishes","restaurant:dishesByRestaurant"},
+            allEntries = true
+    )
     public void deleteRestaurantImage(UUID imageId) {
         if (imageId == null) {
             throw new DishException("Invalid request to delete image");
@@ -161,6 +184,10 @@ public class DishService {
 
     }
 
+    @CacheEvict(
+            value = {"restaurant:dishes","restaurant:dishesByRestaurant"},
+            allEntries = true
+    )
     public void addRating(UUID dishId, Double rating) {
         if (dishId == null || rating == null) {
             throw new DishException("Invalid request to rate dish");
@@ -174,37 +201,38 @@ public class DishService {
         log.info("Rating added successfully for dish id: {}", dishId);
     }
 
-    public Page<DishDTO> searchDishesByRestaurant(UUID restaurantId, Integer pageNo, Integer pageSize,
-                                                  String sortBy, String sortDir, String dishName,
-                                                  Double minPrice, Double maxPrice, Double minRating,
-                                                  Double maxRating, Double discount, Boolean isVeg) {
-        boolean restaurantExists = restaurantRepository.existsByIdAndIsActive(restaurantId);
+    @Cacheable(
+            value = "restaurant:dishesByRestaurant",
+            key = "#filter.hashCode()",
+            unless = "#result == null || #result.isEmpty()"
+    )
+    public CustomPageDto<DishDTO> searchDishesByRestaurant(DishSearchFilterByRestaurant filter) {
+        boolean restaurantExists = restaurantRepository.existsByIdAndIsActive(filter.restaurantId());
         if (!restaurantExists) {
-            throw new RestaurantException("Restaurant not found with id: " + restaurantId);
+            throw new RestaurantException("Restaurant not found with id: " + filter.restaurantId());
         }
-
         try {
-            Sort sort = sortDir.equalsIgnoreCase("asc")?Sort.by(sortBy).ascending():Sort.by(sortBy).descending();
+            Sort sort = filter.sortDir().equalsIgnoreCase("asc")?Sort.by(filter.sortBy()).ascending():Sort.by(filter.sortBy()).descending();
 
-            Pageable pageable = PageRequest.of(pageNo,pageSize,sort);
+            Pageable pageable = PageRequest.of(filter.pageNo(),filter.pageSize(),sort);
 
             Specification<Dish> spec = Specification.<Dish>allOf().
-                    and(DishSpecification.hasRestaurantId(restaurantId)).
-                    and(DishSpecification.hasDishName(dishName)).
-                    and(DishSpecification.hasMinPrice(minPrice).
-                    and(DishSpecification.hasMaxPrice(maxPrice))).
-                    and(DishSpecification.hasDishMinRating(minRating)).
-                    and(DishSpecification.hasDishMaxRating(maxRating)).
-                    and(DishSpecification.hasDiscount(discount)).
-                    and(DishSpecification.isVeg(isVeg)).
+                    and(DishSpecification.hasRestaurantId(filter.restaurantId())).
+                    and(DishSpecification.hasDishName(filter.dishName())).
+                    and(DishSpecification.hasMinPrice(filter.minPrice()).
+                    and(DishSpecification.hasMaxPrice(filter.maxPrice()))).
+                    and(DishSpecification.hasDishMinRating(filter.minRating())).
+                    and(DishSpecification.hasDishMaxRating(filter.maxRating())).
+                    and(DishSpecification.hasDiscount(filter.discount())).
+                    and(DishSpecification.isVeg(filter.isVeg())).
                     and(DishSpecification.isActive(true));
 
             Page<Dish> dishes = dishRepository.findAll(spec,pageable);
 
             if (dishes.getContent().isEmpty()){
-                return Page.empty();
+                return new CustomPageDto<>(Page.empty());
             }else {
-                return dishes.map(dishMapper::toDTO);
+                return new CustomPageDto<>(dishes.map(dishMapper::toDTO));
             }
         } catch (Exception e) {
             throw new DishException("Dish retrieval failed: " + e.getMessage());
