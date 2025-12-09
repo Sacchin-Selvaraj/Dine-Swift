@@ -9,38 +9,36 @@ import com.dineswift.restaurant_service.mapper.OrderItemMapper;
 import com.dineswift.restaurant_service.mapper.TableBookingMapper;
 import com.dineswift.restaurant_service.model.*;
 import com.dineswift.restaurant_service.payload.request.tableBooking.*;
-import com.dineswift.restaurant_service.payload.response.orderItem.OrderItemDto;
 import com.dineswift.restaurant_service.payload.response.tableBooking.TableBookingDto;
 import com.dineswift.restaurant_service.payload.response.tableBooking.TableBookingDtoWoRestaurant;
 import com.dineswift.restaurant_service.payload.response.tableBooking.TableBookingResponse;
 import com.dineswift.restaurant_service.payment.service.PaymentService;
 import com.dineswift.restaurant_service.repository.*;
 import com.dineswift.restaurant_service.security.service.AuthService;
+import com.dineswift.restaurant_service.service.records.TableBookingFilter;
 import jakarta.transaction.Transactional;
-import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.config.core.GrantedAuthorityDefaults;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZonedDateTime;
-import java.util.Collection;
-import java.util.List;
-import java.util.Locale;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @Transactional
@@ -53,14 +51,13 @@ public class TableBookingService {
     private final OrderItemRepository orderItemRepository;
     private final RestaurantRepository restaurantRepository;
     private final TableBookingMapper tableBookingMapper;
-    private final OrderItemMapper orderItemMapper;
     private final DishRepository dishRepository;
     private final AuthService authService;
     private final PaymentService paymentService;
     private final TableBookingSpecification tableBookingSpecification;
     private final KafkaService kafkaService;
     private final RestClient restClient;
-
+    private final CacheManager cacheManager;
 
     public TableBookingResponse createOrder(UUID cartId, BookingRequest bookingRequest) {
 
@@ -208,6 +205,18 @@ public class TableBookingService {
         }
     }
 
+    @Caching(
+            evict = {
+                    @CacheEvict(
+                            value = "restaurant:tableBookingDetails",
+                            key = "#tableBookingId"
+                    ),
+                    @CacheEvict(
+                            value = "restaurant:tableBookings",
+                            allEntries = true
+                    )
+            }
+    )
     public String cancelBooking(UUID tableBookingId, CancellationDetails cancellationDetails) {
         log.info("Cancelling booking with ID: {}", tableBookingId);
         TableBooking existingBooking = tableBookingRepository.findById(tableBookingId)
@@ -274,7 +283,11 @@ public class TableBookingService {
         }
     }
 
-
+    @Cacheable(
+            value = "restaurant:tableBookingDetails",
+            key = "#tableBookingId",
+            unless = "#result == null"
+    )
     public TableBookingDto viewBooking(UUID tableBookingId) {
         log.info("Viewing booking with ID: {}", tableBookingId);
         TableBooking existingBooking = tableBookingRepository.findById(tableBookingId)
@@ -315,6 +328,13 @@ public class TableBookingService {
        log.info("Updating quantity from {} to {}", existingItem.getQuantity(), quantityUpdateRequest.getNewQuantity());
        existingItem.setQuantity(quantityUpdateRequest.getNewQuantity());
        orderItemRepository.save(existingItem);
+       evictCachesForTableBookingId(existingItem.getTableBooking().getTableBookingId());
+       log.info("Order item updated successfully with ID: {}", orderItemsId);
+    }
+
+    private void evictCachesForTableBookingId(UUID tableBookingId) {
+        Objects.requireNonNull(cacheManager.getCache("restaurant:tableBookingDetails")).evict(tableBookingId);
+        Objects.requireNonNull(cacheManager.getCache("restaurant:tableBookings")).clear();
     }
 
     public void removeOrderItem(UUID orderItemsId) {
@@ -334,8 +354,10 @@ public class TableBookingService {
 
         tableBookingRepository.save(tableBooking);
         orderItemRepository.delete(existingItem);
+        evictCachesForTableBookingId(existingItem.getTableBooking().getTableBookingId());
         log.info("Order item removed successfully with ID: {}", orderItemsId);
     }
+
 
     public void addOrderItem(UUID tableBookingId, AddOrderItemRequest addOrderItemRequest) {
         log.info("Adding order item to booking with ID: {}", tableBookingId);
@@ -357,6 +379,7 @@ public class TableBookingService {
         existingBooking.setLastModifiedBy(authService.getAuthenticatedId());
 
         OrderItem savedItem = orderItemRepository.save(newOrderItem);
+        evictCachesForTableBookingId(tableBookingId);
         log.info("Order item added successfully to booking ID: {}", tableBookingId);
     }
 
@@ -372,38 +395,40 @@ public class TableBookingService {
         return newOrderItem;
     }
 
-    public Page<TableBookingDtoWoRestaurant> getTableBookingDetails(UUID restaurantId, Integer pageNo, Integer pageSize,
-                                                                    String tableNumber, LocalDate bookingDate, LocalTime dineInTime,
-                                                                    Integer duration, Integer noOfGuest, String bookingStatus,
-                                                                    String dishStatus, String sortBy, String sortDir) {
-        log.info("Fetching table booking details for restaurantId: {}", restaurantId);
-        Restaurant restaurant = restaurantRepository.findByIdAndIsActive(restaurantId).orElseThrow(()->
-                new RestaurantException("Restaurant not found with ID: " + restaurantId));
+    @Cacheable(
+            value = "restaurant:tableBookings",
+            key = "#filter.hashCode()",
+            unless = "#result == null || #result.isEmpty()"
+    )
+    public CustomPageDto<TableBookingDtoWoRestaurant> getTableBookingDetails(TableBookingFilter filter) {
+        log.info("Fetching table booking details for restaurantId: {}", filter.restaurantId());
+        Restaurant restaurant = restaurantRepository.findByIdAndIsActive(filter.restaurantId()).orElseThrow(()->
+                new RestaurantException("Restaurant not found with ID: " + filter.restaurantId()));
 
-        Sort sort = sortDir.equalsIgnoreCase("asc")?Sort.by(sortBy).ascending():Sort.by(sortBy).descending();
+        Sort sort = filter.sortDir().equalsIgnoreCase("asc")?Sort.by(filter.sortBy()).ascending():Sort.by(filter.sortBy()).descending();
 
-        log.info("Creating pageable object for pageNo: {}, pageSize: {}, sortBy: {}, sortDir: {}", pageNo, pageSize, sortBy, sortDir);
-        Pageable pageable = PageRequest.of(pageNo, pageSize, sort);
+        log.info("Creating pageable object");
+        Pageable pageable = PageRequest.of(filter.pageNo(), filter.pageSize(), sort);
 
         Specification<TableBooking> spec = Specification.<TableBooking>allOf()
                 .and(tableBookingSpecification.hasRestaurant(restaurant))
-                .and(tableBookingSpecification.hasTableNumber(tableNumber))
-                .and(tableBookingSpecification.hasBookingDate(bookingDate))
-                .and(tableBookingSpecification.hasDineInTime(dineInTime))
-                .and(tableBookingSpecification.hasDuration(duration))
-                .and(tableBookingSpecification.hasNoOfGuest(noOfGuest))
-                .and(tableBookingSpecification.hasBookingStatus(bookingStatus))
-                .and(tableBookingSpecification.hasDishStatus(dishStatus));
+                .and(tableBookingSpecification.hasTableNumber(filter.tableNumber()))
+                .and(tableBookingSpecification.hasBookingDate(filter.bookingDate()))
+                .and(tableBookingSpecification.hasDineInTime(filter.dineInTime()))
+                .and(tableBookingSpecification.hasDuration(filter.duration()))
+                .and(tableBookingSpecification.hasNoOfGuest(filter.noOfGuest()))
+                .and(tableBookingSpecification.hasBookingStatus(filter.bookingStatus()))
+                .and(tableBookingSpecification.hasDishStatus(filter.dishStatus()));
 
         Page<TableBooking> bookingsPage = tableBookingRepository.findAll(spec, pageable);
 
         if (!bookingsPage.hasContent()){
-            throw new TableBookingException("No bookings found for the given criteria in restaurant ID: " + restaurantId);
+            throw new TableBookingException("No bookings found for the given criteria in restaurant ID: " + filter.restaurantId());
         }
 
         Page<TableBookingDtoWoRestaurant> bookingDtosPage = bookingsPage.map(tableBookingMapper::toDtoWoRestaurant);
-        log.info("Fetched {} bookings for restaurantId: {}", bookingDtosPage.getTotalElements(), restaurantId);
-        return bookingDtosPage;
+        log.info("Fetched {} bookings for restaurantId: {}", bookingDtosPage.getTotalElements(), filter.restaurantId());
+        return new CustomPageDto<>(bookingDtosPage);
     }
 
     public String updateBookingStatus(UUID tableBookingId, TableBookingStatusUpdateRequest statusUpdateRequest) {
@@ -425,6 +450,7 @@ public class TableBookingService {
 
         existingBooking.setLastModifiedBy(authService.getAuthenticatedId());
         tableBookingRepository.save(existingBooking);
+        evictCachesForTableBookingId(tableBookingId);
         log.info("Booking status updated successfully for booking ID: {}", tableBookingId);
         return "Table Booking status updated successfully.";
     }
@@ -468,6 +494,7 @@ public class TableBookingService {
 
         existingBooking.setLastModifiedBy(authService.getAuthenticatedId());
         tableBookingRepository.save(existingBooking);
+        evictCachesForTableBookingId(tableBookingId);
         log.info("Booking details updated successfully for booking ID: {}", tableBookingId);
         return "Table Booking details updated successfully.";
     }

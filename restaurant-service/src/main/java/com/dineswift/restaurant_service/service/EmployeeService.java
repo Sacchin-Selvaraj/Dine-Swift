@@ -21,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -90,9 +91,17 @@ public class EmployeeService {
         return employeeMapper.toDTO(employee);
     }
 
-    @CacheEvict(
-            value = {"restaurant:employeeById","restaurant:employeesPaginated"},
-            key = "@authService.getAuthenticatedId()"
+    @Caching(
+            evict = {
+                    @CacheEvict(
+                            value = {"restaurant:employeeById"},
+                            key = "@authService.getAuthenticatedId()"
+                    ),
+                    @CacheEvict(
+                            value = {"restaurant:employeesPaginated"},
+                            allEntries = true
+                    )
+            }
     )
     public void changeUsername(EmployeeNameRequest employeeNameRequest) {
         log.info("Getting Employee Id from security context for username change");
@@ -108,9 +117,17 @@ public class EmployeeService {
         employee.setEmployeeName(employeeNameRequest.getEmployeeName());
         employeeRepository.save(employee);
     }
-    @CacheEvict(
-            value = {"restaurant:employeeById","restaurant:employeesPaginated"},
-            allEntries = true
+    @Caching(
+            evict = {
+                    @CacheEvict(
+                            value = {"restaurant:employeeById"},
+                            key = "#employeeId"
+                    ),
+                    @CacheEvict(
+                            value = {"restaurant:employeesPaginated"},
+                            allEntries = true
+                    )
+            }
     )
     public void deleteEmployee(UUID employeeId) {
         if (employeeId == null) {
@@ -178,9 +195,17 @@ public class EmployeeService {
         return employee.getEmployeeName();
     }
 
-    @CacheEvict(
-            value = {"restaurant:employeeById","restaurant:employeesPaginated"},
-            allEntries = true
+    @Caching(
+            evict = {
+                    @CacheEvict(
+                            value = {"restaurant:employeeById"},
+                            key = "@authService.getAuthenticatedId()"
+                    ),
+                    @CacheEvict(
+                            value = {"restaurant:employeesPaginated"},
+                            allEntries = true
+                    )
+            }
     )
     public void removeRolesFromEmployee(UUID employeeId, RoleRequest roleRemovalRequest) {
         if (employeeId == null || roleRemovalRequest == null || roleRemovalRequest.getRoleIds().isEmpty()) {
@@ -211,9 +236,17 @@ public class EmployeeService {
         return roles.stream().map(employeeMapper::toRoleDTO).collect(Collectors.toList());
     }
 
-    @CacheEvict(
-            value = {"restaurant:employeeById","restaurant:employeesPaginated"},
-            allEntries = true
+    @Caching(
+            evict = {
+                    @CacheEvict(
+                            value = {"restaurant:employeeById"},
+                            key = "@authService.getAuthenticatedId()"
+                    ),
+                    @CacheEvict(
+                            value = {"restaurant:employeesPaginated"},
+                            allEntries = true
+                    )
+            }
     )
     public void addRolesToEmployee(UUID employeeId, RoleRequest roleAddRequest) {
         if (employeeId==null || roleAddRequest==null || roleAddRequest.getRoleIds().isEmpty()){
@@ -260,7 +293,7 @@ public class EmployeeService {
 
     @Cacheable(
             value = "restaurant:employeesPaginated",
-            key = "'page:' + #page + ':size:' + #size",
+            key = "'page:' + #page + ':size:' + #size + ':employeeId:' + @authService.getAuthenticatedId()",
             unless = "#result == null || #result.isEmpty()"
     )
     public CustomPageDto<EmployeeDto> getEmployeesPaginated(int page, int size) {
@@ -282,9 +315,17 @@ public class EmployeeService {
         return new CustomPageDto<>(employees.map(employeeMapper::toDTO));
     }
 
-    @CacheEvict(
-            value = {"restaurant:employeeById","restaurant:employeesPaginated"},
-            allEntries = true
+    @Caching(
+            evict = {
+                    @CacheEvict(
+                            value = {"restaurant:employeeById"},
+                            key = "@authService.getAuthenticatedId()"
+                    ),
+                    @CacheEvict(
+                            value = {"restaurant:employeesPaginated"},
+                            allEntries = true
+                    )
+            }
     )
     public void deleteOwnAccount() {
         log.info("Getting Employee Id from security context for account deletion");

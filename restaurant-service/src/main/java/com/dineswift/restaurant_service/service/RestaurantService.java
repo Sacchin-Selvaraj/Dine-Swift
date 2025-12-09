@@ -15,10 +15,15 @@ import com.dineswift.restaurant_service.repository.RestaurantImageRepository;
 import com.dineswift.restaurant_service.repository.RestaurantRepository;
 import com.dineswift.restaurant_service.repository.TableBookingRepository;
 import com.dineswift.restaurant_service.security.service.AuthService;
+import com.dineswift.restaurant_service.service.records.RestaurantFilter;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -30,6 +35,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -49,7 +55,12 @@ public class RestaurantService {
     private final RestaurantImageRepository restaurantImageRepository;
     private final GeocodingService geocodingService;
     private final AuthService authService;
+    private final CacheManager cacheManager;
 
+    @CacheEvict(
+            value = "restaurant:getRestaurants",
+            allEntries = true
+    )
     public void createRestaurant(RestaurantCreateRequest restaurantCreateRequest) {
         UUID employeeId = authService.getAuthenticatedId();
         if (restaurantCreateRequest==null || employeeId==null) {
@@ -80,37 +91,42 @@ public class RestaurantService {
         employeeRepository.save(employee);
     }
 
-    public Page<RestaurantDto> getRestaurants(int page, int size, String restaurantStatus, String sortDir, String sortBy,
-                                              String area, String city, String district, String state, String country,
-                                              String restaurantName, LocalTime openingTime, LocalTime closingTime) {
+    @Cacheable(
+            value = "restaurant:getRestaurants",
+            key = "#filter.hashCode()",
+            unless = "#result == null or #result.isEmpty()"
+    )
+    public CustomPageDto<RestaurantDto> getRestaurants(RestaurantFilter filter) {
         try {
             RestaurantStatus restaurantStatusEnum=null;
+            String restaurantStatus=filter.restaurantStatus();
             log.info("Creating sort object for restaurants");
-            Sort sort = sortDir.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
-            if (restaurantStatus==null) restaurantStatus="OPEN";
+            Sort sort = filter.sortDir().equalsIgnoreCase("asc") ? Sort.by(filter.sortBy()).ascending() : Sort.by(filter.sortBy()).descending();
+            if (filter.restaurantStatus()==null) restaurantStatus="OPEN";
             restaurantStatusEnum=RestaurantStatus.fromDisplayName(restaurantStatus);
 
             log.info("Building restaurant specifications for filtering");
             Specification<Restaurant> spec = Specification.<Restaurant>allOf()
+                    .and(RestaurantSpecification.hasId(filter.restaurantId()))
                     .and(RestaurantSpecification.hasStatus(restaurantStatusEnum))
-                    .and(RestaurantSpecification.hasArea(area))
-                    .and(RestaurantSpecification.hasCity(city))
-                    .and(RestaurantSpecification.hasDistrict(district))
-                    .and(RestaurantSpecification.hasState(state))
-                    .and(RestaurantSpecification.hasCountry(country))
-                    .and(RestaurantSpecification.nameContains(restaurantName))
-                    .and(RestaurantSpecification.openBefore(openingTime))
-                    .and(RestaurantSpecification.closeAfter(closingTime));
+                    .and(RestaurantSpecification.hasArea(filter.area()))
+                    .and(RestaurantSpecification.hasCity(filter.city()))
+                    .and(RestaurantSpecification.hasDistrict(filter.district()))
+                    .and(RestaurantSpecification.hasState(filter.state()))
+                    .and(RestaurantSpecification.hasCountry(filter.country()))
+                    .and(RestaurantSpecification.nameContains(filter.restaurantName()))
+                    .and(RestaurantSpecification.openBefore(filter.openingTime()))
+                    .and(RestaurantSpecification.closeAfter(filter.closingTime()));
 
-            Pageable pageable = PageRequest.of(page, size, sort);
+            Pageable pageable = PageRequest.of(filter.page(), filter.size(), sort);
 
             Page<Restaurant> restaurantPage;
             log.info("Retrieving restaurants from repository with specifications and pagination");
             restaurantPage=restaurantRepository.findAll(spec, pageable);
             if (restaurantPage.hasContent()) {
-                return restaurantPage.map(restaurantMapper::toDTO);
+                return new CustomPageDto<>(restaurantPage.map(restaurantMapper::toDTO));
             }else {
-                return Page.empty();
+                return new CustomPageDto<>(Page.empty());
             }
         } catch (Exception e) {
             log.error("Error retrieving restaurants: {}", e.getMessage());
@@ -118,6 +134,22 @@ public class RestaurantService {
         }
     }
 
+    @Caching(
+            evict = {
+                    @CacheEvict(
+                            value = "restaurant:getEmployeeRestaurant",
+                            key = "@authService.getAuthenticatedId()"
+                    ),
+                    @CacheEvict(
+                            value = "restaurant:getRestaurantById",
+                            key = "#restaurantId"
+                    ),
+                    @CacheEvict(
+                            value = "restaurant:getRestaurants",
+                            allEntries = true
+                    )
+            }
+    )
     public void editRestaurantDetails(UUID restaurantId, @Valid RestaurantUpdateRequest restaurantUpdateRequest) {
         if (restaurantId == null || restaurantUpdateRequest == null) {
             throw new RestaurantException("Invalid Restaurant Update data");
@@ -130,6 +162,22 @@ public class RestaurantService {
         restaurant.setLastModifiedBy(authService.getAuthenticatedId());
     }
 
+    @Caching(
+            evict = {
+                    @CacheEvict(
+                            value = "restaurant:getEmployeeRestaurant",
+                            key = "@authService.getAuthenticatedId()"
+                    ),
+                    @CacheEvict(
+                            value = "restaurant:getRestaurantById",
+                            key = "#restaurantId"
+                    ),
+                    @CacheEvict(
+                            value = "restaurant:getRestaurants",
+                            allEntries = true
+                    )
+            }
+    )
     public void deactivateRestaurant(UUID restaurantId) {
         if (restaurantId == null) {
             throw new RestaurantException("Invalid Restaurant Id");
@@ -142,7 +190,22 @@ public class RestaurantService {
         restaurantRepository.save(restaurant);
     }
 
-
+    @Caching(
+            evict = {
+                    @CacheEvict(
+                            value = "restaurant:getEmployeeRestaurant",
+                            key = "@authService.getAuthenticatedId()"
+                    ),
+                    @CacheEvict(
+                            value = "restaurant:getRestaurantById",
+                            key = "#restaurantId"
+                    ),
+                    @CacheEvict(
+                            value = "restaurant:getRestaurants",
+                            allEntries = true
+                    )
+            }
+    )
     public void changeRestaurantStatus(UUID restaurantId, String status) {
         if (restaurantId == null || status == null) {
             throw new RestaurantException("Invalid data for changing Restaurant status");
@@ -168,6 +231,7 @@ public class RestaurantService {
 
        return imageService.uploadImage(imageFile,"restaurant").thenAcceptAsync( result-> {
            if (result != null && (Boolean) result.get("isSuccessful")) {
+               evictRestaurantCaches(restaurantId);
                log.info("Image uploaded successfully for restaurant id: {}", restaurantId);
                saveRestaurantImage(result, restaurantId);
            } else {
@@ -200,6 +264,7 @@ public class RestaurantService {
 
         return imageService.deleteImage(restaurantImage.getPublicId()).thenAcceptAsync(
                 result->{
+                    evictRestaurantCaches(restaurantImage.getRestaurant().getRestaurantId());
                     log.info("Image deletion Successful for image id: {}", imageId);
                     restaurantImageRepository.delete(restaurantImage);
                 }
@@ -207,7 +272,13 @@ public class RestaurantService {
             log.error("Image deletion failed for image id: {}. Error: {}", imageId, throwable.getMessage());
             throw new CompletionException(new ImageException("Image deletion failed: " + throwable.getMessage()));
         });
+    }
 
+    public void evictRestaurantCaches(UUID restaurantId) {
+        log.info("Evicting caches related to restaurant id: {}", restaurantId);
+        Objects.requireNonNull(cacheManager.getCache("restaurant:getRestaurantById")).evict(restaurantId);
+        Objects.requireNonNull(cacheManager.getCache("restaurant:getEmployeeRestaurant")).evict(authService.getAuthenticatedId());
+        Objects.requireNonNull(cacheManager.getCache("restaurant:getRestaurants")).clear();
     }
 
     public List<RestaurantImageDto> getRestaurantImages(UUID restaurantId) {
@@ -221,6 +292,11 @@ public class RestaurantService {
         return restaurantImages.stream().map(restaurantMapper::toImageDTO).toList();
     }
 
+    @Cacheable(
+            value = "restaurant:getEmployeeRestaurant",
+            key = "@authService.getAuthenticatedId()",
+            unless = "#result == null"
+    )
     public RestaurantDto getEmployeeRestaurant() {
         log.info("Fetching restaurant for authenticated employee");
         UUID employeeId = authService.getAuthenticatedId();
@@ -238,6 +314,11 @@ public class RestaurantService {
         return restaurantMapper.toDTO(restaurant);
     }
 
+    @Cacheable(
+            value = "restaurant:getRestaurantById",
+            key = "#restaurantId",
+            unless = "#result == null"
+    )
     public RestaurantDto getRestaurantById(UUID restaurantId) {
         log.info("Fetching restaurant by id: {}", restaurantId);
         if (restaurantId == null) {

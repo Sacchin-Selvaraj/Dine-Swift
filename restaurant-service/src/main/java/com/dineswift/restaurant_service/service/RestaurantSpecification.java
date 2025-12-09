@@ -5,6 +5,7 @@ import com.dineswift.restaurant_service.model.RestaurantStatus;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.time.LocalTime;
+import java.util.UUID;
 
 public final class RestaurantSpecification {
 
@@ -92,5 +93,14 @@ public final class RestaurantSpecification {
         // closing_time <= requested_time
         return (root, query, builder) ->
                 builder.lessThanOrEqualTo(root.get("closingTime"), time);
+    }
+
+    public static Specification<Restaurant> hasId(UUID restaurantId) {
+        if (restaurantId == null) {
+            return Specification.allOf();
+        }
+        return (root, query, builder)
+                -> builder.equal(root.get("restaurantId"), restaurantId);
+
     }
 }

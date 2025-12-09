@@ -1,6 +1,7 @@
 package com.dineswift.restaurant_service.repository;
 
 import com.dineswift.restaurant_service.model.Menu;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -16,6 +17,10 @@ public interface MenuRepository extends JpaRepository<Menu, UUID> , JpaSpecifica
 
     boolean existsByMenuName(String menuName);
 
+    @EntityGraph(
+        attributePaths = {
+                "dishes"
+        })
     @Query("SELECT m FROM Menu m where menuId=:menuId AND isActive=true")
     Optional<Menu> findByIdAndIsActive(@Param("menuId") UUID menuId);
 

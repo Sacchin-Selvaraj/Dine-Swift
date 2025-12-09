@@ -7,7 +7,9 @@ import com.dineswift.restaurant_service.payload.response.orderItem.OrderItemDto;
 import com.dineswift.restaurant_service.payload.response.tableBooking.TableBookingDto;
 import com.dineswift.restaurant_service.payload.response.tableBooking.TableBookingDtoWoRestaurant;
 import com.dineswift.restaurant_service.payload.response.tableBooking.TableBookingResponse;
+import com.dineswift.restaurant_service.service.CustomPageDto;
 import com.dineswift.restaurant_service.service.TableBookingService;
+import com.dineswift.restaurant_service.service.records.TableBookingFilter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -73,7 +75,7 @@ public class TableBookingController {
 
     @PreAuthorize("(hasAnyRole('ROLE_ADMIN', 'ROLE_MANAGER','ROLE_CHEF', 'ROLE_WAITER'))")
     @GetMapping("/get-table-booking-details/{restaurantId}")
-    public ResponseEntity<Page<TableBookingDtoWoRestaurant>> getTableBookingDetails(
+    public ResponseEntity<CustomPageDto<TableBookingDtoWoRestaurant>> getTableBookingDetails(
             @PathVariable UUID restaurantId,
             @RequestParam(value = "page") Integer pageNo,
             @RequestParam(value = "size") Integer pageSize,
@@ -87,7 +89,7 @@ public class TableBookingController {
             @RequestParam(value = "sortBy",defaultValue = "bookingDate", required = false) String sortBy,
             @RequestParam(value = "sortDir",defaultValue = "asc", required = false) String sortDir
     ) {
-        Page<TableBookingDtoWoRestaurant> bookings = tableBookingService.getTableBookingDetails(
+        TableBookingFilter filter=new TableBookingFilter(
                 restaurantId,
                 pageNo,
                 pageSize,
@@ -101,6 +103,7 @@ public class TableBookingController {
                 sortBy,
                 sortDir
         );
+        CustomPageDto<TableBookingDtoWoRestaurant> bookings = tableBookingService.getTableBookingDetails(filter);
         log.info("Fetched table booking details for restaurantId: {}", restaurantId);
         return ResponseEntity.ok(bookings);
     }

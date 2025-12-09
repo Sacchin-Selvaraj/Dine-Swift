@@ -2,6 +2,7 @@ package com.dineswift.restaurant_service.controller;
 
 import com.dineswift.restaurant_service.payload.request.orderItem.AddOrderItem;
 import com.dineswift.restaurant_service.payload.response.orderItem.OrderItemDto;
+import com.dineswift.restaurant_service.service.CustomPageDto;
 import com.dineswift.restaurant_service.service.OrderService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -56,13 +57,13 @@ public class OrderItemController {
 
     @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_USER')")
     @GetMapping("/get-order-items-booking/{tableBookingId}")
-    public ResponseEntity<Page<OrderItemDto>> getOrderItemsByTableBookingId(
+    public ResponseEntity<CustomPageDto<OrderItemDto>> getOrderItemsByTableBookingId(
             @PathVariable UUID tableBookingId,
             @RequestParam(value = "page") Integer pageNo,
             @RequestParam(value = "size") Integer pageSize
     ) {
         log.info("Fetching order items for tableBookingId={}", tableBookingId);
-        Page<OrderItemDto> orderItems = orderService.getOrderItemsByTableBookingId(tableBookingId, pageNo, pageSize);
+        CustomPageDto<OrderItemDto> orderItems = orderService.getOrderItemsByTableBookingId(tableBookingId, pageNo, pageSize);
         return ResponseEntity.ok(orderItems);
     }
 }

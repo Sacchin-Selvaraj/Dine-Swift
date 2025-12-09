@@ -12,6 +12,10 @@ import com.dineswift.restaurant_service.repository.MenuRepository;
 import com.dineswift.restaurant_service.security.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -31,6 +35,10 @@ public class MenuService {
     private final AuthService authService;
     private final MenuSpecification menuSpecification;
 
+    @CacheEvict(
+            value = "restaurant-menuWoDish",
+            allEntries = true
+    )
     public void addMenu(MenuCreateRequest menuCreateRequest, UUID restaurantId) {
         log.info("Adding new menu: {}", menuCreateRequest.getMenuName());
         if (menuRepository.existsByMenuName(menuCreateRequest.getMenuName())){
@@ -43,6 +51,18 @@ public class MenuService {
         log.info("menu added successfully: {}", menu.getMenuId());
     }
 
+    @Caching(
+            evict = {
+                    @CacheEvict(
+                            value = "restaurant-menuWoDish",
+                            allEntries = true
+                    ),
+                    @CacheEvict(
+                            value = "restaurant-menuDetails",
+                            key = "#menuId"
+                    )
+            }
+    )
     public void deleteMenu(UUID menuId) {
         log.info("Deleting menu with ID: {}", menuId);
         Menu menu = menuRepository.findByIdAndIsActive(menuId).orElseThrow(() -> new MenuException("menu not found with provided Id"));
@@ -52,6 +72,18 @@ public class MenuService {
         log.info("Menu deleted successfully: {}", menuId);
     }
 
+   @Caching(
+            evict = {
+                    @CacheEvict(
+                            value = "restaurant-menuDetails",
+                            key = "#menuId"
+                    ),
+                    @CacheEvict(
+                            value = "restaurant-menuWoDish",
+                            allEntries = true
+                    )
+            }
+   )
     public void updateMenu(UUID menuId, MenuUpdateRequest menuUpdateRequest) {
         log.info("Updating menu with ID: {}", menuId);
         Menu menu = menuRepository.findByIdAndIsActive(menuId).orElseThrow(() -> new MenuException("menu not found with provided Id"));
@@ -69,8 +101,8 @@ public class MenuService {
         }
 
         menu.setLastModifiedBy(authService.getAuthenticatedId());
-        menuRepository.save(menu);
         log.info("menu updated successfully: {}", menuId);
+        menuRepository.save(menu);
     }
 
     public MenuResponse getMenuByRestaurantId(UUID restaurantId) {
@@ -86,6 +118,10 @@ public class MenuService {
         return menuResponse;
     }
 
+    @CacheEvict(
+            value = {"restaurant-menuDetails"},
+            key = "#menuId"
+    )
     public void removeDishFromMenu(UUID menuId, UUID dishId) {
         log.info("Removing dish {} from menu {}", dishId, menuId);
         Menu menu = menuRepository.findByIdAndIsActive(menuId).orElseThrow(() -> new MenuException("menu not found with provided Id"));
@@ -99,13 +135,23 @@ public class MenuService {
     }
 
 
+    @Cacheable(
+            value = "restaurant-menuDetails",
+            key = "#menuId",
+            unless = "#result == null"
+    )
     public MenuDTO getMenuDetails(UUID menuId) {
         log.info("Fetching details for menu ID: {}", menuId);
         Menu menu = menuRepository.findByIdAndIsActive(menuId)
-                .orElseThrow(() -> new MenuException("menu not found with provided Id"));
+                .orElseThrow(() -> new MenuException("Menu not found with provided Id"));
         return menuMapper.toDTO(menu);
     }
 
+    @Cacheable(
+            value = "restaurant-menuWoDish",
+            key = "#restaurantId + '-' + #page + '-' + #size",
+            unless = "#result == null || #result.isEmpty()"
+    )
     public CustomPageDto<MenuDTOWoDish> getMenusByRestaurantId(UUID restaurantId, int page, int size) {
         log.info("Fetching menus for restaurant with ID: {}", restaurantId);
 

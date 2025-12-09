@@ -64,7 +64,7 @@ public class DishService {
     }
 
     @CacheEvict(
-            value = {"restaurant:dishes","restaurant:dishesByRestaurant"},
+            value = {"restaurant:dishes","restaurant:dishesByRestaurant","restaurant-menuDetails"},
             allEntries = true
     )
     public String deleteDish(UUID dishId) {
@@ -77,7 +77,7 @@ public class DishService {
     }
 
     @CacheEvict(
-            value = {"restaurant:dishes","restaurant:dishesByRestaurant"},
+            value = {"restaurant:dishes","restaurant:dishesByRestaurant","restaurant-menuDetails"},
             allEntries = true
     )
     public void updateDish(UUID dishId, @Valid DishUpdateRequest dishUpdateRequest) {
@@ -126,7 +126,7 @@ public class DishService {
     }
 
     @CacheEvict(
-            value = {"restaurant:dishes","restaurant:dishesByRestaurant"},
+            value = {"restaurant:dishes","restaurant:dishesByRestaurant","restaurant-menuDetails"},
             allEntries = true
     )
     public void uploadRestaurantImage(UUID dishId, MultipartFile imageFile) {
@@ -159,7 +159,7 @@ public class DishService {
     }
 
     @CacheEvict(
-            value = {"restaurant:dishes","restaurant:dishesByRestaurant"},
+            value = {"restaurant:dishes","restaurant:dishesByRestaurant","restaurant-menuDetails"},
             allEntries = true
     )
     public void deleteRestaurantImage(UUID imageId) {
@@ -184,10 +184,6 @@ public class DishService {
 
     }
 
-    @CacheEvict(
-            value = {"restaurant:dishes","restaurant:dishesByRestaurant"},
-            allEntries = true
-    )
     public void addRating(UUID dishId, Double rating) {
         if (dishId == null || rating == null) {
             throw new DishException("Invalid request to rate dish");

@@ -11,5 +11,4 @@ public class AddOrderItemRequest {
 
     private UUID dishId;
     private Integer quantity;
-
 }

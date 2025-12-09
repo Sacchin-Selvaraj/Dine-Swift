@@ -45,7 +45,7 @@ public class CartService {
     }
 
     @Cacheable(value = "cart:details",
-            key = "#root.methodName + '_' + #userId",
+            key = "#userId",
             unless = "#result == null")
     public CartDTO getCartDetails(UUID userId) {
 
@@ -82,7 +82,7 @@ public class CartService {
 
 
     @CacheEvict(value = "cart:details",
-            key = "'getCartDetails_' + @authService.getAuthenticatedUserId()")
+            key = "@authService.getAuthenticatedUserId()")
     public void updateCartTotalAmount(UUID cartId, CartAmountUpdateRequest cartAmountUpdateRequest) {
         log.info("Updating cart total amount for cartId={} with request={}", cartId, cartAmountUpdateRequest);
         Cart cart = cartRepository.findByIdAndIsActive(cartId)
@@ -97,7 +97,7 @@ public class CartService {
     }
 
     @CacheEvict(value = "cart:details",
-            key = "'getCartDetails_' + @authService.getAuthenticatedUserId()")
+            key = "@authService.getAuthenticatedUserId()")
     public void clearCart() {
         UUID userId = authService.getAuthenticatedUserId();
        log.info("Clearing cart for userId={}", userId);

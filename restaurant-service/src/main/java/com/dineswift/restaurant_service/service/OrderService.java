@@ -14,6 +14,9 @@ import com.dineswift.restaurant_service.repository.OrderItemRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -24,6 +27,7 @@ import org.springframework.web.client.RestClient;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 @Service
@@ -36,7 +40,12 @@ public class OrderService {
     private final DishRepository dishRepository;
     private final OrderItemMapper orderItemMapper;
     private final RestClient restClient;
+    private final CacheManager cacheManager;
 
+    @CacheEvict(
+            value = "restaurant:order-items-by-booking",
+            allEntries = true
+    )
     public void addItemToOrderItem(AddOrderItem addOrderItemRequest) {
         UUID dishId = addOrderItemRequest.getDishId();
         Integer quantity = addOrderItemRequest.getQuantity();
@@ -100,7 +109,10 @@ public class OrderService {
         return amountUpdateRequest;
     }
 
-
+    @CacheEvict(
+            value = "restaurant:order-items-by-booking",
+            allEntries = true
+    )
     public void updateItemQuantity(UUID orderItemId, Integer quantity) {
 
         checkQuantity(quantity);
@@ -112,17 +124,32 @@ public class OrderService {
 
         orderItem.setQuantity(quantity);
         orderItemRepository.save(orderItem);
-
+        evictOrderItemCaches(orderItem.getCartId());
     }
 
+    @CacheEvict(
+            value = {"restaurant:order-items-by-booking"},
+            allEntries = true
+    )
     public void deleteItem(UUID orderItemId) {
 
         OrderItem orderItem = orderItemRepository.findById(orderItemId).orElseThrow(
                 () -> new OrderItemException("Order item not found"));
         log.info("OrderItem found for deletion: {}", orderItem);
         orderItemRepository.delete(orderItem);
+        evictOrderItemCaches(orderItem.getCartId());
     }
 
+    public void evictOrderItemCaches(UUID cartId) {
+        log.info("Evicting caches related to order items for cartId: {}", cartId);
+        Objects.requireNonNull(cacheManager.getCache("restaurant:order-items-by-cart")).evict(cartId);
+    }
+
+    @Cacheable(
+            value = "restaurant:order-items-by-cart",
+            key = "#cartId",
+            unless = "#result == null || #result.isEmpty()"
+    )
     public List<OrderItemDto> getOrderItemsByCartId(UUID cartId) {
 
         List<OrderItem> orderItems = orderItemRepository.findAllByCartId(cartId);
@@ -189,7 +216,12 @@ public class OrderService {
         return amountUpdateRequest;
     }
 
-    public Page<OrderItemDto> getOrderItemsByTableBookingId(UUID tableBookingId, Integer pageNo, Integer pageSize) {
+    @Cacheable(
+            value = "restaurant:order-items-by-booking",
+            key = "#tableBookingId + '-' + #pageNo + '-' + #pageSize",
+            unless = "#result == null || #result.isEmpty()"
+    )
+    public CustomPageDto<OrderItemDto> getOrderItemsByTableBookingId(UUID tableBookingId, Integer pageNo, Integer pageSize) {
         log.info("Fetching order items for tableBookingId: {}", tableBookingId);
         Pageable pageable = PageRequest.of(pageNo, pageSize);
         Page<OrderItem> orderItemsPage = orderItemRepository.findAllByTableBookingId(tableBookingId, pageable);
@@ -199,7 +231,7 @@ public class OrderService {
         }
         Page<OrderItemDto> orderItemDtos = orderItemsPage.map(orderItemMapper::toDtoAfterBooking);
         log.info("Order items fetched for tableBookingId {}: {}", tableBookingId, orderItemDtos);
-        return orderItemDtos;
+        return new CustomPageDto<>(orderItemDtos);
 
     }
 }

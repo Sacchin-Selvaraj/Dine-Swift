@@ -4,7 +4,9 @@ import com.dineswift.restaurant_service.payload.dto.RestaurantDto;
 import com.dineswift.restaurant_service.payload.request.restaurant.RestaurantCreateRequest;
 import com.dineswift.restaurant_service.payload.request.restaurant.RestaurantUpdateRequest;
 import com.dineswift.restaurant_service.payload.response.MessageResponse;
+import com.dineswift.restaurant_service.service.CustomPageDto;
 import com.dineswift.restaurant_service.service.RestaurantService;
+import com.dineswift.restaurant_service.service.records.RestaurantFilter;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -40,11 +42,12 @@ public class RestaurantController {
     }
 
     @GetMapping("/get-restaurants")
-    public ResponseEntity<Page<RestaurantDto>> getRestaurants(
+    public ResponseEntity<CustomPageDto<RestaurantDto>> getRestaurants(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "asc") String sortDir,
             @RequestParam(defaultValue = "restaurantName") String sortBy,
+            @RequestParam(required = false) UUID restaurantId,
             @RequestParam(required = false) String restaurantStatus,
             @RequestParam(required = false) String area,
             @RequestParam(required = false) String city,
@@ -55,7 +58,23 @@ public class RestaurantController {
             @RequestParam(required = false)LocalTime openingTime,
             @RequestParam(required = false)LocalTime closingTime
             ) {
-        Page<RestaurantDto> restaurants = restaurantService.getRestaurants(page, size, restaurantStatus, sortDir,sortBy, area, city, district, state, country, restaurantName, openingTime, closingTime);
+        RestaurantFilter filter = new RestaurantFilter(
+                page,
+                size,
+                sortDir,
+                sortBy,
+                restaurantId,
+                restaurantStatus,
+                area,
+                city,
+                district,
+                state,
+                country,
+                restaurantName,
+                openingTime,
+                closingTime
+        );
+        CustomPageDto<RestaurantDto> restaurants = restaurantService.getRestaurants(filter);
         return ResponseEntity.ok(restaurants);
     }
 
