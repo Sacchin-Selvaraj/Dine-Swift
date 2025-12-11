@@ -8,13 +8,15 @@ import com.dineswift.restaurant_service.payload.response.dish.DishDTO;
 import com.dineswift.restaurant_service.payload.response.dish.DishImageDTO;
 import com.dineswift.restaurant_service.repository.DishImageRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class DishMapper {
@@ -27,7 +29,7 @@ public class DishMapper {
         Dish dish = mapper.map(dishAddRequest, Dish.class);
         dish.setDishStarRating(BigDecimal.valueOf(0.0));
         dish.setDishTotalRating(0.0);
-        dish.setDishTotalRatingCount(0);
+        dish.setDishTotalRatingCount(0L);
         return dish;
     }
 
@@ -68,6 +70,29 @@ public class DishMapper {
         dishDTO.setDishImages(dishImages.stream().map(this::toImageDTO).toList());
         return dishDTO;
     }
+
+    public List<DishDTO> toDTOList(List<Dish> dishes) {
+
+        List<DishImage> images = dishImageRepository.findByDishes(dishes);
+
+        Map<UUID, List<DishImage>> imageMap =
+                images.stream().collect(Collectors.groupingBy(img -> img.getDish().getDishId()));
+
+        List<DishDTO> dishDTOS = dishes.stream().map(dish -> {
+            DishDTO dto = mapper.map(dish, DishDTO.class);
+            dto.setDishImages(
+                    imageMap.getOrDefault(dish.getDishId(), List.of())
+                            .stream()
+                            .map(this::toImageDTO)
+                            .toList()
+            );
+            return dto;
+        }).toList();
+        log.info("Mapped {} dishes to DishDTOs", dishDTOS.size());
+        return dishDTOS;
+    }
+
+
 
     public DishImage toImageEntity(Map<String, Object> uploadResult, Dish dish) {
         DishImage dishImage = new DishImage();

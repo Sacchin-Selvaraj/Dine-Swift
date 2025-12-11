@@ -56,7 +56,7 @@ public class Dish {
 
     @Min(value = 0, message = "Rating count cannot be negative")
     @Column(name = "dish_total_rating_count")
-    private Integer dishTotalRatingCount = 0;
+    private Long dishTotalRatingCount = 0L;
 
     @Size(max = 500, message = "Dish comments cannot exceed 500 characters")
     @Column(name = "dish_comments", columnDefinition = "TEXT")

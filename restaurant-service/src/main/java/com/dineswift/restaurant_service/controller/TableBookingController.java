@@ -3,7 +3,6 @@ package com.dineswift.restaurant_service.controller;
 
 import com.dineswift.restaurant_service.payload.request.tableBooking.*;
 import com.dineswift.restaurant_service.payload.response.MessageResponse;
-import com.dineswift.restaurant_service.payload.response.orderItem.OrderItemDto;
 import com.dineswift.restaurant_service.payload.response.tableBooking.TableBookingDto;
 import com.dineswift.restaurant_service.payload.response.tableBooking.TableBookingDtoWoRestaurant;
 import com.dineswift.restaurant_service.payload.response.tableBooking.TableBookingResponse;
@@ -12,7 +11,6 @@ import com.dineswift.restaurant_service.service.TableBookingService;
 import com.dineswift.restaurant_service.service.records.TableBookingFilter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;

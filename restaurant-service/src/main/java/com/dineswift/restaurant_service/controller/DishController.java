@@ -2,7 +2,6 @@ package com.dineswift.restaurant_service.controller;
 
 import com.dineswift.restaurant_service.payload.request.dish.DishAddRequest;
 import com.dineswift.restaurant_service.payload.request.dish.DishUpdateRequest;
-import com.dineswift.restaurant_service.payload.response.MessageResponse;
 import com.dineswift.restaurant_service.payload.response.dish.DishDTO;
 import com.dineswift.restaurant_service.service.CustomPageDto;
 import com.dineswift.restaurant_service.service.DishService;
@@ -10,7 +9,6 @@ import com.dineswift.restaurant_service.service.records.DishSearchFilter;
 import com.dineswift.restaurant_service.service.records.DishSearchFilterByRestaurant;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -18,7 +16,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 @RestController
@@ -30,23 +27,32 @@ public class DishController {
 
     @PreAuthorize(("hasRole('ROLE_ADMIN') or hasRole('ROLE_MANAGER')"))
     @PostMapping("/add-dish/{restaurantId}")
-    public ResponseEntity<MessageResponse> addDish(@Valid @RequestBody DishAddRequest dishAddRequest, @PathVariable  UUID restaurantId) {
-        String response = dishService.addDish(dishAddRequest,restaurantId);
-        return new ResponseEntity<>(MessageResponse.builder().message(response).build(),HttpStatus.CREATED);
+    public ResponseEntity<Void> addDish(
+            @Valid @RequestBody DishAddRequest dishAddRequest,
+            @PathVariable  UUID restaurantId) {
+
+        dishService.addDish(dishAddRequest,restaurantId);
+
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @PreAuthorize(("hasRole('ROLE_ADMIN') or hasRole('ROLE_MANAGER')"))
     @DeleteMapping("/delete-dish/{dishId}")
-    public ResponseEntity<MessageResponse> deleteDish(@PathVariable UUID dishId) {
-        String response = dishService.deleteDish(dishId);
-        return ResponseEntity.ok(MessageResponse.builder().message(response).build());
+    public ResponseEntity<Void> deleteDish(@PathVariable UUID dishId) {
+
+        dishService.deleteDish(dishId);
+
+        return ResponseEntity.noContent().build();
     }
 
     @PreAuthorize(("hasRole('ROLE_ADMIN') or hasRole('ROLE_MANAGER')"))
     @PatchMapping("/update-dish/{dishId}")
-    public ResponseEntity<MessageResponse> updateDish(@PathVariable UUID dishId, @Valid @RequestBody DishUpdateRequest dishUpdateRequest) {
+    public ResponseEntity<Void> updateDish(@PathVariable UUID dishId,
+                                                      @Valid @RequestBody DishUpdateRequest dishUpdateRequest) {
+
         dishService.updateDish(dishId, dishUpdateRequest);
-        return ResponseEntity.ok(MessageResponse.builder().message("Dish updated successfully").build());
+
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping("/search-dish")
@@ -74,23 +80,29 @@ public class DishController {
 
     @PreAuthorize(("hasRole('ROLE_ADMIN') or hasRole('ROLE_MANAGER')"))
     @PostMapping("/upload-image/{dishId}")
-    public ResponseEntity<MessageResponse> uploadRestaurantImage(@PathVariable UUID dishId,@RequestParam("imageFile") MultipartFile imageFile) throws ExecutionException, InterruptedException {
-        dishService.uploadRestaurantImage(dishId, imageFile);
-        return new ResponseEntity<>(MessageResponse.builder().message("Image uploaded successfully").build(),HttpStatus.ACCEPTED);
+    public ResponseEntity<Void> uploadDishImage(@PathVariable UUID dishId,
+                                                                 @RequestParam("imageFile") MultipartFile imageFile) throws ExecutionException, InterruptedException {
+        dishService.uploadDishImage(dishId, imageFile);
+
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @PreAuthorize(("hasRole('ROLE_ADMIN') or hasRole('ROLE_MANAGER')"))
     @DeleteMapping("/delete-image/{imageId}")
-    public ResponseEntity<MessageResponse> deleteRestaurantImage(@PathVariable UUID imageId) {
+    public ResponseEntity<Void> deleteRestaurantImage(@PathVariable UUID imageId) {
+
         dishService.deleteRestaurantImage(imageId);
-        return ResponseEntity.ok(new MessageResponse("Image deleted successfully"));
+
+        return ResponseEntity.ok().build();
     }
 
     @PreAuthorize("hasAnyRole('ROLE_USER','ROLE_ADMIN','ROLE_MANAGER')")
     @PatchMapping("/rate-dish/{dishId}")
     public ResponseEntity<Void> rateDish(@PathVariable UUID dishId, @RequestParam Double rating) {
+
         dishService.addRating(dishId,rating);
-        return ResponseEntity.ok(null);
+
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping("/search-dish-restaurant/{restaurantId}")

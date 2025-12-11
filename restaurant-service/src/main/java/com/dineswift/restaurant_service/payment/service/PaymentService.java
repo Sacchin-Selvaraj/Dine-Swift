@@ -10,8 +10,8 @@ import com.dineswift.restaurant_service.payment.payload.request.PaymentDetails;
 import com.dineswift.restaurant_service.payment.payload.response.PaymentDto;
 import com.dineswift.restaurant_service.payment.repository.PaymentRepository;
 import com.dineswift.restaurant_service.payment.repository.PaymentRefundRepository;
-import com.dineswift.restaurant_service.repository.OrderItemRepository;
 import com.dineswift.restaurant_service.repository.TableBookingRepository;
+import com.dineswift.restaurant_service.service.TableBookingService;
 import com.razorpay.Order;
 import com.razorpay.RazorpayClient;
 import com.razorpay.RazorpayException;
@@ -21,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.CacheManager;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -32,6 +33,7 @@ import javax.crypto.spec.SecretKeySpec;
 import java.math.BigDecimal;
 import java.security.MessageDigest;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -45,9 +47,9 @@ public class PaymentService {
     private final TableBookingRepository tableBookingRepository;
     private final RazorpayClient razorpayClient;
     private final PaymentRefundRepository paymentRefundRepository;
-    private final OrderItemRepository orderItemRepository;
     private final RestClient restClient;
     private final PaymentMapper paymentMapper;
+    private final CacheManager cacheManager;
 
     @Value("${razorpay.api.secret}")
     private String secretKey;
@@ -62,7 +64,7 @@ public class PaymentService {
         newPayment.setTableBooking(newBooking);
 
         log.info("Create orderId using Razorpay");
-        String createdOrderId = createRazorpayOrder(amount, "INR");
+        String createdOrderId = createRazorpayOrder(amount);
 
         newPayment.setOrderId(createdOrderId);
         Payment savedPayment = paymentRepository.save(newPayment);
@@ -78,13 +80,13 @@ public class PaymentService {
                 .build();
     }
 
-    private String createRazorpayOrder(BigDecimal upfrontAmount, String currency) {
+    private String createRazorpayOrder(BigDecimal upfrontAmount) {
 
         try {
             JSONObject paymentRequest = new JSONObject();
             int amountInPaise = upfrontAmount.multiply(new BigDecimal(100)).intValue();
             paymentRequest.put("amount", amountInPaise);
-            paymentRequest.put("currency", currency);
+            paymentRequest.put("currency", "INR");
             paymentRequest.put("payment_capture", 1);
 
             Order createdOrder = razorpayClient.orders.create(paymentRequest);
@@ -201,6 +203,7 @@ public class PaymentService {
             }
             log.info("Updating booking status to {} for bookingId: {}", booking.getBookingStatus(), booking.getTableBookingId());
             paymentRepository.save(payment);
+            evictCachesForTableBookingId(booking.getTableBookingId());
 
     }
 
@@ -344,5 +347,10 @@ public class PaymentService {
         Page<PaymentDto> paymentDtoPage = paymentPage.map(paymentMapper::convertToDto);
         log.info("Fetched {} payment records for bookingId: {}", paymentDtoPage.getTotalElements(), tableBookingId);
         return paymentDtoPage;
+    }
+
+    public void evictCachesForTableBookingId(UUID tableBookingId) {
+        Objects.requireNonNull(cacheManager.getCache("restaurant:tableBookingDetails")).evict(tableBookingId);
+        Objects.requireNonNull(cacheManager.getCache("restaurant:tableBookings")).clear();
     }
 }

@@ -48,11 +48,11 @@ public class UserService {
     private final AuthService authService;
 
 
-    @CacheEvict(value = {"user:details", "user:info", "user:byId"}, key = "@authService.getAuthenticatedUserId()")
+    @CacheEvict(value = {"user:details", "user:info"}, key = "@authService.getAuthenticatedUserId()")
     public void updateDetails(UserDetailsRequest userDetailsRequest) {
 
         UUID userId=authService.getAuthenticatedUserId();
-        log.info("Updating user details for userId: {}", userId);
+        log.info("Updating user detail for userId: {}", userId);
         User user=userCommonService.findValidUser(userId);
 
         updateUserFromRequest(user, userDetailsRequest);
@@ -112,7 +112,7 @@ public class UserService {
         return new CustomPageDto<>(bookingDTOS);
     }
 
-    @CacheEvict(value = {"user:details", "user:info", "user:byId"}, key = "@authService.getAuthenticatedUserId()")
+    @CacheEvict(value = {"user:details", "user:info"}, key = "@authService.getAuthenticatedUserId()")
     public void deactivateUser() {
         log.info("Deactivating user account");
         UUID userId = authService.getAuthenticatedUserId();
@@ -122,7 +122,7 @@ public class UserService {
         userRepository.save(user);
     }
 
-    @CacheEvict(value = {"user:details", "user:info", "user:byId"}, key = "@authService.getAuthenticatedUserId()")
+    @CacheEvict(value = {"user:details", "user:info"}, key = "@authService.getAuthenticatedUserId()")
     public void updateUsername(UsernameUpdateRequest usernameRequest) {
         UUID userId=authService.getAuthenticatedUserId();
         log.info("Updating username for userId: {}", userId);

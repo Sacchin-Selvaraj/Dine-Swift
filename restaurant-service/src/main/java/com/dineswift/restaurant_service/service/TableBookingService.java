@@ -5,7 +5,6 @@ import com.dineswift.restaurant_service.exception.DishException;
 import com.dineswift.restaurant_service.exception.RestaurantException;
 import com.dineswift.restaurant_service.exception.TableBookingException;
 import com.dineswift.restaurant_service.kafka.service.KafkaService;
-import com.dineswift.restaurant_service.mapper.OrderItemMapper;
 import com.dineswift.restaurant_service.mapper.TableBookingMapper;
 import com.dineswift.restaurant_service.model.*;
 import com.dineswift.restaurant_service.payload.request.tableBooking.*;
@@ -59,6 +58,11 @@ public class TableBookingService {
     private final RestClient restClient;
     private final CacheManager cacheManager;
 
+
+    @CacheEvict(
+            value = "restaurant:tableBookings",
+            allEntries = true
+    )
     public TableBookingResponse createOrder(UUID cartId, BookingRequest bookingRequest) {
 
         log.info("Creating order for cartId: {}", cartId);
@@ -214,6 +218,10 @@ public class TableBookingService {
                     @CacheEvict(
                             value = "restaurant:tableBookings",
                             allEntries = true
+                    ),
+                    @CacheEvict(
+                            value = "booking:pages",
+                            allEntries = true
                     )
             }
     )
@@ -298,6 +306,10 @@ public class TableBookingService {
         return bookingDto;
     }
 
+    @CacheEvict(
+            value = "restaurant:order-items-by-booking",
+            allEntries = true
+    )
     public void updateOrderItem(UUID orderItemsId, QuantityUpdateRequest quantityUpdateRequest) {
         log.info("Updating order item with ID: {}", orderItemsId);
         OrderItem existingItem = orderItemRepository.findById(orderItemsId)
@@ -332,11 +344,10 @@ public class TableBookingService {
        log.info("Order item updated successfully with ID: {}", orderItemsId);
     }
 
-    private void evictCachesForTableBookingId(UUID tableBookingId) {
-        Objects.requireNonNull(cacheManager.getCache("restaurant:tableBookingDetails")).evict(tableBookingId);
-        Objects.requireNonNull(cacheManager.getCache("restaurant:tableBookings")).clear();
-    }
-
+    @CacheEvict(
+            value = "restaurant:order-items-by-booking",
+            allEntries = true
+    )
     public void removeOrderItem(UUID orderItemsId) {
         log.info("Removing order item with ID: {}", orderItemsId);
         OrderItem existingItem = orderItemRepository.findById(orderItemsId)
@@ -358,7 +369,10 @@ public class TableBookingService {
         log.info("Order item removed successfully with ID: {}", orderItemsId);
     }
 
-
+    @CacheEvict(
+            value = "restaurant:order-items-by-booking",
+            allEntries = true
+    )
     public void addOrderItem(UUID tableBookingId, AddOrderItemRequest addOrderItemRequest) {
         log.info("Adding order item to booking with ID: {}", tableBookingId);
         TableBooking existingBooking = tableBookingRepository.findByIdAndIsActive(tableBookingId)
@@ -431,6 +445,7 @@ public class TableBookingService {
         return new CustomPageDto<>(bookingDtosPage);
     }
 
+    @CacheEvict(value = "booking:pages", allEntries = true)
     public String updateBookingStatus(UUID tableBookingId, TableBookingStatusUpdateRequest statusUpdateRequest) {
         log.info("Updating booking status for booking ID: {}", tableBookingId);
         TableBooking existingBooking = tableBookingRepository.findByIdAndIsActive(tableBookingId)
@@ -497,5 +512,10 @@ public class TableBookingService {
         evictCachesForTableBookingId(tableBookingId);
         log.info("Booking details updated successfully for booking ID: {}", tableBookingId);
         return "Table Booking details updated successfully.";
+    }
+
+    public void evictCachesForTableBookingId(UUID tableBookingId) {
+        Objects.requireNonNull(cacheManager.getCache("restaurant:tableBookingDetails")).evict(tableBookingId);
+        Objects.requireNonNull(cacheManager.getCache("restaurant:tableBookings")).clear();
     }
 }

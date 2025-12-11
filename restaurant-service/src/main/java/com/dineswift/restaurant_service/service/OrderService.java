@@ -74,6 +74,7 @@ public class OrderService {
         OrderItem updatedOrderItem = orderItemMapper.toEntity(cartId, dish, quantity);
         log.info("OrderItem created: {}", updatedOrderItem);
         orderItemRepository.save(updatedOrderItem);
+        evictOrderItemCaches(cartId);
     }
 
     private UUID getCartIdFromUserService() {
@@ -110,7 +111,7 @@ public class OrderService {
     }
 
     @CacheEvict(
-            value = "restaurant:order-items-by-booking",
+            value = {"restaurant:order-items-by-booking"},
             allEntries = true
     )
     public void updateItemQuantity(UUID orderItemId, Integer quantity) {
@@ -138,11 +139,6 @@ public class OrderService {
         log.info("OrderItem found for deletion: {}", orderItem);
         orderItemRepository.delete(orderItem);
         evictOrderItemCaches(orderItem.getCartId());
-    }
-
-    public void evictOrderItemCaches(UUID cartId) {
-        log.info("Evicting caches related to order items for cartId: {}", cartId);
-        Objects.requireNonNull(cacheManager.getCache("restaurant:order-items-by-cart")).evict(cartId);
     }
 
     @Cacheable(
@@ -233,5 +229,10 @@ public class OrderService {
         log.info("Order items fetched for tableBookingId {}: {}", tableBookingId, orderItemDtos);
         return new CustomPageDto<>(orderItemDtos);
 
+    }
+
+    public void evictOrderItemCaches(UUID cartId) {
+        log.info("Evicting caches related to order items for cartId: {}", cartId);
+        Objects.requireNonNull(cacheManager.getCache("restaurant:order-items-by-cart")).evict(cartId);
     }
 }

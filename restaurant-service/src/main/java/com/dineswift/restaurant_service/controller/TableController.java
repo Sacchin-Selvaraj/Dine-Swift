@@ -5,6 +5,7 @@ import com.dineswift.restaurant_service.payload.request.table.TableCreateRequest
 import com.dineswift.restaurant_service.payload.request.table.TableUpdateRequest;
 import com.dineswift.restaurant_service.payload.response.table.AvailableSlots;
 import com.dineswift.restaurant_service.payload.response.table.RestaurantTableDto;
+import com.dineswift.restaurant_service.service.CustomPageDto;
 import com.dineswift.restaurant_service.service.TableService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -51,11 +52,11 @@ public class TableController {
     }
 
     @GetMapping("/get-table/{restaurantId}" )
-    public ResponseEntity<Page<RestaurantTableDto>> getTable(@PathVariable UUID  restaurantId,
+    public ResponseEntity<CustomPageDto<RestaurantTableDto>> getTable(@PathVariable UUID  restaurantId,
                                                              @RequestParam(name = "page", defaultValue = "0") int page,
                                                              @RequestParam(name = "size", defaultValue = "6") int size) {
         log.info("Received request to get table with ID: {}", restaurantId);
-        Page<RestaurantTableDto> tables = tableService.getTablesByRestaurantId(restaurantId, page, size);
+        CustomPageDto<RestaurantTableDto> tables = tableService.getTablesByRestaurantId(restaurantId, page, size);
         return ResponseEntity.ok().body(tables);
     }
 
@@ -84,11 +85,11 @@ public class TableController {
     }
 
     @GetMapping("/get-table-check-out/{orderItemId}" )
-    public ResponseEntity<Page<RestaurantTableDto>> getTableByOrderItem(@PathVariable UUID  orderItemId,
-                                                             @RequestParam(name = "page", defaultValue = "0") int page,
-                                                             @RequestParam(name = "size", defaultValue = "6") int size) {
+    public ResponseEntity<CustomPageDto<RestaurantTableDto>> getTableByOrderItem(@PathVariable UUID  orderItemId,
+                                                                                 @RequestParam(name = "page", defaultValue = "0") int page,
+                                                                                 @RequestParam(name = "size", defaultValue = "6") int size) {
         log.info("Received request to get table with Order ID: {}", orderItemId);
-        Page<RestaurantTableDto> tables = tableService.getTablesByOrderItem(orderItemId, page, size);
+        CustomPageDto<RestaurantTableDto> tables = tableService.getTablesByOrderItem(orderItemId, page, size);
         return ResponseEntity.ok().body(tables);
     }
 

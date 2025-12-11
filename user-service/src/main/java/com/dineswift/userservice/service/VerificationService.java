@@ -67,7 +67,7 @@ public class VerificationService {
     }
 
 
-    @CacheEvict(value = {"user:details", "user:info", "user:byId"}, key = "@authService.getAuthenticatedUserId()")
+    @CacheEvict(value = {"user:details", "user:info"}, key = "@authService.getAuthenticatedUserId()")
     public void verifyEmail(@Valid VerifyTokenRequest verifyEmailRequest) {
 
         UUID userId=authService.getAuthenticatedUserId();
@@ -131,7 +131,7 @@ public class VerificationService {
         return verificationToken;
     }
 
-    @CacheEvict(value = {"user:details", "user:info", "user:byId"}, key = "@authService.getAuthenticatedUserId()")
+    @CacheEvict(value = {"user:details", "user:info"}, key = "@authService.getAuthenticatedUserId()")
     public void verifyPhoneNumber(VerifyTokenRequest verifyPhoneNumberRequest) {
 
         UUID userId=authService.getAuthenticatedUserId();

@@ -1,11 +1,9 @@
 package com.dineswift.restaurant_service.repository;
 
 import com.dineswift.restaurant_service.model.Dish;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -19,4 +17,20 @@ public interface DishRepository extends JpaRepository<Dish, UUID>, JpaSpecificat
     @Query("SELECT d FROM Dish d WHERE d.id = :dishId AND d.isActive = true")
     Optional<Dish> findByIdAndIsActive(@Param("dishId") UUID dishId);
 
+    boolean existsByDishNameAndRestaurant_RestaurantId(String dishName, UUID restaurantId);
+
+
+
+    @Modifying
+    @Query(
+            """
+       UPDATE Dish d 
+       SET 
+         d.dishTotalRating = d.dishTotalRating + :rating,
+         d.dishTotalRatingCount = d.dishTotalRatingCount + 1,
+         d.dishStarRating = (d.dishTotalRating + :rating) / (d.dishTotalRatingCount + 1)
+       WHERE d.dishId = :dishId AND d.isActive = true
+       """
+    )
+    int updateDishRating(UUID dishId, Double rating);
 }

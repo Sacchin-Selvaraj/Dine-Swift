@@ -29,7 +29,9 @@ public class EmployeeMapper {
     private final PasswordEncoder passwordEncoder;
 
     public EmployeeDto toDTO(Employee employee){
+
         EmployeeDto employeeDTO=mapper.map(employee, EmployeeDto.class);
+
         employeeDTO.setRoles(employee.getRoles().stream()
                 .map(this::toRoleDTO).collect(Collectors.toSet()));
 

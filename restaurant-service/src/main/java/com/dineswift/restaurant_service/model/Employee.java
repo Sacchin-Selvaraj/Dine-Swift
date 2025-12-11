@@ -78,4 +78,8 @@ public class Employee {
     )
     private Set<Role> roles;
 
+    public void deactivate() {
+        this.employeeIsActive = false;
+    }
+
 }

@@ -17,7 +17,6 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -99,11 +98,6 @@ public class BookingService {
         return responseEntity.getBody();
     }
 
-    @Cacheable(
-            value = "booking:details",
-            key = "#bookingId",
-            unless = "#result == null"
-    )
     public TableBookingDto viewTableBooking(UUID bookingId) {
         log.info("Fetching booking details for bookingId: {}", bookingId);
         Booking booking = bookingRepository.findById(bookingId)
@@ -118,7 +112,7 @@ public class BookingService {
         return tableBookingDto.getBody();
     }
 
-    @CacheEvict( value = { "booking:pages", "booking:details" }, allEntries = true)
+    @CacheEvict( value = { "booking:pages" }, allEntries = true)
     public void updateBookingStatus(UUID tableBookingId, String status) {
         log.info("Updating booking status for tableBookingId: {}", tableBookingId);
         try {

@@ -18,6 +18,8 @@ import com.dineswift.restaurant_service.security.service.AuthService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -38,6 +40,10 @@ public class TableService {
     private final ReservationService reservationService;
     private final AuthService authService;
 
+    @CacheEvict(
+            value = "restaurant:getTablesByRestaurantId",
+            allEntries = true
+    )
     public void addTableToRestaurant(UUID restaurantId, TableCreateRequest tableCreateRequest) {
         log.info("Adding table to restaurant with ID: {}", restaurantId);
         RestaurantTable restaurantTable=tableMapper.toEntity(tableCreateRequest,restaurantId);
@@ -47,6 +53,10 @@ public class TableService {
         log.info("Table added with ID: {}", savedTable.getTableId());
     }
 
+    @CacheEvict(
+            value = "restaurant:getTablesByRestaurantId",
+            allEntries = true
+    )
     public void deleteTable(UUID tableId) {
         log.info("Deleting table with ID: {}", tableId);
         RestaurantTable existingTable = tableRepository.findByIdAndIsActive(tableId)
@@ -57,6 +67,10 @@ public class TableService {
         log.info("Table deleted with ID: {}", tableId);
     }
 
+    @CacheEvict(
+            value = "restaurant:getTablesByRestaurantId",
+            allEntries = true
+    )
     public void updateTable(UUID tableId, TableUpdateRequest tableUpdateRequest) {
         log.info("Updating table with ID:{}", tableId);
         RestaurantTable table = tableRepository.findById(tableId)
@@ -68,7 +82,12 @@ public class TableService {
         log.info("Table updated with ID: {}", savedTable.getTableId());
     }
 
-    public Page<RestaurantTableDto> getTablesByRestaurantId(UUID restaurantId, int page, int size) {
+    @Cacheable(
+            value = "restaurant:getTablesByRestaurantId",
+            key = "#restaurantId.toString().concat('-').concat(#page).concat('-').concat(#size)",
+            unless = "#result == null"
+    )
+    public CustomPageDto<RestaurantTableDto> getTablesByRestaurantId(UUID restaurantId, int page, int size) {
         log.info("Fetching tables for restaurant with ID: {}", restaurantId);
 
         Restaurant restaurant = restaurantRepository.findByIdAndIsActive(restaurantId).orElseThrow(()-> new RestaurantException("Restaurant not found with ID or inactive: " + restaurantId));
@@ -80,7 +99,7 @@ public class TableService {
             throw new IllegalArgumentException("No tables found for restaurant with ID: " + restaurantId);
         }
         log.info("Fetched {} tables for restaurant with ID: {}", restaurantTables.getTotalElements(), restaurantId);
-        return restaurantTables.map(tableMapper::toDto);
+        return new CustomPageDto<>(restaurantTables.map(tableMapper::toDto));
     }
 
     public List<AvailableSlots> getAvailableSlots(UUID restaurantId, CheckAvailableSlots checkAvailableSlots) {
@@ -109,7 +128,7 @@ public class TableService {
         return availableSlot;
     }
 
-    public Page<RestaurantTableDto> getTablesByOrderItem(UUID orderItemId, int page, int size) {
+    public CustomPageDto<RestaurantTableDto> getTablesByOrderItem(UUID orderItemId, int page, int size) {
         log.info("Fetching tables for order item with ID: {}", orderItemId);
         OrderItem orderItem = orderItemRepository.findById(orderItemId).orElseThrow(()-> new OrderItemException("Order item not found with ID: " + orderItemId));
 
@@ -122,6 +141,6 @@ public class TableService {
             throw new IllegalArgumentException("No tables found for order item with ID: " + orderItemId);
         }
         log.info("Fetched {} tables for order item with ID: {}", restaurantTables.getTotalElements(), orderItemId);
-        return restaurantTables.map(tableMapper::toDto);
+        return new CustomPageDto<>( restaurantTables.map(tableMapper::toDto));
     }
 }

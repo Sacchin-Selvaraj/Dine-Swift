@@ -6,6 +6,7 @@ import com.dineswift.userservice.model.response.*;
 import com.dineswift.userservice.service.CustomPageDto;
 import com.dineswift.userservice.service.UserService;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
@@ -18,14 +19,11 @@ import java.util.UUID;
 
 @Slf4j
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/user")
 public class UserController {
 
     private final UserService userService;
-
-    public UserController(UserService userService) {
-        this.userService = userService;
-    }
 
     @GetMapping("/greet")
     @PreAuthorize("hasRole('ROLE_ADMIN')")

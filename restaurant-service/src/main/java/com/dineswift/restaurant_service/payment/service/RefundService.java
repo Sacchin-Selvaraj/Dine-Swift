@@ -22,7 +22,6 @@ public class RefundService {
     private final PaymentRefundRepository paymentRefundRepository;
     private final PaymentMapper paymentMapper;
 
-
     public List<PaymentRefundDto> getRefundDetailsByTableBookingId(UUID tableBookingId) {
         log.info("Retrieving refund details for tableBookingId={}", tableBookingId);
         List<PaymentRefund> refundDetails = paymentRefundRepository.findAllByTableBookingId(tableBookingId);

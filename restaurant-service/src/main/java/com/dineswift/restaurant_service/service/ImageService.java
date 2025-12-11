@@ -122,7 +122,7 @@ public class ImageService {
                 return CompletableFuture.completedFuture(Map.of("isSuccessful", false, "error", "Deletion failed: " + deletionResult));
             }
         } catch (IOException e) {
-            log.error("Failed to delete image from Cloudinary: {}. Result: {}", publicId, e.getMessage());
+            log.error("Failed to delete image from Cloudinary: {}. Results: {}", publicId, e.getMessage());
             String deletionResult = e.getMessage() != null ? e.getMessage() : "Unknown error";
             return CompletableFuture.completedFuture(Map.of("isSuccessful", false, "error", "Deletion failed: " + deletionResult));
         }
