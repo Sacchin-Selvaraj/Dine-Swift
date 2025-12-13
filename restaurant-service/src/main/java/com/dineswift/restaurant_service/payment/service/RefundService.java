@@ -25,10 +25,12 @@ public class RefundService {
     public List<PaymentRefundDto> getRefundDetailsByTableBookingId(UUID tableBookingId) {
         log.info("Retrieving refund details for tableBookingId={}", tableBookingId);
         List<PaymentRefund> refundDetails = paymentRefundRepository.findAllByTableBookingId(tableBookingId);
+
         if (refundDetails.isEmpty()){
             log.warn("No refund records found for tableBookingId={}", tableBookingId);
             throw new PaymentException("No refund records found for the provided table booking ID.");
         }
+
         log.info("Found {} refund records for tableBookingId={}", refundDetails.size(), tableBookingId);
         return refundDetails.stream().map(paymentMapper::toDto).toList();
     }

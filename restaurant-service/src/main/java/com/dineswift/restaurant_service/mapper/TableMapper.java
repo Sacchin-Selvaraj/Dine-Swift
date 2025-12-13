@@ -1,14 +1,13 @@
 package com.dineswift.restaurant_service.mapper;
 
-import com.dineswift.restaurant_service.model.Restaurant;
 import com.dineswift.restaurant_service.model.RestaurantTable;
 import com.dineswift.restaurant_service.payload.request.table.TableCreateRequest;
 import com.dineswift.restaurant_service.payload.request.table.TableUpdateRequest;
 import com.dineswift.restaurant_service.payload.response.table.RestaurantTableDto;
-import com.dineswift.restaurant_service.repository.RestaurantRepository;
 import com.dineswift.restaurant_service.repository.TableRepository;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;
@@ -18,10 +17,9 @@ import java.util.UUID;
 public class TableMapper {
 
     private final TableRepository tableRepository;
-    private final RestaurantRepository restaurantRepository;
     private final ModelMapper modelMapper;
 
-    public RestaurantTable toEntity(TableCreateRequest tableCreateRequest, UUID restaurantId) {
+    public RestaurantTable toEntity(TableCreateRequest tableCreateRequest) {
         if (tableRepository.existsByTableNumber(tableCreateRequest.getTableNumber())){
             throw new IllegalArgumentException("Table number already exists");
         }
@@ -38,21 +36,15 @@ public class TableMapper {
         if (tableCreateRequest.getTotalNumberOfSeats()!=null && tableCreateRequest.getTotalNumberOfSeats()>0){
             restaurantTable.setTotalNumberOfSeats(tableCreateRequest.getTotalNumberOfSeats());
         }
-        Restaurant restaurant = restaurantRepository.findById(restaurantId)
-                .orElseThrow(() -> new IllegalArgumentException("Restaurant not found with ID: " + restaurantId));
-        restaurantTable.setRestaurant(restaurant);
         return restaurantTable;
 
     }
 
-    public RestaurantTableDto toDto(RestaurantTable savedTable) {
-        RestaurantTableDto restaurantTableDto = modelMapper.map(savedTable, RestaurantTableDto.class);
-        restaurantTableDto.setRestaurantId(savedTable.getRestaurant().getRestaurantId());
-        return restaurantTableDto;
-    }
-
     public RestaurantTable toUpdateEntity(RestaurantTable table, TableUpdateRequest tableUpdateRequest) {
-        if (tableUpdateRequest.getTableNumber()!=null && !tableUpdateRequest.getTableNumber().isBlank() && !tableUpdateRequest.getTableNumber().equals(table.getTableNumber())){
+
+        if (tableUpdateRequest.getTableNumber()!=null && !tableUpdateRequest.getTableNumber().isBlank()
+                && !tableUpdateRequest.getTableNumber().equals(table.getTableNumber())){
+
             if (tableRepository.existsByTableNumber(tableUpdateRequest.getTableNumber())){
                 throw new IllegalArgumentException("Table number already exists");
             }
@@ -68,5 +60,18 @@ public class TableMapper {
             table.setTotalNumberOfSeats(tableUpdateRequest.getTotalNumberOfSeats());
         }
         return table;
+    }
+
+    public Page<RestaurantTableDto> toPageDto(Page<RestaurantTable> restaurantTables, UUID restaurantId) {
+
+        return restaurantTables.map(restaurantTable ->
+                toDtoWithRestaurantId(restaurantTable,restaurantId));
+
+    }
+
+    public RestaurantTableDto toDtoWithRestaurantId(RestaurantTable restaurantTable, UUID restaurantId) {
+        RestaurantTableDto restaurantTableDto = modelMapper.map(restaurantTable, RestaurantTableDto.class);
+        restaurantTableDto.setRestaurantId(restaurantId);
+        return restaurantTableDto;
     }
 }

@@ -39,7 +39,6 @@ public class TableBookingDto {
     private Boolean isUpfrontPaid;
     private LocalTime actualDineInTime;
     private LocalTime actualDineOutTime;
-    private List<OrderItemDto> orderItems;
     private RestaurantTableDto restaurantTableDto;
     private RestaurantDto restaurantDto;
     private GuestInformationDto guestInformationDto;

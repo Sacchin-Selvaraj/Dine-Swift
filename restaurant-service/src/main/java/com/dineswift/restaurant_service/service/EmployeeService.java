@@ -16,6 +16,7 @@ import com.dineswift.restaurant_service.repository.EmployeeRepository;
 import com.dineswift.restaurant_service.repository.RestaurantRepository;
 import com.dineswift.restaurant_service.repository.RoleRepository;
 import com.dineswift.restaurant_service.security.service.AuthService;
+import com.dineswift.restaurant_service.service.specification.EmployeeSpecification;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -117,13 +118,14 @@ public class EmployeeService {
             throw new EmployeeException("Invalid request or Employee Id is null");
         }
 
-        Employee employee = employeeRepository.findById(employeeId)
-                .orElseThrow(() -> new EmployeeException("Employee not found"));
-
         if (employeeRepository.existsByEmployeeName(employeeNameRequest.getEmployeeName())) {
             log.error("Employee name already exists: {}", employeeNameRequest.getEmployeeName());
             throw new EmployeeException("Employee name already taken!");
         }
+
+        Employee employee = employeeRepository.findById(employeeId)
+                .orElseThrow(() -> new EmployeeException("Employee not found"));
+
 
         employee.setEmployeeName(employeeNameRequest.getEmployeeName());
         employeeRepository.save(employee);

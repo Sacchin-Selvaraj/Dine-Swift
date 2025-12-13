@@ -62,4 +62,8 @@ public class Menu {
             inverseJoinColumns = @JoinColumn(name = "dish_id")
     )
     private Set<Dish> dishes=new HashSet<>();
+
+    public void deactivate() {
+        this.isActive = false;
+    }
 }

@@ -27,10 +27,11 @@ public class MenuController {
 
     @PreAuthorize(("hasRole('ROLE_ADMIN') or hasRole('ROLE_MANAGER')"))
     @PostMapping("/add-menu/{restaurantId}")
-    public ResponseEntity<MessageResponse> addMenu(@RequestBody MenuCreateRequest menuCreateRequest, @PathVariable UUID restaurantId) {
+    public ResponseEntity<Void> addMenu(@RequestBody MenuCreateRequest menuCreateRequest,
+                                                   @PathVariable UUID restaurantId) {
         log.info("Received add menu request");
         menuService.addMenu(menuCreateRequest,restaurantId);
-        return new ResponseEntity<>(new MessageResponse("menu created successfully"), HttpStatus.CREATED);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @PreAuthorize(("hasRole('ROLE_ADMIN') or hasRole('ROLE_MANAGER')"))
@@ -38,12 +39,13 @@ public class MenuController {
     public ResponseEntity<Void> deleteMenu(@PathVariable UUID menuId) {
         log.info("Received delete menu request for menuId: {}", menuId);
         menuService.deleteMenu(menuId);
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        return ResponseEntity.noContent().build();
     }
 
     @PreAuthorize(("hasRole('ROLE_ADMIN') or hasRole('ROLE_MANAGER')"))
     @PatchMapping("/update-menu/{menuId}")
-    public ResponseEntity<Void> updateMenu(@PathVariable UUID menuId, @RequestBody MenuUpdateRequest menuUpdateRequest) {
+    public ResponseEntity<Void> updateMenu(@PathVariable UUID menuId,
+                                           @RequestBody MenuUpdateRequest menuUpdateRequest) {
         menuService.updateMenu(menuId, menuUpdateRequest);
         return ResponseEntity.ok().build();
     }
@@ -59,7 +61,7 @@ public class MenuController {
     public ResponseEntity<Void> removeDishFromMenu(@PathVariable UUID menuId, @PathVariable UUID dishId) {
         log.info("Received request to remove dish {} from menu {}", dishId, menuId);
         menuService.removeDishFromMenu(menuId, dishId);
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/get-menu-details/{menuId}")

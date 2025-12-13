@@ -1,9 +1,6 @@
 package com.dineswift.restaurant_service.service;
 
-import com.dineswift.restaurant_service.exception.BookingException;
-import com.dineswift.restaurant_service.exception.DishException;
-import com.dineswift.restaurant_service.exception.RestaurantException;
-import com.dineswift.restaurant_service.exception.TableBookingException;
+import com.dineswift.restaurant_service.exception.*;
 import com.dineswift.restaurant_service.kafka.service.KafkaService;
 import com.dineswift.restaurant_service.mapper.TableBookingMapper;
 import com.dineswift.restaurant_service.model.*;
@@ -15,6 +12,7 @@ import com.dineswift.restaurant_service.payment.service.PaymentService;
 import com.dineswift.restaurant_service.repository.*;
 import com.dineswift.restaurant_service.security.service.AuthService;
 import com.dineswift.restaurant_service.service.records.TableBookingFilter;
+import com.dineswift.restaurant_service.service.specification.TableBookingSpecification;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -48,7 +46,6 @@ public class TableBookingService {
     private final TableBookingRepository tableBookingRepository;
     private final TableRepository tableRepository;
     private final OrderItemRepository orderItemRepository;
-    private final RestaurantRepository restaurantRepository;
     private final TableBookingMapper tableBookingMapper;
     private final DishRepository dishRepository;
     private final AuthService authService;
@@ -59,21 +56,25 @@ public class TableBookingService {
     private final CacheManager cacheManager;
 
 
-    @CacheEvict(
-            value = "restaurant:tableBookings",
-            allEntries = true
+    @Caching(
+            evict = {
+                    @CacheEvict(
+                            value = "restaurant:tableBookings",
+                            allEntries = true
+                    ),
+                    @CacheEvict(
+                            value = "restaurant:cart-id-from-user-service",
+                            key = "@authService.getAuthenticatedId()"
+                    )
+            }
     )
     public TableBookingResponse createOrder(UUID cartId, BookingRequest bookingRequest) {
 
         log.info("Creating order for cartId: {}", cartId);
         UUID tableId = bookingRequest.getTableId();
-        RestaurantTable bookingTable = tableRepository.findByIdAndIsActive(tableId)
-                .orElseThrow(() -> new TableBookingException("Invalid table ID: " + tableId));
 
-        if (bookingRequest.getNoOfGuest()>bookingTable.getTotalNumberOfSeats()){
-            log.error("Number of guests {} exceeds table capacity {}", bookingRequest.getNoOfGuest(), bookingTable.getTotalNumberOfSeats());
-            throw new TableBookingException("Number of guests exceeds table capacity.");
-        }
+        RestaurantTable bookingTable = tableRepository.findByIdAndIsActiveWithRestaurant(tableId)
+                .orElseThrow(() -> new TableBookingException("Invalid table ID: " + tableId));
 
         checkSlotAvailability(bookingRequest, bookingTable);
 
@@ -81,25 +82,31 @@ public class TableBookingService {
 
         checkOrderItemsBelongToRestaurant(orderItems, bookingTable.getRestaurant());
 
-        log.info("All checks passed. Proceeding to remove cart and create booking.");
-        sendCartRemovalRequest();
-
         log.info("Slot available. Proceeding with booking for cartId: {}", cartId);
         TableBooking newBooking = bookTable(bookingRequest, bookingTable, orderItems);
 
         log.info("Set table booking to order items so that they are linked");
         orderItems.forEach(item -> item.setTableBooking(newBooking));
 
+        log.info("All checks passed. Proceeding to remove cart and create booking.");
+        sendCartRemovalRequest();
+
         return tableBookingMapper.toBookingResponse(newBooking);
     }
 
     private void checkOrderItemsBelongToRestaurant(List<OrderItem> orderItems, Restaurant restaurant) {
+
+        List<UUID> orderItemIds = orderItems.stream().map(OrderItem::getOrderItemsId).toList();
+
+        Set<UUID> restaurantIds = orderItemRepository.findDistinctRestaurantIdsByOrderItemIds(orderItemIds);
+
         log.info("Checking if all order items belong to the restaurant ID: {}", restaurant.getRestaurantId());
-        for (OrderItem item : orderItems) {
-            if (!item.getRestaurant().getRestaurantId().equals(restaurant.getRestaurantId())) {
-                log.error("Order item ID: {} does not belong to restaurant ID: {}", item.getOrderItemsId(), restaurant.getRestaurantId());
-                throw new TableBookingException("All order items must belong to the selected restaurant.");
-            }
+        boolean isInvalid = restaurantIds.stream()
+                .anyMatch(restaurantId-> !restaurantId.equals(restaurant.getRestaurantId()));
+
+        if (isInvalid){
+            log.error("Some order items belongs to some other Restaurant");
+            throw new OrderItemException("Some order items do not belong to the selected restaurant.");
         }
     }
 
@@ -117,7 +124,9 @@ public class TableBookingService {
         }
     }
 
-    private TableBooking bookTable(BookingRequest bookingRequest, RestaurantTable bookingTable, List<OrderItem> orderItems) {
+    private TableBooking bookTable(BookingRequest bookingRequest,
+                                   RestaurantTable bookingTable, List<OrderItem> orderItems) {
+
         TableBooking newBooking = new TableBooking();
         newBooking.setDineInTime(bookingRequest.getDineInTime());
         newBooking.setDuration(bookingRequest.getDuration());
@@ -157,6 +166,7 @@ public class TableBookingService {
     }
 
     private void calculateTotalAmount(TableBooking newBooking, List<OrderItem> orderItems) {
+
         BigDecimal grandTotal = orderItems.stream()
                 .map(OrderItem::getFrozenTotalPrice)
                 .reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
@@ -174,15 +184,23 @@ public class TableBookingService {
     private List<OrderItem> getOrderItemsByCartId(UUID cartId) {
 
         log.info("Fetching order items for cartId: {}", cartId);
-        List<OrderItem> orderItems = orderItemRepository.findAllByCartId(cartId);
+        List<OrderItem> orderItems = orderItemRepository.findAllByCartIdWithDish(cartId);
+
         if (orderItems.isEmpty()) {
             throw new TableBookingException("No order items found for cart ID: " + cartId);
         }
         orderItems.forEach(OrderItem::setFrozenValues);
+
         return orderItems;
     }
 
     private void checkSlotAvailability(BookingRequest bookingRequest, RestaurantTable bookingTable) {
+
+
+        if (bookingRequest.getNoOfGuest()>bookingTable.getTotalNumberOfSeats()){
+            log.error("Number of guests {} exceeds table capacity {}", bookingRequest.getNoOfGuest(), bookingTable.getTotalNumberOfSeats());
+            throw new TableBookingException("Number of guests exceeds table capacity.");
+        }
 
         log.info("Checking Availability for tableId: {} on date: {} at time: {}", bookingTable.getTableId(), bookingRequest.getBookingDate(), bookingRequest.getDineInTime());
         LocalTime bookingStartTime = bookingRequest.getDineInTime();
@@ -190,14 +208,17 @@ public class TableBookingService {
 
         LocalTime restaurantOpeningTime = bookingTable.getRestaurant().getOpeningTime();
         LocalTime restaurantClosingTime = bookingTable.getRestaurant().getClosingTime();
+
         if (bookingStartTime.isBefore(restaurantOpeningTime) || bookingEndTime.isAfter(restaurantClosingTime)){
             log.error("Booking time {} - {} is outside restaurant operating hours {} - {}", bookingStartTime, bookingEndTime, restaurantOpeningTime, restaurantClosingTime);
             throw new TableBookingException("The booking time is outside the restaurant's operating hours.");
         }
 
-        List<TableBooking> existingBookings = tableBookingRepository.findByRestaurantTableAndIsActiveAndBookingDate(bookingTable,bookingRequest.getBookingDate());
+        List<TableBooking> existingBookings = tableBookingRepository
+                .findByRestaurantTableAndIsActiveAndBookingDate(bookingTable,bookingRequest.getBookingDate());
 
         long TABLE_CLEANUP_BUFFER_MINUTES = 5L;
+
         for (TableBooking existingBooking : existingBookings) {
             LocalTime existingStartTime = existingBooking.getDineInTime().minusMinutes(TABLE_CLEANUP_BUFFER_MINUTES);
             LocalTime existingEndTime = existingBooking.getDineOutTime().plusMinutes(TABLE_CLEANUP_BUFFER_MINUTES);
@@ -226,8 +247,9 @@ public class TableBookingService {
             }
     )
     public String cancelBooking(UUID tableBookingId, CancellationDetails cancellationDetails) {
+
         log.info("Cancelling booking with ID: {}", tableBookingId);
-        TableBooking existingBooking = tableBookingRepository.findById(tableBookingId)
+        TableBooking existingBooking = tableBookingRepository.findByIdWithGuestInformation(tableBookingId)
                 .orElseThrow(() -> new TableBookingException("Booking not found with ID: " + tableBookingId));
 
         if (!existingBooking.getIsActive()){
@@ -236,9 +258,11 @@ public class TableBookingService {
 
         log.info("Setting booking status to CANCELLED based on Role and User");
         Collection<? extends GrantedAuthority> authorityDefaults = SecurityContextHolder.getContext().getAuthentication().getAuthorities();
+
         boolean isAdminOrManager = authorityDefaults.stream()
                 .map(GrantedAuthority::getAuthority)
                 .anyMatch(role -> role.equals("ROLE_ADMIN") || role.equals("ROLE_MANAGER"));
+
         if (isAdminOrManager)
             existingBooking.setBookingStatus(BookingStatus.CANCELLED_BY_RESTAURANT);
         else if(existingBooking.getGuestInformation().getUserId().equals(authService.getAuthenticatedId()))
@@ -256,6 +280,7 @@ public class TableBookingService {
         GuestInformation guestInformation = existingBooking.getGuestInformation();
         guestInformation.setCancellationFee(existingBooking.getUpfrontAmount());
         log.info("Cancellation fee set to: {}", existingBooking.getUpfrontAmount());
+
         if (cancellationDetails.getCancellationReason()!=null)
             guestInformation.setCancellationReason(cancellationDetails.getCancellationReason());
         else
@@ -271,9 +296,11 @@ public class TableBookingService {
     }
 
     private String checkIsPaymentDone(TableBooking existingBooking) {
+
         LocalDateTime dineInDateTime = existingBooking.getBookingDate().atTime(existingBooking.getDineInTime());
         LocalDateTime refundDeadLine = dineInDateTime.minusHours(24);
         LocalDateTime currentDateTime = ZonedDateTime.now().toLocalDateTime();
+
         if (currentDateTime.isBefore(refundDeadLine)){
             if (existingBooking.getIsUpfrontPaid()){
                 paymentService.processRefund(existingBooking);
@@ -298,7 +325,8 @@ public class TableBookingService {
     )
     public TableBookingDto viewBooking(UUID tableBookingId) {
         log.info("Viewing booking with ID: {}", tableBookingId);
-        TableBooking existingBooking = tableBookingRepository.findById(tableBookingId)
+
+        TableBooking existingBooking = tableBookingRepository.findByIdWithChildClass(tableBookingId)
                 .orElseThrow(() -> new TableBookingException("Booking not found with ID: " + tableBookingId));
 
         TableBookingDto bookingDto = tableBookingMapper.toDto(existingBooking);
@@ -312,7 +340,8 @@ public class TableBookingService {
     )
     public void updateOrderItem(UUID orderItemsId, QuantityUpdateRequest quantityUpdateRequest) {
         log.info("Updating order item with ID: {}", orderItemsId);
-        OrderItem existingItem = orderItemRepository.findById(orderItemsId)
+
+        OrderItem existingItem = orderItemRepository.findByIdWithDishAndBooking(orderItemsId)
                 .orElseThrow(() -> new TableBookingException("Order item not found with ID: " + orderItemsId));
 
         if (existingItem.getTableBooking().getDishStatus().equals(DishStatus.PREPARING) ||
@@ -324,22 +353,28 @@ public class TableBookingService {
        if (newQuantity<0) {
             BigDecimal priceChange = existingItem.getFrozenPrice().multiply(BigDecimal.valueOf(Math.abs(newQuantity)));
             BigDecimal newTotalPrice = existingItem.getFrozenTotalPrice().subtract(priceChange);
+
             TableBooking tableBooking = existingItem.getTableBooking();
             tableBooking.setGrandTotal(tableBooking.getGrandTotal().subtract(priceChange));
             tableBooking.setPendingAmount(tableBooking.getPendingAmount().subtract(priceChange));
+
             existingItem.setFrozenTotalPrice(newTotalPrice);
        }else {
            BigDecimal additionalTotalPrice = existingItem.getFrozenPrice().multiply(BigDecimal.valueOf(newQuantity));
            BigDecimal newTotalPrice = existingItem.getFrozenTotalPrice().add(additionalTotalPrice);
            TableBooking tableBooking = existingItem.getTableBooking();
+
            tableBooking.setGrandTotal(tableBooking.getGrandTotal().add(additionalTotalPrice));
            tableBooking.setPendingAmount(tableBooking.getPendingAmount().add(additionalTotalPrice));
+
            existingItem.setFrozenTotalPrice(newTotalPrice);
        }
 
        log.info("Updating quantity from {} to {}", existingItem.getQuantity(), quantityUpdateRequest.getNewQuantity());
+
        existingItem.setQuantity(quantityUpdateRequest.getNewQuantity());
        orderItemRepository.save(existingItem);
+
        evictCachesForTableBookingId(existingItem.getTableBooking().getTableBookingId());
        log.info("Order item updated successfully with ID: {}", orderItemsId);
     }
@@ -350,7 +385,8 @@ public class TableBookingService {
     )
     public void removeOrderItem(UUID orderItemsId) {
         log.info("Removing order item with ID: {}", orderItemsId);
-        OrderItem existingItem = orderItemRepository.findById(orderItemsId)
+
+        OrderItem existingItem = orderItemRepository.findByIdWithDishAndBooking(orderItemsId)
                 .orElseThrow(() -> new TableBookingException("Order item not found with ID: " + orderItemsId));
 
         if (existingItem.getTableBooking().getDishStatus().equals(DishStatus.PREPARING) ||
@@ -359,12 +395,14 @@ public class TableBookingService {
         }
 
         TableBooking tableBooking = existingItem.getTableBooking();
+
         tableBooking.setGrandTotal(tableBooking.getGrandTotal().subtract(existingItem.getFrozenTotalPrice()));
         tableBooking.setPendingAmount(tableBooking.getPendingAmount().subtract(existingItem.getFrozenTotalPrice()));
         tableBooking.setLastModifiedBy(authService.getAuthenticatedId());
 
         tableBookingRepository.save(tableBooking);
         orderItemRepository.delete(existingItem);
+
         evictCachesForTableBookingId(existingItem.getTableBooking().getTableBookingId());
         log.info("Order item removed successfully with ID: {}", orderItemsId);
     }
@@ -375,8 +413,10 @@ public class TableBookingService {
     )
     public void addOrderItem(UUID tableBookingId, AddOrderItemRequest addOrderItemRequest) {
         log.info("Adding order item to booking with ID: {}", tableBookingId);
-        TableBooking existingBooking = tableBookingRepository.findByIdAndIsActive(tableBookingId)
+
+        TableBooking existingBooking = tableBookingRepository.findByIdWithRestaurant(tableBookingId)
                 .orElseThrow(() -> new TableBookingException("Booking not found with ID: " + tableBookingId));
+
 
         if (existingBooking.getDishStatus().equals(DishStatus.PREPARING) ||
                 existingBooking.getDishStatus().equals(DishStatus.PREPARED)) {
@@ -392,13 +432,15 @@ public class TableBookingService {
         existingBooking.setPendingAmount(existingBooking.getPendingAmount().add(newOrderItem.getFrozenTotalPrice()));
         existingBooking.setLastModifiedBy(authService.getAuthenticatedId());
 
-        OrderItem savedItem = orderItemRepository.save(newOrderItem);
+        orderItemRepository.save(newOrderItem);
         evictCachesForTableBookingId(tableBookingId);
+
         log.info("Order item added successfully to booking ID: {}", tableBookingId);
     }
 
     private OrderItem createNewOrderItem(TableBooking existingBooking, Dish dish, Integer quantity) {
         log.info("Creating new order item for dish ID: {} with quantity: {}", dish.getDishId(), quantity);
+
         OrderItem newOrderItem = new OrderItem();
         newOrderItem.setDish(dish);
         newOrderItem.setQuantity(quantity);
@@ -416,16 +458,15 @@ public class TableBookingService {
     )
     public CustomPageDto<TableBookingDtoWoRestaurant> getTableBookingDetails(TableBookingFilter filter) {
         log.info("Fetching table booking details for restaurantId: {}", filter.restaurantId());
-        Restaurant restaurant = restaurantRepository.findByIdAndIsActive(filter.restaurantId()).orElseThrow(()->
-                new RestaurantException("Restaurant not found with ID: " + filter.restaurantId()));
 
-        Sort sort = filter.sortDir().equalsIgnoreCase("asc")?Sort.by(filter.sortBy()).ascending():Sort.by(filter.sortBy()).descending();
+        Sort sort = filter.sortDir().equalsIgnoreCase("asc")
+                ?Sort.by(filter.sortBy()).ascending():Sort.by(filter.sortBy()).descending();
 
         log.info("Creating pageable object");
         Pageable pageable = PageRequest.of(filter.pageNo(), filter.pageSize(), sort);
 
         Specification<TableBooking> spec = Specification.<TableBooking>allOf()
-                .and(tableBookingSpecification.hasRestaurant(restaurant))
+                .and(tableBookingSpecification.hasRestaurantId(filter.restaurantId()))
                 .and(tableBookingSpecification.hasTableNumber(filter.tableNumber()))
                 .and(tableBookingSpecification.hasBookingDate(filter.bookingDate()))
                 .and(tableBookingSpecification.hasDineInTime(filter.dineInTime()))
@@ -434,23 +475,29 @@ public class TableBookingService {
                 .and(tableBookingSpecification.hasBookingStatus(filter.bookingStatus()))
                 .and(tableBookingSpecification.hasDishStatus(filter.dishStatus()));
 
-        Page<TableBooking> bookingsPage = tableBookingRepository.findAll(spec, pageable);
+        Page<TableBooking> bookingsPage = tableBookingRepository.findAllByChildEntities(spec, pageable);
 
         if (!bookingsPage.hasContent()){
+            log.error("No bookings found for the given criteria in restaurant ID: {}", filter.restaurantId());
             throw new TableBookingException("No bookings found for the given criteria in restaurant ID: " + filter.restaurantId());
         }
 
-        Page<TableBookingDtoWoRestaurant> bookingDtosPage = bookingsPage.map(tableBookingMapper::toDtoWoRestaurant);
+        Page<TableBookingDtoWoRestaurant> bookingDtosPage = bookingsPage.map(tableBooking ->
+                tableBookingMapper.toDtoWoRestaurant(tableBooking,filter.restaurantId()));
+
         log.info("Fetched {} bookings for restaurantId: {}", bookingDtosPage.getTotalElements(), filter.restaurantId());
         return new CustomPageDto<>(bookingDtosPage);
     }
 
     @CacheEvict(value = "booking:pages", allEntries = true)
-    public String updateBookingStatus(UUID tableBookingId, TableBookingStatusUpdateRequest statusUpdateRequest) {
+    public void updateBookingStatus(UUID tableBookingId, TableBookingStatusUpdateRequest statusUpdateRequest) {
         log.info("Updating booking status for booking ID: {}", tableBookingId);
-        TableBooking existingBooking = tableBookingRepository.findByIdAndIsActive(tableBookingId)
+
+        TableBooking existingBooking = tableBookingRepository.findByIdWithGuestInformation(tableBookingId)
                 .orElseThrow(() -> new TableBookingException("Booking not found with ID: " + tableBookingId));
+
         UUID userId=existingBooking.getGuestInformation().getUserId();
+
         if (statusUpdateRequest.getBookingStatus()!=null) {
             log.info("Updating booking status from {} to {}", existingBooking.getBookingStatus(), statusUpdateRequest.getBookingStatus());
             existingBooking.setBookingStatus(BookingStatus.valueOf(statusUpdateRequest.getBookingStatus().toUpperCase(Locale.ROOT)));
@@ -465,25 +512,29 @@ public class TableBookingService {
 
         existingBooking.setLastModifiedBy(authService.getAuthenticatedId());
         tableBookingRepository.save(existingBooking);
+
         evictCachesForTableBookingId(tableBookingId);
         log.info("Booking status updated successfully for booking ID: {}", tableBookingId);
-        return "Table Booking status updated successfully.";
     }
 
-    private void sendNotificationViaKafka(UUID userId, String bookingStatus, TableBooking existingBooking,boolean isBookingStatus) {
+    private void sendNotificationViaKafka(UUID userId, String bookingStatus,
+                                          TableBooking existingBooking,boolean isBookingStatus) {
+
         log.info("Sending notification via Kafka for userId: {} with bookingStatus: {}", userId, bookingStatus);
 
-        kafkaService.sendEmailNotification(userId, bookingStatus, "booking-confirmation",existingBooking,isBookingStatus).thenAccept(success -> {
-            if (success) {
-                log.info("Email notification sent successfully for userId: {}", userId);
-            } else {
-                log.error("Failed to send email notification for userId: {}", userId);
-            }
-        });
+        kafkaService.sendEmailNotification(userId, bookingStatus, "booking-confirmation",existingBooking,isBookingStatus)
+                .thenAccept(success -> {
+                        if (success) {
+                            log.info("Email notification sent successfully for userId: {}", userId);
+                        } else {
+                            log.error("Failed to send email notification for userId: {}", userId);
+                        }
+                });
     }
 
-    public String updateBookingDetails(UUID tableBookingId, TableBookingDetailsUpdateRequest detailsUpdateRequest) {
+    public void updateBookingDetails(UUID tableBookingId, TableBookingDetailsUpdateRequest detailsUpdateRequest) {
         log.info("Updating booking details for booking ID: {}", tableBookingId);
+
         TableBooking existingBooking = tableBookingRepository.findByIdAndIsActive(tableBookingId)
                 .orElseThrow(() -> new TableBookingException("Booking not found with ID: " + tableBookingId));
 
@@ -509,9 +560,9 @@ public class TableBookingService {
 
         existingBooking.setLastModifiedBy(authService.getAuthenticatedId());
         tableBookingRepository.save(existingBooking);
+
         evictCachesForTableBookingId(tableBookingId);
         log.info("Booking details updated successfully for booking ID: {}", tableBookingId);
-        return "Table Booking details updated successfully.";
     }
 
     public void evictCachesForTableBookingId(UUID tableBookingId) {

@@ -1,6 +1,6 @@
 package com.dineswift.restaurant_service.mapper;
 
-import com.dineswift.restaurant_service.exception.RestaurantException;
+import com.dineswift.restaurant_service.exception.DishException;
 import com.dineswift.restaurant_service.model.*;
 import com.dineswift.restaurant_service.payload.request.menu.MenuCreateRequest;
 import com.dineswift.restaurant_service.payload.response.dish.DishDTO;
@@ -26,13 +26,12 @@ public class MenuMapper {
 
     private final RestaurantRepository restaurantRepository;
     private final DishRepository dishRepository;
-    private final DishMapper dishMapper;
     private final ModelMapper modelMapper;
     private final DishImageRepository dishImageRepository;
 
 
     public Menu toEntity(MenuCreateRequest menuCreateRequest, UUID restaurantId) {
-        Restaurant restaurant = restaurantRepository.findByIdAndIsActive(restaurantId).orElseThrow(()-> new RestaurantException("Restaurant not found with provided Id"));
+        Restaurant restaurant = restaurantRepository.getReferenceById(restaurantId);
 
         Menu menu=new Menu();
         if (menuCreateRequest.getMenuName()!=null && !menuCreateRequest.getMenuName().isEmpty()){
@@ -43,13 +42,19 @@ public class MenuMapper {
         }
         menu.setRestaurant(restaurant);
 
-        List<Dish> dishes = null;
-        if (!menuCreateRequest.getDishIds().isEmpty()){
-           dishes = dishRepository.findAllById(menuCreateRequest.getDishIds());
-        }
+        List<UUID> dishIds = menuCreateRequest.getDishIds();
 
-        if (dishes!=null){
+        if (dishIds != null && !dishIds.isEmpty()) {
+
+            List<Dish> dishes = dishRepository.findAllById(dishIds);
+
+            if (dishes.size() != dishIds.size()) {
+                throw new DishException("Some dish IDs are invalid for menu creation");
+            }
+
             menu.setDishes(new HashSet<>(dishes));
+        } else {
+            menu.setDishes(Collections.emptySet());
         }
 
         return menu;

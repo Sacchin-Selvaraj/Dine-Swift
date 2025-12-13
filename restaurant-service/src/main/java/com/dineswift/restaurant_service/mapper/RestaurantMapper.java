@@ -14,12 +14,17 @@ import com.dineswift.restaurant_service.security.service.AuthService;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 @Transactional
@@ -66,14 +71,14 @@ public class RestaurantMapper {
         if (restaurantUpdateRequest.getClosingTime() != null)
             restaurant.setClosingTime(restaurantUpdateRequest.getClosingTime());
 
-        // need to set latitude and longitude from address using geocoding service in future
-
         return restaurant;
     }
 
     public RestaurantDto toDTO(Restaurant restaurant) {
         RestaurantDto restaurantDTO = mapper.map(restaurant, RestaurantDto.class);
+
         List<RestaurantImage> restaurantImages = restaurantImageRepository.findByRestaurant(restaurant);
+
         if (!restaurantImages.isEmpty())
             restaurantDTO.setRestaurantImages(restaurantImages.stream().map(this::toImageDTO).toList());
 
@@ -96,5 +101,50 @@ public class RestaurantMapper {
 
     public RestaurantImageDto toImageDTO(RestaurantImage image) {
         return mapper.map(image, RestaurantImageDto.class);
+    }
+
+    public Page<RestaurantDto> toPageDTO(Page<Restaurant> restaurantPage) {
+        List<Restaurant> restaurantList = restaurantPage.getContent();
+
+        Map<UUID,RestaurantDto> restaurantDtoMap = getRestaurantDTOs(restaurantList);
+
+        return restaurantPage
+                .map(restaurant -> restaurantDtoMap.get(restaurant.getRestaurantId()));
+    }
+
+    private Map<UUID, RestaurantDto> getRestaurantDTOs(List<Restaurant> restaurantList) {
+
+        List<RestaurantImage> restaurantImages = restaurantImageRepository.findByRestaurants(restaurantList);
+
+        Map<UUID, List<RestaurantImage>> restaurantImagesMap = restaurantImages
+                .stream()
+                .collect(Collectors.groupingBy(
+                                restaurantImage -> restaurantImage
+                                                .getRestaurant()
+                                                .getRestaurantId()
+                        )
+                );
+
+        Map<UUID,RestaurantDto> restaurantDtoMap = restaurantList.stream()
+                .map(restaurant -> toDto(restaurant,restaurantImagesMap))
+                .collect(Collectors.toMap(RestaurantDto::getRestaurantId,
+                        restaurantDto -> restaurantDto));
+
+        log.info("Mapped Restaurant Dto");
+        return restaurantDtoMap;
+
+    }
+
+    private RestaurantDto toDto(Restaurant restaurant,Map<UUID,List<RestaurantImage>> restaurantImagesMap) {
+        RestaurantDto restaurantDto = mapper.map(restaurant, RestaurantDto.class);
+
+        List<RestaurantImage> imagesForRestaurant = restaurantImagesMap
+                .getOrDefault(restaurantDto.getRestaurantId(), List.of());
+
+        restaurantDto.setRestaurantImages(imagesForRestaurant.stream()
+                        .map(this::toImageDTO)
+                        .toList());
+
+        return restaurantDto;
     }
 }

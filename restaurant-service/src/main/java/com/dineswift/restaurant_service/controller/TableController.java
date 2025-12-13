@@ -9,7 +9,6 @@ import com.dineswift.restaurant_service.service.CustomPageDto;
 import com.dineswift.restaurant_service.service.TableService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -29,7 +28,8 @@ public class TableController {
 
     @PreAuthorize(("hasAnyRole('ROLE_ADMIN','ROLE_MANAGER')"))
     @PostMapping("/add-table/{restaurantId}" )
-    public ResponseEntity<Void> addTableToRestaurant(@PathVariable UUID  restaurantId, @RequestBody TableCreateRequest tableCreateRequest) {
+    public ResponseEntity<Void> addTableToRestaurant(@PathVariable UUID  restaurantId,
+                                                     @RequestBody TableCreateRequest tableCreateRequest) {
         log.info("Received request to add table to restaurant with ID: {}", restaurantId);
         tableService.addTableToRestaurant(restaurantId, tableCreateRequest);
         return ResponseEntity.ok().build();
@@ -45,7 +45,9 @@ public class TableController {
 
     @PreAuthorize(("hasAnyRole('ROLE_ADMIN','ROLE_MANAGER')"))
     @PatchMapping("/update-table/{tableId}" )
-    public ResponseEntity<Void> updateTable(@PathVariable UUID  tableId, @RequestBody TableUpdateRequest tableUpdateRequest) {
+    public ResponseEntity<Void> updateTable(@PathVariable UUID  tableId,
+                                            @RequestBody TableUpdateRequest tableUpdateRequest) {
+
         log.info("Received request to update table with ID: {}", tableId);
         tableService.updateTable(tableId, tableUpdateRequest);
         return ResponseEntity.ok().build();
@@ -61,7 +63,9 @@ public class TableController {
     }
 
     @GetMapping("/available-slots/{restaurantId}" )
-    public ResponseEntity<List<AvailableSlots>> getAvailableSlots(@PathVariable UUID  restaurantId, @RequestBody CheckAvailableSlots checkAvailableSlots) {
+    public ResponseEntity<List<AvailableSlots>> getAvailableSlots(@PathVariable UUID  restaurantId,
+                                                                  @RequestBody CheckAvailableSlots checkAvailableSlots) {
+
         log.info("Received request to get available slots for table with ID: {}", restaurantId);
         List<AvailableSlots> availableSlots = tableService.getAvailableSlots(restaurantId,checkAvailableSlots);
         return ResponseEntity.ok().body(availableSlots);
@@ -79,6 +83,7 @@ public class TableController {
         checkAvailableSlots.setReservationTime(reservationTime);
         checkAvailableSlots.setDurationInMinutes(durationInMinutes);
         checkAvailableSlots.setNumberOfGuests(numberOfGuests);
+
         log.info("Received request to get available slot for table with ID: {}", tableId);
         AvailableSlots availableSlot = tableService.getAvailableSlot(tableId, checkAvailableSlots);
         return ResponseEntity.ok().body(availableSlot);

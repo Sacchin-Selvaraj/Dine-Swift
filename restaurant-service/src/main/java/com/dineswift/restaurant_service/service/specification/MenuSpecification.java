@@ -1,4 +1,4 @@
-package com.dineswift.restaurant_service.service;
+package com.dineswift.restaurant_service.service.specification;
 
 import com.dineswift.restaurant_service.model.Menu;
 import org.springframework.data.jpa.domain.Specification;

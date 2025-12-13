@@ -18,7 +18,6 @@ import com.dineswift.restaurant_service.repository.EmployeeRepository;
 import com.dineswift.restaurant_service.repository.VerificationRepository;
 import com.dineswift.restaurant_service.security.service.AuthService;
 import jakarta.transaction.Transactional;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -42,14 +41,16 @@ public class VerificationService {
     private final AuthService authService;
 
 
-    public String updateEmail(EmailUpdateRequest emailUpdateRequest) {
+    public void updateEmail(EmailUpdateRequest emailUpdateRequest) {
 
         UUID employeeId = authService.getAuthenticatedId();
+
         if (employeeRepository.existsByEmail(emailUpdateRequest.getEmail())){
             log.error("Email {} already registered by another user", emailUpdateRequest.getEmail());
             throw new EmployeeException("Email already registered by another user");
         }
-        Employee employee = employeeRepository.findByIdAndIsActive(employeeId).orElseThrow(()->new EmployeeException("Employee not found or inactive"));
+        Employee employee = employeeRepository.findByIdAndIsActiveWoEntity(employeeId)
+                .orElseThrow(()->new EmployeeException("Employee not found or inactive"));
 
         log.info("Generating email verification token for employeeId: {}", employeeId);
         String token=utilityService.generateNumericCode(6);
@@ -70,14 +71,15 @@ public class VerificationService {
             return verificationRepository.save(verificationToken);
         });
 
-        return "Email Sent Successfully";
     }
 
 
-    public void verifyEmail( @Valid VerifyTokenRequest verifyEmailRequest) {
+    public void verifyEmail( VerifyTokenRequest verifyEmailRequest) {
         UUID employeeId = authService.getAuthenticatedId();
+
         log.info("Verifying email token for employeeId: {}", employeeId);
         VerificationToken verificationToken = verifyTokenExistence(verifyEmailRequest.getToken(),TokenType.EMAIL_VERIFICATION);
+
         Employee employee = verificationToken.getEmployee();
         employee.setEmail(verificationToken.getNewEmail());
 
@@ -86,25 +88,29 @@ public class VerificationService {
         }
         verificationToken.setWasUsed(true);
         verificationToken.setTokenStatus(TokenStatus.VERIFIED);
+
         verificationRepository.save(verificationToken);
 
     }
 
-    public String updatePhoneNumber(PhoneNumberUpdateRequest phoneNumberUpdateRequest) {
+    public void updatePhoneNumber(PhoneNumberUpdateRequest phoneNumberUpdateRequest) {
 
         UUID employeeId = authService.getAuthenticatedId();
+
         if (employeeRepository.existsByPhoneNumber(phoneNumberUpdateRequest.getPhoneNumber())){
             log.error("Phone Number {} already registered by another user", phoneNumberUpdateRequest.getPhoneNumber());
             throw new EmployeeException("Phone Number already registered by another user");
         }
 
-        Employee employee = employeeRepository.findByIdAndIsActive(employeeId).orElseThrow( ()->new EmployeeException("Employee not found or inactive"));
+        Employee employee = employeeRepository.findByIdAndIsActiveWoEntity(employeeId)
+                .orElseThrow(()->new EmployeeException("Employee not found or inactive"));
 
         log.info("Generating phone number verification token for employeeId: {}", employeeId);
         String token=utilityService.generateNumericCode(6);
 
         VerificationToken verificationToken = setVerificationToken(token, employee,TokenType.PHONE_VERIFICATION);
         verificationToken.setNewPhonenumber(phoneNumberUpdateRequest.getPhoneNumber());
+
         verificationRepository.save(verificationToken);
 
         kafkaService.sendSmsVerification(phoneNumberUpdateRequest.getPhoneNumber(),token,employee.getEmployeeName()).thenApply(status->{
@@ -117,11 +123,10 @@ public class VerificationService {
             }
             return verificationRepository.save(verificationToken);
         });
-        return "Verification Code Sent Successfully";
     }
 
     private static VerificationToken setVerificationToken(String token, Employee employee,TokenType tokenType) {
-        log.info("Setting verification token for employeeId: {}", employee.getEmployeeId());
+        log.info("Setting verification token for employee");
         VerificationToken verificationToken=new VerificationToken();
         verificationToken.setToken(token);
         verificationToken.setEmployee(employee);
@@ -136,6 +141,7 @@ public class VerificationService {
 
         UUID employeeId = authService.getAuthenticatedId();
         VerificationToken verificationToken = verifyTokenExistence(verifyPhoneNumberRequest.getToken(),TokenType.PHONE_VERIFICATION);
+
         Employee employee = verificationToken.getEmployee();
         log.info("Updating phone number for employeeId: {}", employeeId);
         employee.setPhoneNumber(verificationToken.getNewPhonenumber());
@@ -146,14 +152,16 @@ public class VerificationService {
 
         verificationToken.setWasUsed(true);
         verificationToken.setTokenStatus(TokenStatus.VERIFIED);
+
         verificationRepository.save(verificationToken);
     }
 
-    public String forgotPassword(ForgotPasswordRequest forgotPasswordRequest) {
+    public void forgotPassword(ForgotPasswordRequest forgotPasswordRequest) {
 
         String typeOfVerification = forgotPasswordRequest.getTypeOfVerification();
         log.info("Initiating forgot password process for employeeInput: {}", forgotPasswordRequest.getEmployeeInput());
         Employee registedEmployee;
+
         if (typeOfVerification.equalsIgnoreCase("Email")){
             String employeeEmail = forgotPasswordRequest.getEmployeeInput();
             registedEmployee=employeeRepository.findByEmailAndIsActive(employeeEmail)
@@ -200,10 +208,9 @@ public class VerificationService {
             log.info("Sent forgot password SMS to employee");
         }
 
-        return "Verification code sent via " + typeOfVerification.toLowerCase();
     }
 
-    public String verifyforgotPassword(PasswordUpdateRequest passwordChangeRequest) {
+    public String verifyForgotPassword(PasswordUpdateRequest passwordChangeRequest) {
 
         log.info("Verifying forgot password token");
         if (!passwordChangeRequest.getNewPassword().equals(passwordChangeRequest.getConfirmPassword())){
@@ -224,6 +231,7 @@ public class VerificationService {
 
     public VerificationToken verifyTokenExistence(String verifyToken,TokenType tokenType) {
         log.info("Verifying existence of token: {}", verifyToken);
+
         VerificationToken verificationToken=verificationRepository.findByToken(verifyToken)
                 .orElseThrow(()->new TokenException("Verification Token was invalid"));
 

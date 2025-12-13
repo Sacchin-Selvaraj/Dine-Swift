@@ -27,6 +27,7 @@ import org.springframework.web.client.RestClient;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -47,6 +48,7 @@ public class OrderService {
             allEntries = true
     )
     public void addItemToOrderItem(AddOrderItem addOrderItemRequest) {
+
         UUID dishId = addOrderItemRequest.getDishId();
         Integer quantity = addOrderItemRequest.getQuantity();
         log.info("Checking quantity: {}", quantity);
@@ -54,7 +56,9 @@ public class OrderService {
 
         UUID cartId = getCartIdFromUserService();
 
-        Dish dish = dishRepository.findByIdAndIsActive(dishId).orElseThrow(() -> new DishException("Dish not found or inactive"));
+        Dish dish = dishRepository.findByIdAndIsActiveWithRestaurant(dishId)
+                .orElseThrow(() -> new DishException("Dish not found or inactive"));
+
         log.info("Dish found: {}", dish.getDishName());
         CartAmountUpdateRequest amountUpdateRequest = getCartAmountUpdateRequest(quantity, dish);
 
@@ -65,8 +69,10 @@ public class OrderService {
         if (existingOrderItem != null) {
             log.info("Existing OrderItem found, updating quantity: {}", existingOrderItem);
             int newQuantity = existingOrderItem.getQuantity() + quantity;
+
             checkQuantity(newQuantity);
             existingOrderItem.setQuantity(newQuantity);
+
             orderItemRepository.save(existingOrderItem);
             return;
         }
@@ -74,9 +80,15 @@ public class OrderService {
         OrderItem updatedOrderItem = orderItemMapper.toEntity(cartId, dish, quantity);
         log.info("OrderItem created: {}", updatedOrderItem);
         orderItemRepository.save(updatedOrderItem);
+
         evictOrderItemCaches(cartId);
     }
 
+    @Cacheable(
+            value = "restaurant:cart-id-from-user-service",
+            key = "@authService.getAuthenticatedId()",
+            unless = "#result == null"
+    )
     private UUID getCartIdFromUserService() {
         log.info("Fetching cartId from User-Service");
         ResponseEntity<UUID> response = restClient.get()
@@ -94,6 +106,7 @@ public class OrderService {
 
     private static CartAmountUpdateRequest getCartAmountUpdateRequest(Integer quantity, Dish dish) {
         log.info("Calculating the total price and sending to user service to update the cart total amount");
+
         CartAmountUpdateRequest amountUpdateRequest = new CartAmountUpdateRequest();
         amountUpdateRequest.setRemoved(false);
         BigDecimal finalDishPrice = dish.getDishPrice().subtract(
@@ -102,6 +115,7 @@ public class OrderService {
                         .divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP)
         );
         log.info("Final dish price after discount: {}", finalDishPrice);
+
         finalDishPrice = finalDishPrice.setScale(2, RoundingMode.HALF_UP);
         BigDecimal finalTotalPrice = finalDishPrice.multiply(BigDecimal.valueOf(quantity))
                 .setScale(2, RoundingMode.HALF_UP);
@@ -117,14 +131,19 @@ public class OrderService {
     public void updateItemQuantity(UUID orderItemId, Integer quantity) {
 
         checkQuantity(quantity);
-        OrderItem orderItem = orderItemRepository.findById(orderItemId).orElseThrow(() -> new OrderItemException("Order item not found"));
+        OrderItem orderItem = orderItemRepository.findByIdAndDish(orderItemId)
+                .orElseThrow(() -> new OrderItemException("Order item not found"));
+
         log.info("OrderItem found: {}", orderItem);
         CartAmountUpdateRequest amountUpdateRequest = getAmountUpdateRequest(quantity, orderItem);
+
         log.info("Amount update request prepared: {} will be sent to User-Service", amountUpdateRequest);
         updateCartTotalAmount(orderItem.getCartId(), amountUpdateRequest);
 
         orderItem.setQuantity(quantity);
         orderItemRepository.save(orderItem);
+
+        log.info("OrderItem quantity updated: {}", orderItem);
         evictOrderItemCaches(orderItem.getCartId());
     }
 
@@ -134,10 +153,12 @@ public class OrderService {
     )
     public void deleteItem(UUID orderItemId) {
 
-        OrderItem orderItem = orderItemRepository.findById(orderItemId).orElseThrow(
-                () -> new OrderItemException("Order item not found"));
+        OrderItem orderItem = orderItemRepository.findById(orderItemId)
+                .orElseThrow(() -> new OrderItemException("Order item not found"));
+
         log.info("OrderItem found for deletion: {}", orderItem);
         orderItemRepository.delete(orderItem);
+
         evictOrderItemCaches(orderItem.getCartId());
     }
 
@@ -149,12 +170,14 @@ public class OrderService {
     public List<OrderItemDto> getOrderItemsByCartId(UUID cartId) {
 
         List<OrderItem> orderItems = orderItemRepository.findAllByCartId(cartId);
+
         if (orderItems.isEmpty()){
             log.error("No order items found for cartId: {}", cartId);
             throw new OrderItemException("No order items found !!!");
         }
 
-        List<OrderItemDto> orderItemDtos = orderItems.stream().map(orderItemMapper::toDto).toList();
+        List<OrderItemDto> orderItemDtos = orderItemMapper.toListDto(orderItems);
+
         log.info("Order items fetched for cartId {}", cartId);
         return orderItemDtos;
     }
@@ -172,19 +195,8 @@ public class OrderService {
         }
     }
 
-    private void checkCartIdIsValid(UUID cartId) {
-        log.info("Check whether the CartId is present in User Service or not: {}", cartId);
-        ResponseEntity<Boolean> response = restClient.get()
-                .uri("/cart/valid-cartId/{cartId}", cartId)
-                .retrieve().toEntity(Boolean.class);
-        if (response.getBody()==null || !response.getBody()) {
-            log.error("Invalid cartId: {}", cartId);
-            throw new OrderItemException("Invalid cart ID provided");
-        }
-        log.info("Valid cartId: {}", cartId);
-    }
-
     private void updateCartTotalAmount(UUID cartId, CartAmountUpdateRequest cartAmountUpdateRequest) {
+
         log.info("Updating cart total amount: cartId={}, totalAmount={}", cartId, cartAmountUpdateRequest);
         ResponseEntity<Void> response = restClient.patch()
                 .uri("/cart/update-cart-amount/{cartId}",cartId)
@@ -192,6 +204,7 @@ public class OrderService {
                 .header("Content-Type", "application/json")
                 .retrieve()
                 .toBodilessEntity();
+
         log.info("Cart total amount updated successfully for cartId={}", cartId);
     }
 
@@ -199,6 +212,7 @@ public class OrderService {
         CartAmountUpdateRequest amountUpdateRequest = new CartAmountUpdateRequest();
         BigDecimal amountDifference;
         int quantityDifference = quantity - orderItem.getQuantity();
+
         if (quantityDifference>=0) {
             amountUpdateRequest.setRemoved(false);
             amountDifference = orderItem.getPrice().multiply(BigDecimal.valueOf(quantityDifference));
@@ -217,18 +231,30 @@ public class OrderService {
             key = "#tableBookingId + '-' + #pageNo + '-' + #pageSize",
             unless = "#result == null || #result.isEmpty()"
     )
-    public CustomPageDto<OrderItemDto> getOrderItemsByTableBookingId(UUID tableBookingId, Integer pageNo, Integer pageSize) {
+    public CustomPageDto<OrderItemDto> getOrderItemsByTableBookingId(UUID tableBookingId,
+                                                                     Integer pageNo, Integer pageSize) {
+
         log.info("Fetching order items for tableBookingId: {}", tableBookingId);
         Pageable pageable = PageRequest.of(pageNo, pageSize);
+
         Page<OrderItem> orderItemsPage = orderItemRepository.findAllByTableBookingId(tableBookingId, pageable);
+
         if (orderItemsPage.isEmpty()) {
             log.error("No order items found for tableBookingId: {}", tableBookingId);
-            throw new OrderItemException("No order items found for the given table booking ID");
+            return new CustomPageDto<>(Page.empty());
         }
-        Page<OrderItemDto> orderItemDtos = orderItemsPage.map(orderItemMapper::toDtoAfterBooking);
+
+        Page<OrderItemDto> orderItemDtos = getOrderItemsDtoList(orderItemsPage);
         log.info("Order items fetched for tableBookingId {}: {}", tableBookingId, orderItemDtos);
         return new CustomPageDto<>(orderItemDtos);
 
+    }
+
+    private Page<OrderItemDto> getOrderItemsDtoList(Page<OrderItem> orderItemsPage) {
+        List<OrderItem> orderItemList = orderItemsPage.getContent();
+        Map<UUID,OrderItemDto> orderItemDtoMap = orderItemMapper.toListDtoAfterBooking(orderItemList);
+        log.info("Converted OrderItems to OrderItemDtos");
+        return orderItemsPage.map(orderItem -> orderItemDtoMap.get(orderItem.getOrderItemsId()));
     }
 
     public void evictOrderItemCaches(UUID cartId) {

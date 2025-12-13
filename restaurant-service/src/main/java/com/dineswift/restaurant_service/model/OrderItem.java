@@ -51,6 +51,7 @@ public class OrderItem {
     @NotNull(message = "Restaurant is required")
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "restaurant_id")
+    @JsonIgnore
     private Restaurant restaurant;
 
     @Column(name = "cart_id")

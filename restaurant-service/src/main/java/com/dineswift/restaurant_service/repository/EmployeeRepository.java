@@ -49,4 +49,11 @@ public interface EmployeeRepository extends JpaRepository<Employee, UUID>, JpaSp
     @EntityGraph(attributePaths = {"roles"})
     @Query("SELECT DISTINCT emp FROM Employee emp WHERE emp.restaurant.restaurantId = :restaurantId")
     List<Employee> findAllByRestaurant_RestaurantId(UUID restaurantId);
+
+    @EntityGraph(attributePaths = {"restaurant"})
+    @Query("SELECT emp FROM Employee emp WHERE emp.employeeId = :employeeId AND emp.employeeIsActive = true")
+    Optional<Employee> findByIdAndIsActiveWithRestaurant(UUID employeeId);
+
+    @Query("SELECT emp FROM Employee emp where employeeId=:employeeId AND employeeIsActive=true")
+    Optional<Employee> findByIdAndIsActiveWoEntity(UUID employeeId);
 }

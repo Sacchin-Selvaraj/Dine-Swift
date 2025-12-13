@@ -1,18 +1,16 @@
 package com.dineswift.restaurant_service.mapper;
 
-import com.dineswift.restaurant_service.model.OrderItem;
 import com.dineswift.restaurant_service.model.TableBooking;
 import com.dineswift.restaurant_service.payload.response.tableBooking.GuestInformationDto;
 import com.dineswift.restaurant_service.payload.response.tableBooking.TableBookingDto;
 import com.dineswift.restaurant_service.payload.response.tableBooking.TableBookingDtoWoRestaurant;
 import com.dineswift.restaurant_service.payload.response.tableBooking.TableBookingResponse;
-import com.dineswift.restaurant_service.repository.OrderItemRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
+import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -22,11 +20,8 @@ public class TableBookingMapper {
     private final ModelMapper modelMapper;
     private final TableMapper tableMapper;
     private final RestaurantMapper restaurantMapper;
-    private final OrderItemRepository orderItemRepository;
-    private final OrderItemMapper orderItemMapper;
 
 
-    //Use the concurrent mapping approach to map TableBooking to TableBookingDto
     public TableBookingDto toDto(TableBooking existingBooking) {
 
         log.info("Mapping TableBooking entity to TableBookingDto");
@@ -34,9 +29,11 @@ public class TableBookingMapper {
 
         tableBookingDto.setRestaurantDto(restaurantMapper.toDTO(existingBooking.getRestaurant()));
 
-        tableBookingDto.setRestaurantTableDto(tableMapper.toDto(existingBooking.getRestaurantTable()));
+        UUID restaurantId = existingBooking.getRestaurant().getRestaurantId();
 
-        log.info("Mapping for Guest Information");
+        tableBookingDto.setRestaurantTableDto(tableMapper.toDtoWithRestaurantId(existingBooking.getRestaurantTable(), restaurantId));
+
+        log.info("Mapping for Guest Information from TableBooking");
         tableBookingDto.setGuestInformationDto(modelMapper.map(existingBooking.getGuestInformation(), GuestInformationDto.class));
 
         log.info("Mapping completed for TableBookingDto");
@@ -44,23 +41,11 @@ public class TableBookingMapper {
 
     }
 
-    public TableBookingDto toDto(TableBooking existingBooking, List<OrderItem> orderItems) {
-
-        TableBookingDto tableBookingDto = toDto(existingBooking);
-        log.info("Mapping OrderItems to OrderItemDtos for bookingId: {}", existingBooking.getTableBookingId());
-        tableBookingDto.setOrderItems(orderItems.stream().map(orderItemMapper::toDtoAfterBooking).toList());
-        log.info("Mapping completed for TableBookingDto with OrderItems");
-        return tableBookingDto;
-
-    }
-
-    public TableBookingDtoWoRestaurant toDtoWoRestaurant(TableBooking tableBooking) {
+    public TableBookingDtoWoRestaurant toDtoWoRestaurant(TableBooking tableBooking, UUID restaurantId) {
         log.info("Mapping TableBooking entity to TableBookingDtoWoRestaurant");
         TableBookingDtoWoRestaurant dto = modelMapper.map(tableBooking, TableBookingDtoWoRestaurant.class);
 
-        dto.setRestaurantTableDto(tableMapper.toDto(tableBooking.getRestaurantTable()));
-
-
+        dto.setRestaurantTableDto(tableMapper.toDtoWithRestaurantId(tableBooking.getRestaurantTable(),restaurantId));
 
         log.info("Mapping for Guest Information");
         dto.setGuestInformationDto(modelMapper.map(tableBooking.getGuestInformation(), GuestInformationDto.class));

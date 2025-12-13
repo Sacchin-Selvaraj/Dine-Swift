@@ -25,6 +25,7 @@ public class OrderItemController {
     @PostMapping("/add-item")
     public ResponseEntity<Void> addItemToOrderItem(@RequestBody AddOrderItem addOrderItemRequest) {
         log.info("Adding item to cart");
+
         orderService.addItemToOrderItem(addOrderItemRequest);
         return ResponseEntity.ok().build();
     }
@@ -42,7 +43,9 @@ public class OrderItemController {
     @DeleteMapping("/delete-item/{orderItemId}")
     public ResponseEntity<Void> deleteItem(@PathVariable UUID orderItemId) {
         log.info("Deleting item: orderItemId={}", orderItemId);
+
         orderService.deleteItem(orderItemId);
+
         return ResponseEntity.noContent().build();
     }
 
@@ -50,7 +53,9 @@ public class OrderItemController {
     @GetMapping("/get-order-items/{cartId}")
     public ResponseEntity<List<OrderItemDto>> getOrderItemsByCartId(@PathVariable UUID cartId) {
         log.info("Fetching order items for cartId={}", cartId);
+
         List<OrderItemDto> orderItems = orderService.getOrderItemsByCartId(cartId);
+
         return ResponseEntity.ok(orderItems);
     }
 
@@ -62,7 +67,9 @@ public class OrderItemController {
             @RequestParam(value = "size") Integer pageSize
     ) {
         log.info("Fetching order items for tableBookingId={}", tableBookingId);
-        CustomPageDto<OrderItemDto> orderItems = orderService.getOrderItemsByTableBookingId(tableBookingId, pageNo, pageSize);
+        CustomPageDto<OrderItemDto> orderItems = orderService
+                .getOrderItemsByTableBookingId(tableBookingId, pageNo, pageSize);
+
         return ResponseEntity.ok(orderItems);
     }
 }

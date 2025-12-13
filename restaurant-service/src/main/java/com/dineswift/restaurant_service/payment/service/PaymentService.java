@@ -5,13 +5,11 @@ import com.dineswift.restaurant_service.exception.PaymentException;
 import com.dineswift.restaurant_service.mapper.PaymentMapper;
 import com.dineswift.restaurant_service.model.*;
 import com.dineswift.restaurant_service.payload.response.tableBooking.PaymentCreateResponse;
-import com.dineswift.restaurant_service.payment.payload.request.BookingStatusUpdate;
 import com.dineswift.restaurant_service.payment.payload.request.PaymentDetails;
 import com.dineswift.restaurant_service.payment.payload.response.PaymentDto;
 import com.dineswift.restaurant_service.payment.repository.PaymentRepository;
 import com.dineswift.restaurant_service.payment.repository.PaymentRefundRepository;
 import com.dineswift.restaurant_service.repository.TableBookingRepository;
-import com.dineswift.restaurant_service.service.TableBookingService;
 import com.razorpay.Order;
 import com.razorpay.RazorpayClient;
 import com.razorpay.RazorpayException;
@@ -24,9 +22,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.CacheManager;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestClient;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -47,7 +43,6 @@ public class PaymentService {
     private final TableBookingRepository tableBookingRepository;
     private final RazorpayClient razorpayClient;
     private final PaymentRefundRepository paymentRefundRepository;
-    private final RestClient restClient;
     private final PaymentMapper paymentMapper;
     private final CacheManager cacheManager;
 
@@ -55,7 +50,9 @@ public class PaymentService {
     private String secretKey;
 
 
-    public PaymentCreateResponse initiatePayment(TableBooking newBooking,String paymentName, BigDecimal amount) {
+    public PaymentCreateResponse initiatePayment(TableBooking newBooking,
+                                                 String paymentName,
+                                                 BigDecimal amount) {
 
         Payment newPayment = new Payment();
         newPayment.setPaymentName(paymentName);
@@ -181,8 +178,10 @@ public class PaymentService {
     private void handleSuccessfulPayment(PaymentDetails paymentDetails, com.razorpay.Payment paymentData) {
 
             log.info("Handling successful payment for orderId: {}", paymentDetails.getOrderId());
+
             Payment payment = paymentRepository.findByOrderId(paymentDetails.getOrderId())
                     .orElseThrow(()-> new PaymentException("No payment found with orderId: " + paymentDetails.getOrderId()));
+
             payment.setPaymentStatus(PaymentStatus.COMPLETED);
             payment.setTransactionId(paymentDetails.getPaymentId());
 
@@ -191,15 +190,14 @@ public class PaymentService {
             payment.setPaymentMethod(paymentMethod);
 
             TableBooking booking = payment.getTableBooking();
+
             if (!booking.getIsUpfrontPaid()) {
                 booking.setTablePaymentStatus(TablePaymentStatus.PAYMENT_PENDING);
                 booking.setIsUpfrontPaid(true);
-                //updateBookingStatus(booking.getTableBookingId(), BookingStatus.PAYMENT_PENDING.name());
             }
             else {
                 booking.setTablePaymentStatus(TablePaymentStatus.PAYMENT_COMPLETED);
                 booking.setIsPendingAmountPaid(true);
-                //updateBookingStatus(booking.getTableBookingId(), BookingStatus.ORDER_COMPLETED.name());
             }
             log.info("Updating booking status to {} for bookingId: {}", booking.getBookingStatus(), booking.getTableBookingId());
             paymentRepository.save(payment);
@@ -207,25 +205,12 @@ public class PaymentService {
 
     }
 
-    private void updateBookingStatus(UUID tableBookingId, String bookingStatus) {
-
-        log.info("Updating Booking Status in Booking Service");
-        BookingStatusUpdate statusUpdate = new BookingStatusUpdate();
-        statusUpdate.setTableBookingId(tableBookingId);
-        statusUpdate.setBookingStatus(bookingStatus);
-
-        ResponseEntity<Void> response = restClient.patch()
-                .uri("/booking/update-booking-status")
-                .body(statusUpdate)
-                .retrieve()
-                .toBodilessEntity();
-    }
-
-
     private void handleFailedPayment(PaymentDetails paymentDetails, com.razorpay.Payment paymentData) {
         log.info("Handling failed payment for orderId: {}", paymentDetails.getOrderId());
-        Payment failerPayment = paymentRepository.findByOrderId(paymentDetails.getOrderId())
+
+        Payment failerPayment = paymentRepository.findByOrderIdWoBooking(paymentDetails.getOrderId())
                 .orElseThrow(()-> new PaymentException("No payment found with orderId: " + paymentDetails.getOrderId()));
+
         failerPayment.setPaymentStatus(PaymentStatus.FAILED);
         failerPayment.setPaymentMethod(getPaymentMethodFromId(paymentData));
         failerPayment.setTransactionId(paymentDetails.getPaymentId());
@@ -244,7 +229,7 @@ public class PaymentService {
             String failureReason = paymentData.get("error_description");
             return failureReason != null ? failureReason : "Unknown failure reason";
         } catch (IllegalArgumentException e) {
-            log.error("Error fetching payment details from Razorpay: " + e.getMessage());
+            log.error("Error fetching payment detail from Razorpay: " + e.getMessage());
             return "Error fetching failure reason";
         }
     }
@@ -262,7 +247,9 @@ public class PaymentService {
     }
 
     public PaymentCreateResponse generatePayNow(UUID tableBookingId) {
+
         log.info("Generating pay-now link for bookingId: {}", tableBookingId);
+
         TableBooking existingBooking = tableBookingRepository.findByIdAndIsActive(tableBookingId)
                 .orElseThrow(() -> new PaymentException("Invalid table booking ID: " + tableBookingId));
 
@@ -319,6 +306,7 @@ public class PaymentService {
 
             log.info("Refund created in Razorpay with ID: {}", Optional.ofNullable(refund.get("id")));
             createRefundRecord(existingBooking,successfulPayment,refund);
+
         } catch (RazorpayException e) {
             log.error("Error fetching payments details from Razorpay: " + e.getMessage());
             throw new PaymentException("Error processing refund from Razorpay, please try again later. Error Message : " + e.getMessage());
@@ -337,14 +325,18 @@ public class PaymentService {
         paymentRefund.setRefundStatus(Optional.ofNullable(refund.get("status")).orElse("created").toString());
         paymentRefund.setReason("Customer requested refund for table booking ID: " + existingBooking.getTableBookingId());
         paymentRefundRepository.save(paymentRefund);
+
         log.info("Refund record created successfully in database for paymentId: {}", successfulPayment.getPaymentId());
     }
 
     public Page<PaymentDto> getPaymentDetails(UUID tableBookingId, int page, int size) {
         log.info("Fetching payment details for bookingId: {}", tableBookingId);
         Pageable pageable = Pageable.ofSize(size).withPage(page);
+
         Page<Payment> paymentPage = paymentRepository.findAllByTableBooking_TableBookingId(tableBookingId, pageable);
+
         Page<PaymentDto> paymentDtoPage = paymentPage.map(paymentMapper::convertToDto);
+
         log.info("Fetched {} payment records for bookingId: {}", paymentDtoPage.getTotalElements(), tableBookingId);
         return paymentDtoPage;
     }

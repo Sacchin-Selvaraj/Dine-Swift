@@ -16,6 +16,7 @@ import com.dineswift.restaurant_service.repository.RestaurantRepository;
 import com.dineswift.restaurant_service.security.service.AuthService;
 import com.dineswift.restaurant_service.service.records.DishSearchFilter;
 import com.dineswift.restaurant_service.service.records.DishSearchFilterByRestaurant;
+import com.dineswift.restaurant_service.service.specification.DishSpecification;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -146,7 +147,7 @@ public class DishService {
                 return new CustomPageDto<>(Page.empty());
             }
 
-            return new CustomPageDto<>(dishes.map(dishMapper::toDTO));
+            return getCustomPageDto(dishes);
 
         } catch (Exception e) {
             throw new DishException("Dish retrieval failed: " + e.getMessage());

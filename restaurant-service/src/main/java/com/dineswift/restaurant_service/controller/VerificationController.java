@@ -22,9 +22,9 @@ public class VerificationController {
 
     @PreAuthorize("!hasRole('ROLE_USER')")
     @PostMapping("/update-mail")
-    public ResponseEntity<MessageResponse> updateEmail(@Valid @RequestBody EmailUpdateRequest emailUpdateRequest) {
-        String response=verificationService.updateEmail(emailUpdateRequest);
-        return ResponseEntity.ok(MessageResponse.builder().message(response).build());
+    public ResponseEntity<Void> updateEmail(@Valid @RequestBody EmailUpdateRequest emailUpdateRequest) {
+        verificationService.updateEmail(emailUpdateRequest);
+        return ResponseEntity.ok().build();
     }
     @PreAuthorize("!hasRole('ROLE_USER')")
     @PostMapping("/verify-mail")
@@ -35,9 +35,9 @@ public class VerificationController {
 
     @PreAuthorize("!hasRole('ROLE_USER')")
     @PostMapping("/update-phone-number")
-    public ResponseEntity<MessageResponse> updatePhoneNumber( @Valid @RequestBody PhoneNumberUpdateRequest phoneNumberUpdateRequest) {
-        String response=verificationService.updatePhoneNumber(phoneNumberUpdateRequest);
-        return ResponseEntity.ok(MessageResponse.builder().message(response).build());
+    public ResponseEntity<Void> updatePhoneNumber( @Valid @RequestBody PhoneNumberUpdateRequest phoneNumberUpdateRequest) {
+        verificationService.updatePhoneNumber(phoneNumberUpdateRequest);
+        return ResponseEntity.ok().build();
     }
 
     @PreAuthorize("!hasRole('ROLE_USER')")
@@ -49,13 +49,13 @@ public class VerificationController {
 
     @PostMapping("/forgot-password" )
     public ResponseEntity<MessageResponse> forgotPassword(@Valid @RequestBody ForgotPasswordRequest forgotPasswordRequest) {
-        String response=verificationService.forgotPassword(forgotPasswordRequest);
-        return ResponseEntity.ok(MessageResponse.builder().message(response).build());
+        verificationService.forgotPassword(forgotPasswordRequest);
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping("/verify-forgot-password" )
     public ResponseEntity<MessageResponse> verifyForgotPassword(@Valid @RequestBody PasswordUpdateRequest passwordUpdateRequest) {
-        String response = verificationService.verifyforgotPassword(passwordUpdateRequest);
+        String response = verificationService.verifyForgotPassword(passwordUpdateRequest);
         return ResponseEntity.ok(MessageResponse.builder().message(response).build());
     }
 

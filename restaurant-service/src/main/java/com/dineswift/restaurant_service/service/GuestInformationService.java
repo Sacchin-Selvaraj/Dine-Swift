@@ -1,5 +1,6 @@
 package com.dineswift.restaurant_service.service;
 
+import com.dineswift.restaurant_service.exception.EmployeeException;
 import com.dineswift.restaurant_service.model.GuestInformation;
 import com.dineswift.restaurant_service.payload.response.guestInformation.GuestInformationResponse;
 import com.dineswift.restaurant_service.repository.GuestInformationRepository;
@@ -24,18 +25,18 @@ public class GuestInformationService {
     public GuestInformationResponse getGuestInformationById(UUID guestInformationId) {
         log.info("Service layer: Retrieving guest information for ID: {}", guestInformationId);
         GuestInformation guestInformation = guestInformationRepository.findById(guestInformationId)
-                .orElseThrow(() -> new RuntimeException("Guest Information not found for ID: " + guestInformationId));
+                .orElseThrow(() -> new EmployeeException("Guest Information not found for ID: " + guestInformationId));
 
-        UUID userId = guestInformation.getUserId()==null?null:guestInformation.getUserId();
+        UUID userId = guestInformation.getUserId();
         if (userId==null)
-            throw new RuntimeException("User ID is null for Guest Information ID: " + guestInformationId);
+            throw new EmployeeException("User ID is null for Guest Information ID: " + guestInformationId);
 
-        GuestInformationResponse response = getGuestInformationFromService(userId);
+        GuestInformationResponse response = fetchUserDetails(userId);
         log.info("Successfully retrieved guest information for ID: {}", guestInformationId);
         return response;
     }
 
-    private GuestInformationResponse getGuestInformationFromService(UUID userId) {
+    private GuestInformationResponse fetchUserDetails(UUID userId) {
         log.info("Fetching user details from User Service for User ID: {}", userId);
         ResponseEntity<GuestInformationResponse> responseEntity =
                 restClient.get()

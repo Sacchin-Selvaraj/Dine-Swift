@@ -29,14 +29,18 @@ public class TableBookingController {
 
     @PreAuthorize(("hasAnyRole('ROLE_USER')"))
     @PostMapping("/create-order/{cartId}")
-    public ResponseEntity<TableBookingResponse> bookTable(@PathVariable UUID cartId, @RequestBody BookingRequest bookingRequest){
+    public ResponseEntity<TableBookingResponse> bookTable(@PathVariable UUID cartId,
+                                                          @RequestBody BookingRequest bookingRequest){
+
         TableBookingResponse bookingDto = tableBookingService.createOrder(cartId, bookingRequest);
         log.info("Order created successfully for cartId: {}", cartId);
         return ResponseEntity.ok(bookingDto);
     }
     @PreAuthorize(("hasAnyRole('ROLE_USER', 'ROLE_ADMIN', 'ROLE_MANAGER')"))
     @DeleteMapping("/cancel-booking/{tableBookingId}")
-    public ResponseEntity<MessageResponse> cancelBooking(@PathVariable UUID tableBookingId, @RequestBody CancellationDetails cancellationDetails){
+    public ResponseEntity<MessageResponse> cancelBooking(@PathVariable UUID tableBookingId,
+                                                         @RequestBody CancellationDetails cancellationDetails){
+
         String response = tableBookingService.cancelBooking(tableBookingId, cancellationDetails);
         log.info("Booking cancelled successfully for bookingId: {}", tableBookingId);
         return ResponseEntity.ok(new MessageResponse(response));
@@ -51,24 +55,31 @@ public class TableBookingController {
     }
     @PreAuthorize(("hasAnyRole('ROLE_USER')"))
     @PatchMapping("/change-order-item/{orderItemsId}")
-    public ResponseEntity<MessageResponse> updateOrderItem(@PathVariable UUID orderItemsId, @RequestBody QuantityUpdateRequest quantityUpdateRequest) {
+    public ResponseEntity<Void> updateOrderItem(@PathVariable UUID orderItemsId,
+                                                           @RequestBody QuantityUpdateRequest quantityUpdateRequest) {
+
         tableBookingService.updateOrderItem(orderItemsId, quantityUpdateRequest);
         log.info("Updated order item successfully for orderItemId: {}", orderItemsId);
-        return ResponseEntity.ok(MessageResponse.builder().message("Updated order item successfully").build());
+
+        return ResponseEntity.ok().build();
     }
     @PreAuthorize(("hasAnyRole('ROLE_USER')"))
     @DeleteMapping("/remove-order-item/{orderItemsId}")
     public ResponseEntity<Void> removeOrderItem(@PathVariable UUID orderItemsId) {
+
         tableBookingService.removeOrderItem(orderItemsId);
         log.info("Removed order item successfully for orderItemId: {}", orderItemsId);
         return ResponseEntity.noContent().build();
     }
     @PreAuthorize(("hasAnyRole('ROLE_USER')"))
     @PostMapping("/add-order-item/{tableBookingId}")
-    public ResponseEntity<MessageResponse> addOrderItem(@PathVariable UUID tableBookingId, @RequestBody AddOrderItemRequest addOrderItemRequest) {
+    public ResponseEntity<Void> addOrderItem(@PathVariable UUID tableBookingId,
+                                                        @RequestBody AddOrderItemRequest addOrderItemRequest) {
+
         tableBookingService.addOrderItem(tableBookingId, addOrderItemRequest);
         log.info("Added order item successfully for bookingId: {}", tableBookingId);
-        return ResponseEntity.ok(MessageResponse.builder().message("Added order item successfully").build());
+
+        return ResponseEntity.ok().build();
     }
 
     @PreAuthorize("(hasAnyRole('ROLE_ADMIN', 'ROLE_MANAGER','ROLE_CHEF', 'ROLE_WAITER'))")
@@ -108,18 +119,24 @@ public class TableBookingController {
 
     @PreAuthorize(("hasAnyRole('ROLE_ADMIN', 'ROLE_MANAGER','ROLE_CHEF', 'ROLE_WAITER')"))
     @PutMapping("/update-status/{tableBookingId}")
-    public ResponseEntity<MessageResponse> updateBookingStatus(@PathVariable UUID tableBookingId, @RequestBody TableBookingStatusUpdateRequest statusUpdateRequest) {
-        String responseFromUpdateRequest = tableBookingService.updateBookingStatus(tableBookingId, statusUpdateRequest);
+    public ResponseEntity<Void> updateBookingStatus(@PathVariable UUID tableBookingId,
+                                                               @RequestBody TableBookingStatusUpdateRequest statusUpdateRequest) {
+
+        tableBookingService.updateBookingStatus(tableBookingId, statusUpdateRequest);
         log.info("Updated booking status successfully for bookingId: {}", tableBookingId);
-        return ResponseEntity.ok(MessageResponse.builder().message(responseFromUpdateRequest).build());
+
+        return ResponseEntity.ok().build();
     }
 
     @PreAuthorize(("hasAnyRole('ROLE_ADMIN', 'ROLE_MANAGER', 'ROLE_WAITER','ROLE_STAFF')"))
     @PutMapping("/update-details/{tableBookingId}")
-    public ResponseEntity<MessageResponse> updateBookingDetails(@PathVariable UUID tableBookingId, @RequestBody TableBookingDetailsUpdateRequest detailsUpdateRequest) {
-        String responseFromUpdateRequest = tableBookingService.updateBookingDetails(tableBookingId, detailsUpdateRequest);
+    public ResponseEntity<Void> updateBookingDetails(@PathVariable UUID tableBookingId,
+                                                                @RequestBody TableBookingDetailsUpdateRequest detailsUpdateRequest) {
+
+        tableBookingService.updateBookingDetails(tableBookingId, detailsUpdateRequest);
         log.info("Updated booking details successfully for bookingId: {}", tableBookingId);
-        return ResponseEntity.ok(MessageResponse.builder().message(responseFromUpdateRequest).build());
+
+        return ResponseEntity.ok().build();
     }
 
 }

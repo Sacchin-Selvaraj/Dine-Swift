@@ -1,4 +1,4 @@
-package com.dineswift.restaurant_service.service;
+package com.dineswift.restaurant_service.service.specification;
 
 import com.dineswift.restaurant_service.exception.TableBookingException;
 import com.dineswift.restaurant_service.model.*;
@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -101,5 +102,11 @@ public final class TableBookingSpecification {
     }
 
 
-
+    public Specification<TableBooking> hasRestaurantId(UUID restaurantId) {
+        if (restaurantId == null) {
+            return Specification.allOf();
+        }
+        return (root, query, criteriaBuilder) ->
+                criteriaBuilder.equal(root.get("restaurant").get("restaurantId"), restaurantId);
+    }
 }

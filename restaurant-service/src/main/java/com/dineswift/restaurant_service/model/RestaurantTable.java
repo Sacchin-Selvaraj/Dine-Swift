@@ -62,4 +62,8 @@ public class RestaurantTable {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "restaurant_id")
     private Restaurant restaurant;
+
+    public void deactivate() {
+        this.isActive = false;
+    }
 }
