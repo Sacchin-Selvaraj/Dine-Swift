@@ -28,7 +28,6 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
 import java.util.*;
 
 @Service
@@ -48,7 +47,8 @@ public class UserService {
     private final AuthService authService;
 
 
-    @CacheEvict(value = {"user:details", "user:info"}, key = "@authService.getAuthenticatedUserId()")
+    @CacheEvict(value = {"user:details", "user:info"},
+            key = "@authService.getAuthenticatedUserId()")
     public void updateDetails(UserDetailsRequest userDetailsRequest) {
 
         UUID userId=authService.getAuthenticatedUserId();
@@ -78,29 +78,30 @@ public class UserService {
 
     @Cacheable(
             value = "booking:pages",
-            key = "T(java.lang.String).format('%s:%d:%d:%s:%s', " +
-                    "@authService.getAuthenticatedUserId(), #pageNumber, #limit, #sortField, #sortOrder)",
+            key = "#filter.hashCode()",
             unless = "#result == null || #result.isEmpty()"
     )
-    public CustomPageDto<BookingDTO> getBookings(Integer pageNumber, Integer limit, BookingStatus bookingStatus, LocalDate bookingDate, String sortField, String sortOrder) {
+    public CustomPageDto<BookingDTO> getBookings(BookingFilter filter) {
         log.info("Get Bookings from the UserService");
 
         UUID userId = authService.getAuthenticatedUserId();
         Set<String> allowedFields = Set.of("createdAt", "lastModifiedAt", "bookingStatus","tableBookingId","bookingDate");
 
-        if (!allowedFields.contains(sortField)) {
-            throw new IllegalArgumentException("Invalid sort field: " + sortField);
+        if (!allowedFields.contains(filter.sortField())) {
+            throw new IllegalArgumentException("Invalid sorts field "+ filter.sortField());
         }
-        log.info("Sorting Field: {}, Order: {}", sortField, sortOrder);
-        Sort sort=sortOrder.equalsIgnoreCase("asc")?Sort.by(sortField).ascending():Sort.by(sortField).descending();
+        log.info("Sorting Field: {}, Order: {}", filter.sortField(), filter.sortOrder());
 
-        Pageable pageable= PageRequest.of(pageNumber,limit,sort);
+        Sort sort=filter.sortOrder().equalsIgnoreCase("asc")?
+                Sort.by(filter.sortField()).ascending():Sort.by(filter.sortField()).descending();
+
+        Pageable pageable= PageRequest.of(filter.page(),filter.limit(),sort);
 
         Page<Booking> bookings;
         log.info("Building booking specification");
         Specification<Booking> spec = Specification.<Booking>allOf()
-                .and(bookingSpecification.hasBookingStatus(bookingStatus))
-                .and(bookingSpecification.hasBookingDate(bookingDate))
+                .and(bookingSpecification.hasBookingStatus(filter.bookingStatus()))
+                .and(bookingSpecification.hasBookingDate(filter.bookingDate()))
                 .and(bookingSpecification.belongsToUser(userId));
 
         bookings = bookingRepository.findAll(spec, pageable);
@@ -112,23 +113,29 @@ public class UserService {
         return new CustomPageDto<>(bookingDTOS);
     }
 
-    @CacheEvict(value = {"user:details", "user:info"}, key = "@authService.getAuthenticatedUserId()")
+    @CacheEvict(value = {"user:details", "user:info"},
+            key = "@authService.getAuthenticatedUserId()")
     public void deactivateUser() {
         log.info("Deactivating user account");
         UUID userId = authService.getAuthenticatedUserId();
+
         User user=userCommonService.findValidUser(userId);
         log.info("Deactivating user with ID: {}", userId);
         user.setIsActive(false);
+
         userRepository.save(user);
     }
 
-    @CacheEvict(value = {"user:details", "user:info"}, key = "@authService.getAuthenticatedUserId()")
+    @CacheEvict(value = {"user:details", "user:info"},
+            key = "@authService.getAuthenticatedUserId()")
     public void updateUsername(UsernameUpdateRequest usernameRequest) {
         UUID userId=authService.getAuthenticatedUserId();
         log.info("Updating username for userId: {}", userId);
         validUsername(usernameRequest.getUsername(),userId);
+
         User user=userCommonService.findValidUser(userId);
         user.setUsername(usernameRequest.getUsername());
+
         userRepository.save(user);
     }
 
@@ -168,9 +175,8 @@ public class UserService {
             log.info("Initializing cart for new user: {}", userRequest.getUsername());
             Cart cart=new Cart();
 
-            Role role=roleRepository.findByRoleName(RoleName.ROLE_USER).orElseThrow(
-                    ()-> new UserException("Role Not Found")
-            );
+            Role role=roleRepository.findByRoleName(RoleName.ROLE_USER)
+                    .orElseThrow(()-> new UserException("Role Not Found"));
 
             user.setRoles(Set.of(role));
             user.setCart(cart);
@@ -185,6 +191,7 @@ public class UserService {
     }
 
     public UserResponse loginUser(@Valid LoginRequest loginRequest) {
+
         User user=userRepository.findByEmailAndIsActive(loginRequest.getEmail()).orElseThrow(
                 ()-> new UserException("Invalid Email or Account is deactivated")
         );
@@ -220,6 +227,7 @@ public class UserService {
     public GuestInformationResponse getUserInfo(UUID userId) {
         log.info("Fetching user information for userId: {}", userId);
         User user=userCommonService.findValidUser(userId);
+
         log.info("Successfully retrieved user information for userId: {}", userId);
         return userMapper.toGuestInformationResponse(user);
     }
@@ -231,8 +239,10 @@ public class UserService {
     public UserDTO getCurrentUserInfo() {
         UUID userId=authService.getAuthenticatedUserId();
         log.info("Fetching current user information for userId: {}", userId);
+
         User user=userCommonService.findValidUser(userId);
         log.info("Successfully retrieved current user information for userId: {}", userId);
+
         return userMapper.toDTO(user);
     }
 }

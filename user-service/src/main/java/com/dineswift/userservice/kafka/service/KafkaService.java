@@ -26,7 +26,10 @@ public class KafkaService {
     @Value("${app.kafka.topic.sms-verification-topic}")
     private String smsVerificationTopic;
 
-    public CompletableFuture<Boolean> sendEmailVerification(String toEmail, String token, String userName, String templateType) {
+    public CompletableFuture<Boolean> sendEmailVerification(String toEmail,
+                                                            String token,
+                                                            String userName,
+                                                            String templateType) {
 
         try {
             EmailVerificationDetail message = EmailVerificationDetail.builder()
@@ -43,7 +46,7 @@ public class KafkaService {
                     log.info("Topic Name: "+res.getRecordMetadata().topic());
                     return true;
             }).exceptionally(throwable -> {
-                log.error("Exception occurred while sending email verification: " + throwable.getMessage());
+                log.error("Exception occurred while sending email verifications: " + throwable.getMessage());
                 return false;
             });
 

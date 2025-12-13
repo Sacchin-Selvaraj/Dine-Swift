@@ -13,8 +13,6 @@ import com.dineswift.userservice.security.service.AuthService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
@@ -52,8 +50,10 @@ public class CartService {
         Cart cart = loggedInUser.getCart();
 
         CartDTO cartDto = cartMapper.toDto(cart);
+
         log.info("Cart details fetched successfully for cartId={}: {}", cart.getCartId(), cartDto);
         List<OrderItemDto> orderItemDtos = fetchOrderItemsForCart(cart.getCartId());
+
         log.info("Calculating Grand Total for cartId={}", cart.getCartId());
         BigDecimal grandTotalFromOrderItems = orderItemDtos.stream().map(OrderItemDto::getTotalPrice)
                 .reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
@@ -63,25 +63,29 @@ public class CartService {
 
         cart.setGrandTotal(grandTotalFromOrderItems.setScale(2,RoundingMode.HALF_UP));
         cartRepository.save(cart);
+
         log.info("Cart grand total updated to {} for cartId={}", grandTotalFromOrderItems, cart.getCartId());
         return cartDto;
     }
 
     private List<OrderItemDto> fetchOrderItemsForCart(UUID cartId) {
         log.info("Fetching order items for cartId={}", cartId);
+
         return restClient.get()
                 .uri("/order-items/get-order-items/{cartId}",cartId)
                 .header("Content-Type", "application/json")
                 .retrieve()
-                .body(new ParameterizedTypeReference<List<OrderItemDto>>() {
+                .body(new ParameterizedTypeReference<>() {
                 });
     }
 
 
     public void updateCartTotalAmount(UUID cartId, CartAmountUpdateRequest cartAmountUpdateRequest) {
         log.info("Updating cart total amount for cartId={} with request={}", cartId, cartAmountUpdateRequest);
+
         Cart cart = cartRepository.findByIdAndIsActive(cartId)
                 .orElseThrow(() -> new IllegalArgumentException("Cart not found or inactive"));
+
         if (cartAmountUpdateRequest.isRemoved())
             cart.setGrandTotal(cart.getGrandTotal().subtract(cartAmountUpdateRequest.getTotalDishPrice()));
         else
@@ -94,11 +98,14 @@ public class CartService {
     public void clearCart() {
         UUID userId = authService.getAuthenticatedUserId();
        log.info("Clearing cart for userId={}", userId);
-        User existingUser = userRepository.findByIdAndIsActive(userId).orElseThrow(()-> new UserException("User not found or inactive"));
+
+        User existingUser = userRepository.findByIdAndIsActive(userId)
+                .orElseThrow(()-> new UserException("User not found or inactive"));
 
         Cart newCart = new Cart();
         newCart.setGrandTotal(BigDecimal.ZERO);
         existingUser.setCart(newCart);
+
         userRepository.save(existingUser);
         log.info("Cart cleared successfully for userId={}", userId);
     }
@@ -106,8 +113,10 @@ public class CartService {
     public UUID getCurrentCartId() {
         UUID userId = authService.getAuthenticatedUserId();
         log.info("Fetching current cart ID for userId={}", userId);
+
         User loggedInUser = userCommonService.findValidUser(userId);
         UUID cartId = loggedInUser.getCart().getCartId();
+
         log.info("Current cart ID for userId={} is cartId={}", userId, cartId);
         return cartId;
     }

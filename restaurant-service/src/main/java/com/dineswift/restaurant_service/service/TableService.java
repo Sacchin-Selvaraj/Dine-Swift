@@ -15,10 +15,10 @@ import com.dineswift.restaurant_service.repository.OrderItemRepository;
 import com.dineswift.restaurant_service.repository.RestaurantRepository;
 import com.dineswift.restaurant_service.repository.TableRepository;
 import com.dineswift.restaurant_service.security.service.AuthService;
+import com.dineswift.restaurant_service.service.specification.TableSpecification;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
@@ -41,6 +41,7 @@ public class TableService {
     private final TableMapper tableMapper;
     private final ReservationService reservationService;
     private final AuthService authService;
+    private final TableSpecification tableSpecification;
 
     @CacheEvict(
             value = "restaurant:getTablesByRestaurantId",
@@ -116,7 +117,9 @@ public class TableService {
 
         Pageable pageable = Pageable.ofSize(size).withPage(page);
 
-        Specification<RestaurantTable> spec = getRestaurantTableSpecification(restaurantId);
+        Specification<RestaurantTable> spec = Specification.<RestaurantTable>allOf()
+                .and(tableSpecification.getRestaurantTableSpecification(restaurantId))
+                .and(tableSpecification.isActive());
 
         Page<RestaurantTable> restaurantTables = tableRepository.findAll(spec,pageable);
 
@@ -172,7 +175,9 @@ public class TableService {
         UUID restaurantId = orderItemRepository.findRestaurantIdByOrderItemId(orderItemId)
                 .orElseThrow(() -> new OrderItemException("Order item not found with ID: " + orderItemId));
 
-        Specification<RestaurantTable> spec = getRestaurantTableSpecification(restaurantId);
+        Specification<RestaurantTable> spec = Specification.<RestaurantTable>allOf()
+                .and(tableSpecification.getRestaurantTableSpecification(restaurantId))
+                .and(tableSpecification.isActive());
 
         Pageable pageable = Pageable.ofSize(size).withPage(page);
         
@@ -185,13 +190,5 @@ public class TableService {
         Page<RestaurantTableDto> restaurantTableDtos = tableMapper.toPageDto(restaurantTables,restaurantId);
 
         return new CustomPageDto<>(restaurantTableDtos);
-    }
-
-    @NotNull
-    private static Specification<RestaurantTable> getRestaurantTableSpecification(UUID restaurantId) {
-        Specification<RestaurantTable> spec = (root, query, criteriaBuilder) ->
-                criteriaBuilder.equal(root.get("restaurant").get("restaurantId"), restaurantId);
-        log.debug("Specification created for Restaurant ID: {}", restaurantId);
-        return spec;
     }
 }

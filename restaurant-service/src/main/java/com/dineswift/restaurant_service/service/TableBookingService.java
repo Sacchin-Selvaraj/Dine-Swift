@@ -475,7 +475,7 @@ public class TableBookingService {
                 .and(tableBookingSpecification.hasBookingStatus(filter.bookingStatus()))
                 .and(tableBookingSpecification.hasDishStatus(filter.dishStatus()));
 
-        Page<TableBooking> bookingsPage = tableBookingRepository.findAllByChildEntities(spec, pageable);
+        Page<TableBooking> bookingsPage = tableBookingRepository.findAll(spec, pageable);
 
         if (!bookingsPage.hasContent()){
             log.error("No bookings found for the given criteria in restaurant ID: {}", filter.restaurantId());

@@ -3,12 +3,12 @@ package com.dineswift.userservice.controller;
 import com.dineswift.userservice.model.entites.BookingStatus;
 import com.dineswift.userservice.model.request.*;
 import com.dineswift.userservice.model.response.*;
+import com.dineswift.userservice.service.BookingFilter;
 import com.dineswift.userservice.service.CustomPageDto;
 import com.dineswift.userservice.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -48,14 +48,15 @@ public class UserController {
     @GetMapping("/bookings")
     @PreAuthorize("hasRole('ROLE_USER')")
     public ResponseEntity<CustomPageDto<BookingDTO>> getBookings(
-            @RequestParam(name = "page") Integer page,
-            @RequestParam(name = "limit") Integer limit,
+            @RequestParam(name = "page") int page,
+            @RequestParam(name = "limit") int limit,
             @RequestParam(name = "bookingStatus",required = false) BookingStatus bookingStatus,
             @RequestParam(name = "bookingDate",required = false) LocalDate bookingDate,
             @RequestParam(name = "sortField",defaultValue = "bookingDate" ,required = false) String sortField,
             @RequestParam(name = "sortOrder",defaultValue = "asc" ,required = false) String sortOrder
     ){
-        CustomPageDto<BookingDTO> bookingDTOS=userService.getBookings(page,limit,bookingStatus,bookingDate,sortField,sortOrder);
+        BookingFilter filter = new BookingFilter(page,limit,bookingStatus,bookingDate,sortField,sortOrder);
+        CustomPageDto<BookingDTO> bookingDTOS=userService.getBookings(filter);
         return ResponseEntity.ok(bookingDTOS);
     }
 

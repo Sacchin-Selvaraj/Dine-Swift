@@ -25,8 +25,10 @@ public class BookingController {
 
     @PostMapping("/book-table/{cartId}")
     @PreAuthorize("hasRole('ROLE_USER')")
-    public ResponseEntity<TableBookingResponse> bookTable(@PathVariable UUID cartId, @Valid @RequestBody BookingRequest bookingRequest){
+    public ResponseEntity<TableBookingResponse> bookTable(@PathVariable UUID cartId,
+                                                          @Valid @RequestBody BookingRequest bookingRequest){
         log.info("Received booking request for cartId: {}", cartId);
+
         TableBookingResponse tableBookingResponse = bookingService.bookTable(cartId, bookingRequest);
         log.info("Booking successful for cartId: {}", cartId);
         return ResponseEntity.ok(tableBookingResponse);

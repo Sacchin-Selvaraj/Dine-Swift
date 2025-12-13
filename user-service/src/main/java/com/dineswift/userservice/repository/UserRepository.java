@@ -1,6 +1,7 @@
 package com.dineswift.userservice.repository;
 
 import com.dineswift.userservice.model.entites.User;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -28,4 +29,8 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     Optional<User> findByEmailAndIsActive(String email);
 
     Optional<User> findByPhoneNumber(String userPhoneNumber);
+
+    @EntityGraph(attributePaths = {"cart","roles"})
+    @Query("SELECT u FROM User u WHERE u.userId = :userId")
+    Optional<User> findByIdWithCart(UUID userId);
 }

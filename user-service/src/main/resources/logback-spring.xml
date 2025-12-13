@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration scan="true">
+
+    <!-- Application name from Spring -->
+    <springProperty scope="context" name="APP_NAME" source="spring.application.name"/>
+
+    <!-- Console Appender (JSON) -->
+    <appender name="JSON_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+
+            <providers>
+
+                <!-- Timestamp -->
+                <timestamp>
+                    <timeZone>UTC</timeZone>
+                </timestamp>
+
+                <!-- Log level -->
+                <logLevel />
+
+                <!-- Thread name -->
+                <threadName />
+
+                <!-- Logger name -->
+                <loggerName />
+
+                <!-- Log message -->
+                <message />
+
+                <!-- Stacktrace -->
+                <stackTrace />
+
+                <!-- MDC (traceId, spanId, userId, etc.) -->
+                <mdc />
+
+                <!-- Custom fields -->
+                <globalCustomFields>
+                    {
+                    "service": "${APP_NAME}",
+                    "env": "${SPRING_PROFILES_ACTIVE:-local}"
+                    }
+                </globalCustomFields>
+
+            </providers>
+        </encoder>
+    </appender>
+
+    <!-- Root logger -->
+    <root level="INFO">
+        <appender-ref ref="JSON_CONSOLE"/>
+    </root>
+
+    <!-- Reduce noise -->
+    <logger name="org.springframework" level="WARN"/>
+    <logger name="org.hibernate.SQL" level="WARN"/>
+    <logger name="org.hibernate.type.descriptor.sql" level="WARN"/>
+
+</configuration>

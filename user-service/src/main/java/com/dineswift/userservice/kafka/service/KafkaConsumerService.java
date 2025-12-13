@@ -2,12 +2,10 @@ package com.dineswift.userservice.kafka.service;
 
 import com.dineswift.notification_service.model.EmailVerificationDetail;
 import com.dineswift.notification_service.model.SmsVerificationDetail;
-import com.dineswift.userservice.exception.NotificationException;
 import com.dineswift.userservice.notification.service.EmailService;
 import com.dineswift.userservice.notification.service.SmsService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.kafka.annotation.DltHandler;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.annotation.RetryableTopic;
 import org.springframework.kafka.support.KafkaHeaders;
@@ -98,7 +96,7 @@ public class KafkaConsumerService {
                                              @Header(value = KafkaHeaders.ORIGINAL_OFFSET,required = false) Long originalOffset
     ) {
         log.error("DLT reached for email verification message: {}", message);
-        log.error("Original Topic: {}, Partition: {}, Offset: {}", originalTopic, originalPartition, originalOffset);
+        log.error("Original Topics: {}, Partition: {}, Offset: {}", originalTopic, originalPartition, originalOffset);
     }
 
     @KafkaListener(topics = "${app.kafka.topic.sms-verification-topic}-sms-verification-dlt",

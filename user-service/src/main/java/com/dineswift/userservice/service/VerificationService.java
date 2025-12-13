@@ -106,6 +106,7 @@ public class VerificationService {
         VerificationToken verificationToken = setVerificationToken(token, user,TokenType.PHONE_VERIFICATION);
         verificationToken.setNewPhonenumber(phoneNumberUpdateRequest.getPhoneNumber());
         verificationToken.setTokenStatus(TokenStatus.PENDING);
+
         verificationRepository.save(verificationToken);
 
         kafkaService.sendSmsVerification(phoneNumberUpdateRequest.getPhoneNumber(),token,user.getUsername()).thenApply(status->{
@@ -152,6 +153,7 @@ public class VerificationService {
 
         verificationToken.setWasUsed(true);
         verificationToken.setTokenStatus(TokenStatus.VERIFIED);
+
         verificationRepository.save(verificationToken);
     }
 
@@ -225,6 +227,7 @@ public class VerificationService {
 
         verificationToken.setWasUsed(true);
         verificationToken.setTokenStatus(TokenStatus.VERIFIED);
+
         verificationRepository.save(verificationToken);
         log.info("Password updated successfully for user");
         return "Password updated successfully";

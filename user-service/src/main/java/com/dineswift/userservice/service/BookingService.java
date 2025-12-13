@@ -38,8 +38,10 @@ public class BookingService {
 
     @CacheEvict(value = "booking:pages", allEntries = true)
     public TableBookingResponse bookTable(UUID cartId, BookingRequest bookingRequest) {
+
         log.info("Processing booking for cartId: {}", cartId);
         boolean isValidCart=cartRepository.existsByIdAndIsActive(cartId);
+
         if (!isValidCart)
             throw new CartException("Invalid or inactive cart ID: " + cartId);
 
@@ -49,7 +51,10 @@ public class BookingService {
         return tableBookingResponse;
     }
 
-    private void createBookingRecord(UUID cartId, BookingRequest bookingRequest, TableBookingResponse tableBookingResponse) {
+    private void createBookingRecord(UUID cartId,
+                                     BookingRequest bookingRequest,
+                                     TableBookingResponse tableBookingResponse) {
+
         log.info("Creating booking record for cartId: {}", cartId);
         Booking newBooking = new Booking();
         newBooking.setTableBookingId(tableBookingResponse.getTableBookingId());
@@ -58,7 +63,9 @@ public class BookingService {
 
         log.info("Fetching authenticated user for booking record creation");
         UUID userId = authService.getAuthenticatedUserId();
-        User bookedUser = userRepository.findById(userId).orElseThrow(()-> new UserException("No user found with ID: " + userId));
+        User bookedUser = userRepository.findById(userId)
+                .orElseThrow(()-> new UserException("No user found with ID: " + userId));
+
         newBooking.setUser(bookedUser);
         bookingRepository.save(newBooking);
         log.info("Booking record created successfully with ID: {}", newBooking.getBookingId());
@@ -100,6 +107,7 @@ public class BookingService {
 
     public TableBookingDto viewTableBooking(UUID bookingId) {
         log.info("Fetching booking details for bookingId: {}", bookingId);
+
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new CartException("Booking not found with ID: " + bookingId));
 
@@ -120,7 +128,9 @@ public class BookingService {
                     .orElseThrow(() -> new CartException("Booking not found with Table Booking ID: " + tableBookingId));
 
             booking.setBookingStatus(BookingStatus.valueOf(status));
+
             bookingRepository.save(booking);
+
         } catch (IllegalArgumentException e) {
             log.error("Invalid booking status provided: {}", status);
         }

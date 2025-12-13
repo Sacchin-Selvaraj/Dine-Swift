@@ -19,14 +19,10 @@ public class UserCommonService {
         this.userRepository = userRepository;
     }
 
-    @Cacheable(
-            value = "user:byId",
-            key = "#userId",
-            unless = "#result == null"
-    )
+
     public User findValidUser(UUID userId){
 
-        return userRepository.findById(userId).orElseThrow(
+        return userRepository.findByIdWithCart(userId).orElseThrow(
                 () -> new UserException("User not found with ID: " + userId));
     }
 

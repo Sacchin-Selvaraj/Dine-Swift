@@ -42,7 +42,7 @@ public class TableBookingMapper {
     }
 
     public TableBookingDtoWoRestaurant toDtoWoRestaurant(TableBooking tableBooking, UUID restaurantId) {
-        log.info("Mapping TableBooking entity to TableBookingDtoWoRestaurant");
+
         TableBookingDtoWoRestaurant dto = modelMapper.map(tableBooking, TableBookingDtoWoRestaurant.class);
 
         dto.setRestaurantTableDto(tableMapper.toDtoWithRestaurantId(tableBooking.getRestaurantTable(),restaurantId));
