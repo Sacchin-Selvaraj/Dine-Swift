@@ -15,8 +15,8 @@ scrape_configs:
       - targets:
           - localhost
         labels:
-          job: docker-logs
-          __path__: /var/lib/docker/containers/*/*.log
+          job: spring-boot
+          __path__: /var/log/spring-boot/*.log
 
     pipeline_stages:
       - json:

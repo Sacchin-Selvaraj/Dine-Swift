@@ -19,6 +19,8 @@ logging:
     org.apache.kafka.clients.admin.AdminClientConfig: OFF
     org.springframework.cloud.commons.util.InetUtils: DEBUG
     com.netflix.appinfo: DEBUG
+  file:
+    name:
 
 
 jwt:
@@ -127,4 +129,22 @@ eureka:
 dineswift:
   restaurant-service:
     url: ${ORDER_SERVICE_URL}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  metrics:
+    distribution:
+      percentiles-histograms:
+        http:
+          server:
+            requests: true
+  observations:
+    key-values:
+      application: user-service
+  tracing:
+    sampling:
+      probability: 1.0
 
