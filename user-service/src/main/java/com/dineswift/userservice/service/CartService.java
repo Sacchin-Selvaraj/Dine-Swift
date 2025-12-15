@@ -6,6 +6,7 @@ import com.dineswift.userservice.model.entites.Cart;
 import com.dineswift.userservice.model.entites.User;
 import com.dineswift.userservice.model.request.CartAmountUpdateRequest;
 import com.dineswift.userservice.model.response.CartDTO;
+import com.dineswift.userservice.model.response.CustomOrderItem;
 import com.dineswift.userservice.model.response.restaurant_service.OrderItemDto;
 import com.dineswift.userservice.repository.CartRepository;
 import com.dineswift.userservice.repository.UserRepository;
@@ -13,7 +14,6 @@ import com.dineswift.userservice.security.service.AuthService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
@@ -52,7 +52,7 @@ public class CartService {
         CartDTO cartDto = cartMapper.toDto(cart);
 
         log.info("Cart details fetched successfully for cartId={}: {}", cart.getCartId(), cartDto);
-        List<OrderItemDto> orderItemDtos = fetchOrderItemsForCart(cart.getCartId());
+        List<OrderItemDto> orderItemDtos = fetchOrderItemsForCart(cart.getCartId()).getOrderItemDtos();
 
         log.info("Calculating Grand Total for cartId={}", cart.getCartId());
         BigDecimal grandTotalFromOrderItems = orderItemDtos.stream().map(OrderItemDto::getTotalPrice)
@@ -68,15 +68,14 @@ public class CartService {
         return cartDto;
     }
 
-    private List<OrderItemDto> fetchOrderItemsForCart(UUID cartId) {
+    private CustomOrderItem fetchOrderItemsForCart(UUID cartId) {
         log.info("Fetching order items for cartId={}", cartId);
 
         return restClient.get()
                 .uri("/order-items/get-order-items/{cartId}",cartId)
                 .header("Content-Type", "application/json")
                 .retrieve()
-                .body(new ParameterizedTypeReference<>() {
-                });
+                .body(CustomOrderItem.class);
     }
 
 

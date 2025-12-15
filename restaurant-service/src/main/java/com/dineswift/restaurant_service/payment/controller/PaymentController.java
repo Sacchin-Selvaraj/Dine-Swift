@@ -24,14 +24,14 @@ public class PaymentController {
 
     @PreAuthorize("hasRole('ROLE_USER')")
     @PostMapping("/verify-payment")
-    public ResponseEntity<?> verifyPayment(@RequestBody PaymentDetails paymentDetails){
+    public ResponseEntity<Void> verifyPayment(@RequestBody PaymentDetails paymentDetails){
         boolean isValid = paymentService.verifyPayment(paymentDetails);
         if(isValid){
             log.info("Payment verified successfully for paymentId: {}", paymentDetails.getPaymentId());
-            return ResponseEntity.status(HttpStatus.ACCEPTED).body("Payment verified successfully");
+            return ResponseEntity.status(HttpStatus.ACCEPTED).build();
         } else {
             log.warn("Payment verification failed for paymentId: {}", paymentDetails.getPaymentId());
-           return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Payment verification failed");
+           return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
     }
     @PreAuthorize("hasRole('ROLE_USER')")

@@ -31,6 +31,9 @@ logging:
     reactor.netty: DEBUG
     org.springframework.cloud.commons.util.InetUtils: DEBUG
     com.netflix.appinfo: DEBUG
+  file:
+    path: ./docker/logs
+    name: ./docker/logs/${spring.application.name}.log
 
 
 eureka:

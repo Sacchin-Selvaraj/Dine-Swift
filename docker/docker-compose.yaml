@@ -95,7 +95,7 @@ services:
       - "3100:3100"
     command: -config.file=/etc/loki/loki-config.yml
     volumes:
-      - ./src/main/resources/loki-config.yml:/etc/loki/loki-config.yml
+      - ./loki/loki-config.yml:/etc/loki/loki-config.yml
       - loki-data:/loki
     restart: unless-stopped
 
@@ -103,7 +103,7 @@ services:
     image: grafana/promtail:3.0.0
     container_name: promtail
     volumes:
-      - ./src/main/resources/promtail-config.yml:/etc/promtail/promtail-config.yml
+      - ./promtail/promtail-config.yml:/etc/promtail/promtail-config.yml
       - /var/log:/var/log
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
     command: -config.file=/etc/promtail/promtail-config.yml
@@ -118,7 +118,7 @@ services:
       - "3000:3000"
     volumes:
       - grafana-data:/var/lib/grafana
-      - ./src/main/resources/datasource.yml:/etc/grafana/provisioning/datasources/datasource.yml
+      - ./grafana/datasource.yml:/etc/grafana/provisioning/datasources/datasource.yml
     environment:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=admin
@@ -132,14 +132,14 @@ services:
       - --enable-feature=exemplar-storage
       - --config.file=/etc/prometheus/prometheus.yml
     volumes:
-      - ./src/main/resources/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
     ports:
       - '9090:9090'
   tempo:
     image: grafana/tempo:2.2.2
     command: [ '-config.file=/etc/tempo.yaml' ]
     volumes:
-      - ./src/main/resources/tempo.yml:/etc/tempo.yaml:ro
+      - ./tempo/tempo.yml:/etc/tempo.yaml:ro
       - ./docker/tempo/tempo-data:/tmp/tempo
     ports:
       - '3110:3100' # Tempo

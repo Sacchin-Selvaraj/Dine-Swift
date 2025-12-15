@@ -8,6 +8,7 @@ import com.dineswift.restaurant_service.model.Dish;
 import com.dineswift.restaurant_service.model.OrderItem;
 import com.dineswift.restaurant_service.payload.request.orderItem.AddOrderItem;
 import com.dineswift.restaurant_service.payload.request.orderItem.CartAmountUpdateRequest;
+import com.dineswift.restaurant_service.payload.response.orderItem.CustomOrderItem;
 import com.dineswift.restaurant_service.payload.response.orderItem.OrderItemDto;
 import com.dineswift.restaurant_service.repository.DishRepository;
 import com.dineswift.restaurant_service.repository.OrderItemRepository;
@@ -67,13 +68,15 @@ public class OrderService {
 
         OrderItem existingOrderItem = orderItemRepository.findByCartIdAndDish(cartId, dish).orElse(null);
         if (existingOrderItem != null) {
-            log.info("Existing OrderItem found, updating quantity: {}", existingOrderItem);
+            log.info("Existing OrderItem found, updating quantity: {}", addOrderItemRequest.getQuantity());
             int newQuantity = existingOrderItem.getQuantity() + quantity;
 
             checkQuantity(newQuantity);
             existingOrderItem.setQuantity(newQuantity);
 
             orderItemRepository.save(existingOrderItem);
+
+            evictOrderItemCaches(cartId);
             return;
         }
 
@@ -165,21 +168,21 @@ public class OrderService {
     @Cacheable(
             value = "restaurant:order-items-by-cart",
             key = "#cartId",
-            unless = "#result == null || #result.isEmpty()"
+            unless = "#result == null"
     )
-    public List<OrderItemDto> getOrderItemsByCartId(UUID cartId) {
+    public CustomOrderItem getOrderItemsByCartId(UUID cartId) {
 
         List<OrderItem> orderItems = orderItemRepository.findAllByCartId(cartId);
 
         if (orderItems.isEmpty()){
-            log.error("No order items found for cartId: {}", cartId);
-            throw new OrderItemException("No order items found !!!");
+            log.warn("No order items found for cartId: {}", cartId);
+            return new CustomOrderItem(List.of());
         }
 
         List<OrderItemDto> orderItemDtos = orderItemMapper.toListDto(orderItems);
 
         log.info("Order items fetched for cartId {}", cartId);
-        return orderItemDtos;
+        return new CustomOrderItem(orderItemDtos);
     }
 
     private static void checkQuantity(Integer quantity) {

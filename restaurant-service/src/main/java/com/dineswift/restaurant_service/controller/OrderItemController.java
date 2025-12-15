@@ -1,6 +1,7 @@
 package com.dineswift.restaurant_service.controller;
 
 import com.dineswift.restaurant_service.payload.request.orderItem.AddOrderItem;
+import com.dineswift.restaurant_service.payload.response.orderItem.CustomOrderItem;
 import com.dineswift.restaurant_service.payload.response.orderItem.OrderItemDto;
 import com.dineswift.restaurant_service.service.CustomPageDto;
 import com.dineswift.restaurant_service.service.OrderService;
@@ -51,10 +52,10 @@ public class OrderItemController {
 
     @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_USER')")
     @GetMapping("/get-order-items/{cartId}")
-    public ResponseEntity<List<OrderItemDto>> getOrderItemsByCartId(@PathVariable UUID cartId) {
+    public ResponseEntity<CustomOrderItem> getOrderItemsByCartId(@PathVariable UUID cartId) {
         log.info("Fetching order items for cartId={}", cartId);
 
-        List<OrderItemDto> orderItems = orderService.getOrderItemsByCartId(cartId);
+        CustomOrderItem orderItems = orderService.getOrderItemsByCartId(cartId);
 
         return ResponseEntity.ok(orderItems);
     }

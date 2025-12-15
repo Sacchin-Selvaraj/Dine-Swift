@@ -45,6 +45,9 @@ spring:
             descriptor:
               sql:
                 BasicBinder: TRACE
+    file:
+      path: ./docker/logs
+      name: ./docker/logs/${spring.application.name}.log
 
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}

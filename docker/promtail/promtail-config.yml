@@ -16,7 +16,7 @@ scrape_configs:
           - localhost
         labels:
           job: spring-boot
-          __path__: /var/log/spring-boot/*.log
+          __path__: ./logs/*.log
 
     pipeline_stages:
       - json:

@@ -42,6 +42,9 @@ spring:
             descriptor:
               sql:
                 BasicBinder: TRACE
+    file:
+      path: ./docker/logs
+      name: ./docker/logs/${spring.application.name}.log
 
 
   config:
