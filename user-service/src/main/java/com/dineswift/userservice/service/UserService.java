@@ -12,7 +12,7 @@ import com.dineswift.userservice.repository.BookingRepository;
 import com.dineswift.userservice.repository.RoleRepository;
 import com.dineswift.userservice.repository.UserRepository;
 import com.dineswift.userservice.security.service.AuthService;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,7 +31,6 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 
 @Service
-@Transactional
 @RequiredArgsConstructor
 @Slf4j
 public class UserService {
@@ -49,6 +48,7 @@ public class UserService {
 
     @CacheEvict(value = {"user:details", "user:info"},
             key = "@authService.getAuthenticatedUserId()")
+    @Transactional
     public void updateDetails(UserDetailsRequest userDetailsRequest) {
 
         UUID userId=authService.getAuthenticatedUserId();
@@ -95,7 +95,7 @@ public class UserService {
         Sort sort=filter.sortOrder().equalsIgnoreCase("asc")?
                 Sort.by(filter.sortField()).ascending():Sort.by(filter.sortField()).descending();
 
-        Pageable pageable= PageRequest.of(filter.page(),filter.limit(),sort);
+        Pageable pageable=PageRequest.of(filter.page(),filter.limit(),sort);
 
         Page<Booking> bookings;
         log.info("Building booking specification");
@@ -115,6 +115,7 @@ public class UserService {
 
     @CacheEvict(value = {"user:details", "user:info"},
             key = "@authService.getAuthenticatedUserId()")
+    @Transactional
     public void deactivateUser() {
         log.info("Deactivating user account");
         UUID userId = authService.getAuthenticatedUserId();
@@ -128,6 +129,7 @@ public class UserService {
 
     @CacheEvict(value = {"user:details", "user:info"},
             key = "@authService.getAuthenticatedUserId()")
+    @Transactional
     public void updateUsername(UsernameUpdateRequest usernameRequest) {
         UUID userId=authService.getAuthenticatedUserId();
         log.info("Updating username for userId: {}", userId);
@@ -164,6 +166,7 @@ public class UserService {
         }
     }
 
+    @Transactional
     public void signUpUser(@Valid UserRequest userRequest) {
 
         try {
@@ -203,6 +206,7 @@ public class UserService {
         return userMapper.toUserResponse(user);
     }
 
+    @Transactional
     public void updatePassword(PasswordUpdateRequest passwordRequest) {
 
         UUID userId=authService.getAuthenticatedUserId();

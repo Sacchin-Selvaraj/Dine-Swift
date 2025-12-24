@@ -12,7 +12,7 @@ import com.dineswift.userservice.model.request.*;
 import com.dineswift.userservice.repository.UserRepository;
 import com.dineswift.userservice.repository.VerificationRepository;
 import com.dineswift.userservice.security.service.AuthService;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,7 +25,6 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 @Service
-@Transactional
 @RequiredArgsConstructor
 @Slf4j
 public class VerificationService {
@@ -38,13 +37,15 @@ public class VerificationService {
     private final AuthService authService;
 
 
+    @Transactional
     public String updateEmail(EmailUpdateRequest emailUpdateRequest) {
 
         UUID userId=authService.getAuthenticatedUserId();
         if (userRepository.existsByEmail(emailUpdateRequest.getEmail())){
             throw new UserException("Email already registered by another user");
         }
-        User user=userCommonService.findValidUser(userId);
+        User user=userRepository.findById(userId)
+                .orElseThrow(()-> new UserException("User not found with this Id"));
 
         String token=userCommonService.generateNumericCode(6);
 
@@ -67,10 +68,13 @@ public class VerificationService {
     }
 
 
-    @CacheEvict(value = {"user:details", "user:info"}, key = "@authService.getAuthenticatedUserId()")
+    @CacheEvict(value = {"user:details", "user:info"},
+            key = "@authService.getAuthenticatedUserId()")
+    @Transactional
     public void verifyEmail(@Valid VerifyTokenRequest verifyEmailRequest) {
 
         UUID userId=authService.getAuthenticatedUserId();
+
         VerificationToken verificationToken=verificationRepository.findByToken(verifyEmailRequest.getToken())
                 .orElseThrow(()->new TokenException("Email Verification Token was invalid"));
 
@@ -88,10 +92,12 @@ public class VerificationService {
 
         verificationToken.setWasUsed(true);
         verificationToken.setTokenStatus(TokenStatus.VERIFIED);
+
         verificationRepository.save(verificationToken);
 
     }
 
+    @Transactional
     public String updatePhoneNumber(PhoneNumberUpdateRequest phoneNumberUpdateRequest) {
 
         UUID userId=authService.getAuthenticatedUserId();
@@ -99,7 +105,8 @@ public class VerificationService {
             throw new UserException("Phone Number already registered by another user");
         }
 
-        User user=userCommonService.findValidUser(userId);
+        User user=userRepository.findById(userId)
+                .orElseThrow(()-> new UserException("User not found with this Id"));
 
         String token=userCommonService.generateNumericCode(6);
 
@@ -132,7 +139,9 @@ public class VerificationService {
         return verificationToken;
     }
 
-    @CacheEvict(value = {"user:details", "user:info"}, key = "@authService.getAuthenticatedUserId()")
+    @CacheEvict(value = {"user:details", "user:info"},
+            key = "@authService.getAuthenticatedUserId()")
+    @Transactional
     public void verifyPhoneNumber(VerifyTokenRequest verifyPhoneNumberRequest) {
 
         UUID userId=authService.getAuthenticatedUserId();
@@ -157,6 +166,7 @@ public class VerificationService {
         verificationRepository.save(verificationToken);
     }
 
+    @Transactional
     public String forgetPassword(ForgotPasswordRequest forgotPasswordRequest) {
         log.info("Processing forget password request for user");
         String typeOfVerification=forgotPasswordRequest.getTypeOfVerification();
@@ -205,6 +215,7 @@ public class VerificationService {
         return "Verification code sent via " + typeOfVerification.toLowerCase();
     }
 
+    @Transactional
     public String verifyForgetPassword(PasswordChangeRequest passwordChangeRequest) {
 
         log.info("Verifying forget password token for user");

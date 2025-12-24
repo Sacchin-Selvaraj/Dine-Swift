@@ -10,14 +10,15 @@ import com.dineswift.restaurant_service.payload.dto.RestaurantDto;
 import com.dineswift.restaurant_service.payload.dto.RestaurantImageDto;
 import com.dineswift.restaurant_service.payload.request.restaurant.RestaurantCreateRequest;
 import com.dineswift.restaurant_service.payload.request.restaurant.RestaurantUpdateRequest;
+import com.dineswift.restaurant_service.payload.response.restaurant.RestaurantIdDto;
 import com.dineswift.restaurant_service.repository.EmployeeRepository;
 import com.dineswift.restaurant_service.repository.RestaurantImageRepository;
 import com.dineswift.restaurant_service.repository.RestaurantRepository;
 import com.dineswift.restaurant_service.repository.TableBookingRepository;
 import com.dineswift.restaurant_service.security.service.AuthService;
-import com.dineswift.restaurant_service.service.records.RestaurantFilter;
-import com.dineswift.restaurant_service.service.specification.RestaurantSpecification;
-import jakarta.transaction.Transactional;
+import com.dineswift.restaurant_service.records.RestaurantFilter;
+import com.dineswift.restaurant_service.specification.RestaurantSpecification;
+import org.springframework.transaction.annotation.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -38,11 +39,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.CompletionException;
-import java.util.concurrent.ExecutionException;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 @Slf4j
 public class RestaurantService {
 
@@ -60,6 +59,7 @@ public class RestaurantService {
             value = "restaurant:getRestaurants",
             allEntries = true
     )
+    @Transactional
     public void createRestaurant(RestaurantCreateRequest restaurantCreateRequest) {
         UUID employeeId = authService.getAuthenticatedId();
 
@@ -98,9 +98,10 @@ public class RestaurantService {
             key = "#filter.hashCode()",
             unless = "#result == null or #result.isEmpty()"
     )
+    @Transactional(readOnly = true)
     public CustomPageDto<RestaurantDto> getRestaurants(RestaurantFilter filter) {
         try {
-            RestaurantStatus restaurantStatusEnum=null;
+            RestaurantStatus restaurantStatusEnum;
             String restaurantStatus=filter.restaurantStatus();
             log.info("Creating sort object for restaurants");
 
@@ -129,7 +130,8 @@ public class RestaurantService {
             log.info("Retrieving restaurants from repository with specifications and pagination");
             restaurantPage=restaurantRepository.findAll(spec, pageable);
             if (restaurantPage.isEmpty()){
-                return new CustomPageDto<>();
+                log.info("No restaurants found matching the given criteria");
+                return new CustomPageDto<>(Page.empty());
             }
             Page<RestaurantDto> restaurantDtoPage = restaurantMapper.toPageDTO(restaurantPage);
             log.info("Successfully retrieved {} restaurants", restaurantDtoPage.getTotalElements());
@@ -156,6 +158,7 @@ public class RestaurantService {
                     )
             }
     )
+    @Transactional
     public void editRestaurantDetails(UUID restaurantId, @Valid RestaurantUpdateRequest restaurantUpdateRequest) {
         if (restaurantId == null || restaurantUpdateRequest == null) {
             throw new RestaurantException("Invalid Restaurant Update data");
@@ -187,6 +190,7 @@ public class RestaurantService {
                     )
             }
     )
+    @Transactional
     public void deactivateRestaurant(UUID restaurantId) {
         if (restaurantId == null) {
             throw new RestaurantException("Invalid Restaurant Id");
@@ -217,6 +221,7 @@ public class RestaurantService {
                     )
             }
     )
+    @Transactional
     public void changeRestaurantStatus(UUID restaurantId, String status) {
         if (restaurantId == null || status == null) {
             throw new RestaurantException("Invalid data for changing Restaurant status");
@@ -236,21 +241,22 @@ public class RestaurantService {
         }
     }
 
-    public void uploadRestaurantImage(UUID restaurantId, MultipartFile imageFile) throws ExecutionException, InterruptedException {
+    public void uploadRestaurantImage(UUID restaurantId, MultipartFile imageFile){
         if (restaurantId == null || imageFile == null || imageFile.isEmpty() || !restaurantRepository.existsById(restaurantId)) {
             log.error("Invalid data for uploading Restaurant image");
             throw new RestaurantException("Invalid data for uploading Restaurant image");
         }
 
+        UUID employeeId = authService.getAuthenticatedId();
         imageService.uploadImage(imageFile, "restaurant").thenAcceptAsync(result -> {
             if (result != null && (Boolean) result.get("isSuccessful")) {
 
-                evictRestaurantCaches(restaurantId);
-
                 log.info("Image uploaded successfully for restaurant id: {}", restaurantId);
-
                 saveRestaurantImage(result, restaurantId);
+
+                evictRestaurantCaches(restaurantId,employeeId);
             } else {
+                assert result != null;
                 log.error("Image upload failed for restaurant id: {}. Error: {}", restaurantId, result.get("error"));
                 throw new RestaurantException("Image upload failed");
             }
@@ -270,6 +276,7 @@ public class RestaurantService {
         restaurantImageRepository.save(imageEntity);
     }
 
+    @Transactional
     public void deleteRestaurantImage(UUID imageId) {
         if (imageId == null) {
             throw new RestaurantException("Invalid Image Id");
@@ -277,11 +284,15 @@ public class RestaurantService {
         RestaurantImage restaurantImage = restaurantImageRepository.findByIdAndRestaurant(imageId)
                 .orElseThrow(() -> new ImageException("Restaurant Image not found with id: " + imageId));
 
+        UUID restaurantId = restaurantImageRepository.getRestaurantIdByImageId(imageId);
+        UUID employeeId = authService.getAuthenticatedId();
+
         imageService.deleteImage(restaurantImage.getPublicId()).thenAcceptAsync(
                 result -> {
-                    evictRestaurantCaches(restaurantImage.getRestaurant().getRestaurantId());
                     log.info("Image deletion Successful for image id: {}", imageId);
                     restaurantImageRepository.delete(restaurantImage);
+
+                    evictRestaurantCaches(restaurantId,employeeId);
                 }
         ).exceptionally(throwable -> {
             log.error("Image deletion failed for image id: {}. Error: {}", imageId, throwable.getMessage());
@@ -289,13 +300,14 @@ public class RestaurantService {
         });
     }
 
-    public void evictRestaurantCaches(UUID restaurantId) {
+    public void evictRestaurantCaches(UUID restaurantId,UUID employeeId) {
         log.info("Evicting caches related to restaurant id: {}", restaurantId);
         Objects.requireNonNull(cacheManager.getCache("restaurant:getRestaurantById")).evict(restaurantId);
-        Objects.requireNonNull(cacheManager.getCache("restaurant:getEmployeeRestaurant")).evict(authService.getAuthenticatedId());
+        Objects.requireNonNull(cacheManager.getCache("restaurant:getEmployeeRestaurant")).evict(employeeId);
         Objects.requireNonNull(cacheManager.getCache("restaurant:getRestaurants")).clear();
     }
 
+    @Transactional(readOnly = true)
     public List<RestaurantImageDto> getRestaurantImages(UUID restaurantId) {
         if (restaurantId == null) {
             throw new RestaurantException("Invalid Restaurant Id");
@@ -312,6 +324,7 @@ public class RestaurantService {
             key = "@authService.getAuthenticatedId()",
             unless = "#result == null"
     )
+    @Transactional(readOnly = true)
     public RestaurantDto getEmployeeRestaurant() {
         log.info("Fetching restaurant for authenticated employee");
         UUID employeeId = authService.getAuthenticatedId();
@@ -337,6 +350,7 @@ public class RestaurantService {
             key = "#restaurantId",
             unless = "#result == null"
     )
+    @Transactional(readOnly = true)
     public RestaurantDto getRestaurantById(UUID restaurantId) {
         log.info("Fetching restaurant by id: {}", restaurantId);
         if (restaurantId == null) {
@@ -348,14 +362,29 @@ public class RestaurantService {
         return restaurantMapper.toDTO(restaurant);
     }
 
+    @Transactional(readOnly = true)
     public RestaurantDto getRestaurantByTableBookingId(UUID tableBookingId) {
         log.info("Fetching restaurant by table booking id: {}", tableBookingId);
         if (tableBookingId == null) {
             throw new RestaurantException("Invalid Table Booking Id");
         }
-        TableBooking existingBooking = tableBookingRepository.findByIdWithRestaurant(tableBookingId)
+
+        Restaurant restaurantFromBooking = tableBookingRepository.findRestaurantByTableBookingId(tableBookingId)
                 .orElseThrow(() -> new RestaurantException("Restaurant not found for table booking id: " + tableBookingId));
 
-        return restaurantMapper.toDTO(existingBooking.getRestaurant());
+        return restaurantMapper.toDTO(restaurantFromBooking);
+    }
+
+    public RestaurantIdDto getEmployeeRestaurantId() {
+
+        UUID employeeId = authService.getAuthenticatedId();
+        log.info("Fetching restaurant id for authenticated employee id: {}", employeeId);
+
+        UUID restaurantId = employeeRepository.findRestaurantIdByEmployeeId(employeeId);
+        if (restaurantId == null) {
+            log.error("No restaurant associated with employee id: {}", employeeId);
+            throw new RestaurantException("No restaurant associated with the employee");
+        }
+        return new RestaurantIdDto(restaurantId);
     }
 }

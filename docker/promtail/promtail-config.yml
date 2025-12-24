@@ -25,6 +25,10 @@ scrape_configs:
             service: service
             traceId: traceId
             message: message
+      - regex:
+          expression: "./logs/(?P<app_name>[^/]+).log"
+      - labels:
+          app_name:
 
       - labels:
           level:

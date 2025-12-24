@@ -65,8 +65,8 @@ public class DishMapper {
 
         List<DishImage> images = dishImageRepository.findByDishes(dishes);
 
-        Map<UUID, List<DishImage>> imageMap =
-                images.stream().collect(Collectors.groupingBy(img -> img.getDish().getDishId()));
+        Map<UUID, List<DishImage>> imageMap = images.stream()
+                .collect(Collectors.groupingBy(img -> img.getDish().getDishId()));
 
         List<DishDTO> dishDTOS = dishes.stream().map(dish -> {
             DishDTO dto = mapper.map(dish, DishDTO.class);

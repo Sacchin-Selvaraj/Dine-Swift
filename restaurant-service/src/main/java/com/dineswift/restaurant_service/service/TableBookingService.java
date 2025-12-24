@@ -11,9 +11,9 @@ import com.dineswift.restaurant_service.payload.response.tableBooking.TableBooki
 import com.dineswift.restaurant_service.payment.service.PaymentService;
 import com.dineswift.restaurant_service.repository.*;
 import com.dineswift.restaurant_service.security.service.AuthService;
-import com.dineswift.restaurant_service.service.records.TableBookingFilter;
-import com.dineswift.restaurant_service.service.specification.TableBookingSpecification;
-import jakarta.transaction.Transactional;
+import com.dineswift.restaurant_service.records.TableBookingFilter;
+import com.dineswift.restaurant_service.specification.TableBookingSpecification;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.CacheManager;
@@ -38,7 +38,6 @@ import java.time.ZonedDateTime;
 import java.util.*;
 
 @Service
-@Transactional
 @Slf4j
 @RequiredArgsConstructor
 public class TableBookingService {
@@ -68,6 +67,7 @@ public class TableBookingService {
                     )
             }
     )
+    @Transactional
     public TableBookingResponse createOrder(UUID cartId, BookingRequest bookingRequest) {
 
         log.info("Creating order for cartId: {}", cartId);
@@ -159,9 +159,12 @@ public class TableBookingService {
     private GuestInformation getGuestInformation(BookingRequest bookingRequest) {
         log.info("After Authorization this method will fetch user details");
         GuestInformation guestInfo = new GuestInformation();
+
         if (bookingRequest.getSpecialRequest()!=null)
             guestInfo.setSpecialRequest(bookingRequest.getSpecialRequest());
+
         guestInfo.setUserId(authService.getAuthenticatedId());
+
         return guestInfo;
     }
 
@@ -246,6 +249,7 @@ public class TableBookingService {
                     )
             }
     )
+    @Transactional
     public String cancelBooking(UUID tableBookingId, CancellationDetails cancellationDetails) {
 
         log.info("Cancelling booking with ID: {}", tableBookingId);
@@ -263,12 +267,12 @@ public class TableBookingService {
                 .map(GrantedAuthority::getAuthority)
                 .anyMatch(role -> role.equals("ROLE_ADMIN") || role.equals("ROLE_MANAGER"));
 
-        if (isAdminOrManager)
+        if (isAdminOrManager) {
             existingBooking.setBookingStatus(BookingStatus.CANCELLED_BY_RESTAURANT);
-        else if(existingBooking.getGuestInformation().getUserId().equals(authService.getAuthenticatedId()))
+        }
+        else if(existingBooking.getGuestInformation().getUserId().equals(authService.getAuthenticatedId())) {
             existingBooking.setBookingStatus(BookingStatus.CANCELLED_BY_CUSTOMER);
-        else
-            throw new TableBookingException("You are not authorized to cancel this booking");
+        }
 
         existingBooking.setDishStatus(DishStatus.CANCELLED);
         existingBooking.setIsActive(false);
@@ -323,6 +327,7 @@ public class TableBookingService {
             key = "#tableBookingId",
             unless = "#result == null"
     )
+    @Transactional(readOnly = true)
     public TableBookingDto viewBooking(UUID tableBookingId) {
         log.info("Viewing booking with ID: {}", tableBookingId);
 
@@ -338,6 +343,7 @@ public class TableBookingService {
             value = "restaurant:order-items-by-booking",
             allEntries = true
     )
+    @Transactional
     public void updateOrderItem(UUID orderItemsId, QuantityUpdateRequest quantityUpdateRequest) {
         log.info("Updating order item with ID: {}", orderItemsId);
 
@@ -383,6 +389,7 @@ public class TableBookingService {
             value = "restaurant:order-items-by-booking",
             allEntries = true
     )
+    @Transactional
     public void removeOrderItem(UUID orderItemsId) {
         log.info("Removing order item with ID: {}", orderItemsId);
 
@@ -411,6 +418,7 @@ public class TableBookingService {
             value = "restaurant:order-items-by-booking",
             allEntries = true
     )
+    @Transactional
     public void addOrderItem(UUID tableBookingId, AddOrderItemRequest addOrderItemRequest) {
         log.info("Adding order item to booking with ID: {}", tableBookingId);
 
@@ -438,6 +446,7 @@ public class TableBookingService {
         log.info("Order item added successfully to booking ID: {}", tableBookingId);
     }
 
+
     private OrderItem createNewOrderItem(TableBooking existingBooking, Dish dish, Integer quantity) {
         log.info("Creating new order item for dish ID: {} with quantity: {}", dish.getDishId(), quantity);
 
@@ -456,6 +465,7 @@ public class TableBookingService {
             key = "#filter.hashCode()",
             unless = "#result == null || #result.isEmpty()"
     )
+    @Transactional(readOnly = true)
     public CustomPageDto<TableBookingDtoWoRestaurant> getTableBookingDetails(TableBookingFilter filter) {
         log.info("Fetching table booking details for restaurantId: {}", filter.restaurantId());
 
@@ -478,8 +488,8 @@ public class TableBookingService {
         Page<TableBooking> bookingsPage = tableBookingRepository.findAll(spec, pageable);
 
         if (!bookingsPage.hasContent()){
-            log.error("No bookings found for the given criteria in restaurant ID: {}", filter.restaurantId());
-            throw new TableBookingException("No bookings found for the given criteria in restaurant ID: " + filter.restaurantId());
+            log.info("No bookings found for the given criteria in restaurant ID: {}", filter.restaurantId());
+            return new CustomPageDto<>(Page.empty());
         }
 
         Page<TableBookingDtoWoRestaurant> bookingDtosPage = bookingsPage.map(tableBooking ->
@@ -490,6 +500,7 @@ public class TableBookingService {
     }
 
     @CacheEvict(value = "booking:pages", allEntries = true)
+    @Transactional
     public void updateBookingStatus(UUID tableBookingId, TableBookingStatusUpdateRequest statusUpdateRequest) {
         log.info("Updating booking status for booking ID: {}", tableBookingId);
 
@@ -532,6 +543,7 @@ public class TableBookingService {
                 });
     }
 
+    @Transactional
     public void updateBookingDetails(UUID tableBookingId, TableBookingDetailsUpdateRequest detailsUpdateRequest) {
         log.info("Updating booking details for booking ID: {}", tableBookingId);
 

@@ -12,12 +12,13 @@ import com.dineswift.restaurant_service.payload.response.orderItem.CustomOrderIt
 import com.dineswift.restaurant_service.payload.response.orderItem.OrderItemDto;
 import com.dineswift.restaurant_service.repository.DishRepository;
 import com.dineswift.restaurant_service.repository.OrderItemRepository;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -34,7 +35,6 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 @Slf4j
 public class OrderService {
 
@@ -44,10 +44,19 @@ public class OrderService {
     private final RestClient restClient;
     private final CacheManager cacheManager;
 
-    @CacheEvict(
-            value = "restaurant:order-items-by-booking",
-            allEntries = true
+    @Caching(
+            evict = {
+                    @CacheEvict(
+                            value = "restaurant:order-items-by-booking",
+                            allEntries = true
+                    ),
+                    @CacheEvict(
+                            value = "userService:cartDto",
+                            key = "@authService.getAuthenticatedId()"
+                    )
+            }
     )
+    @Transactional
     public void addItemToOrderItem(AddOrderItem addOrderItemRequest) {
 
         UUID dishId = addOrderItemRequest.getDishId();
@@ -127,10 +136,19 @@ public class OrderService {
         return amountUpdateRequest;
     }
 
-    @CacheEvict(
-            value = {"restaurant:order-items-by-booking"},
-            allEntries = true
+    @Caching(
+            evict = {
+                    @CacheEvict(
+                            value = "restaurant:order-items-by-booking",
+                            allEntries = true
+                    ),
+                    @CacheEvict(
+                            value = "userService:cartDto",
+                            key = "@authService.getAuthenticatedId()"
+                    )
+            }
     )
+    @Transactional
     public void updateItemQuantity(UUID orderItemId, Integer quantity) {
 
         checkQuantity(quantity);
@@ -150,10 +168,19 @@ public class OrderService {
         evictOrderItemCaches(orderItem.getCartId());
     }
 
-    @CacheEvict(
-            value = {"restaurant:order-items-by-booking"},
-            allEntries = true
+    @Caching(
+            evict = {
+                    @CacheEvict(
+                            value = "restaurant:order-items-by-booking",
+                            allEntries = true
+                    ),
+                    @CacheEvict(
+                            value = "userService:cartDto",
+                            key = "@authService.getAuthenticatedId()"
+                    )
+            }
     )
+    @Transactional
     public void deleteItem(UUID orderItemId) {
 
         OrderItem orderItem = orderItemRepository.findById(orderItemId)
@@ -170,6 +197,7 @@ public class OrderService {
             key = "#cartId",
             unless = "#result == null"
     )
+    @Transactional(readOnly = true)
     public CustomOrderItem getOrderItemsByCartId(UUID cartId) {
 
         List<OrderItem> orderItems = orderItemRepository.findAllByCartId(cartId);
@@ -197,6 +225,7 @@ public class OrderService {
             throw new OrderItemException("Quantity must be at least " + QUANTITY_MIN);
         }
     }
+
 
     private void updateCartTotalAmount(UUID cartId, CartAmountUpdateRequest cartAmountUpdateRequest) {
 
@@ -234,6 +263,7 @@ public class OrderService {
             key = "#tableBookingId + '-' + #pageNo + '-' + #pageSize",
             unless = "#result == null || #result.isEmpty()"
     )
+    @Transactional(readOnly = true)
     public CustomPageDto<OrderItemDto> getOrderItemsByTableBookingId(UUID tableBookingId,
                                                                      Integer pageNo, Integer pageSize) {
 
@@ -253,6 +283,7 @@ public class OrderService {
 
     }
 
+    @Transactional(readOnly = true)
     private Page<OrderItemDto> getOrderItemsDtoList(Page<OrderItem> orderItemsPage) {
         List<OrderItem> orderItemList = orderItemsPage.getContent();
         Map<UUID,OrderItemDto> orderItemDtoMap = orderItemMapper.toListDtoAfterBooking(orderItemList);

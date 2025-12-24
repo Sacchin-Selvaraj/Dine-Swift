@@ -8,7 +8,7 @@ import com.dineswift.restaurant_service.payload.response.tableBooking.TableBooki
 import com.dineswift.restaurant_service.payload.response.tableBooking.TableBookingResponse;
 import com.dineswift.restaurant_service.service.CustomPageDto;
 import com.dineswift.restaurant_service.service.TableBookingService;
-import com.dineswift.restaurant_service.service.records.TableBookingFilter;
+import com.dineswift.restaurant_service.records.TableBookingFilter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;

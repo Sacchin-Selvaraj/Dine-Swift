@@ -2,7 +2,6 @@ package com.dineswift.userservice.service;
 
 import com.dineswift.userservice.model.entites.Booking;
 import com.dineswift.userservice.model.entites.BookingStatus;
-import com.dineswift.userservice.model.entites.User;
 import com.dineswift.userservice.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.domain.Specification;
@@ -13,7 +12,7 @@ import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
-public final class BookingSpecification {
+public class BookingSpecification {
 
     private final UserRepository userRepository;
 

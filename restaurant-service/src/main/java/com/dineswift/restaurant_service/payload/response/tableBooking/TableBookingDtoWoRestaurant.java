@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.ZonedDateTime;
 import java.util.UUID;
 
 @Data
@@ -33,6 +34,9 @@ public class TableBookingDtoWoRestaurant {
     private Boolean isUpfrontPaid;
     private LocalTime actualDineInTime;
     private LocalTime actualDineOutTime;
+    private ZonedDateTime createdAt;
+    private ZonedDateTime lastModifiedDate;
+    private UUID lastModifiedBy;
     private RestaurantTableDto restaurantTableDto;
     private GuestInformationDto guestInformationDto;
 }

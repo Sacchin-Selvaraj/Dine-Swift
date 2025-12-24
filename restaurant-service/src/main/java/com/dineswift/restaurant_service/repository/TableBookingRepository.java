@@ -1,5 +1,6 @@
 package com.dineswift.restaurant_service.repository;
 
+import com.dineswift.restaurant_service.model.Restaurant;
 import com.dineswift.restaurant_service.model.RestaurantTable;
 import com.dineswift.restaurant_service.model.TableBooking;
 import org.jetbrains.annotations.NotNull;
@@ -35,10 +36,13 @@ public interface TableBookingRepository extends JpaRepository<TableBooking, UUID
     Optional<TableBooking> findByIdWithGuestInformation(UUID tableBookingId);
 
     @EntityGraph(attributePaths = {"restaurantTable", "restaurant", "guestInformation"})
-    @Query("SELECT tb FROM TableBooking tb WHERE tb.tableBookingId = :tableBookingId AND tb.isActive = true")
+    @Query("SELECT tb FROM TableBooking tb WHERE tb.tableBookingId = :tableBookingId")
     Optional<TableBooking> findByIdWithChildClass(UUID tableBookingId);
 
     @NotNull
     @EntityGraph(attributePaths = {"restaurantTable", "guestInformation"})
     Page<TableBooking> findAll(Specification<TableBooking> spec, @NotNull Pageable pageable);
+
+    @Query("SELECT tb.restaurant FROM TableBooking tb WHERE tb.tableBookingId = :tableBookingId")
+    Optional<Restaurant> findRestaurantByTableBookingId(UUID tableBookingId);
 }

@@ -39,7 +39,7 @@ dependencies {
 	implementation(platform("com.google.cloud:libraries-bom:26.72.0"))
 	implementation("com.google.cloud:google-cloud-apikeys")
 	implementation 'org.modelmapper:modelmapper:3.2.0'
-	implementation 'com.github.loki4j:loki-logback-appender:2.0.1'
+//	implementation 'com.github.loki4j:loki-logback-appender:2.0.1'
 //	implementation 'org.apache.httpcomponents.client5:httpclient5:5.5.1'
 	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 	testImplementation 'org.springframework.boot:spring-boot-starter-data-redis-test'

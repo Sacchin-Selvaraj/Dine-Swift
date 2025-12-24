@@ -13,13 +13,13 @@ import com.dineswift.userservice.repository.BookingRepository;
 import com.dineswift.userservice.repository.CartRepository;
 import com.dineswift.userservice.repository.UserRepository;
 import com.dineswift.userservice.security.service.AuthService;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClient;
 
 import java.util.UUID;
@@ -27,7 +27,6 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-@Transactional
 public class BookingService {
 
     private final BookingRepository bookingRepository;
@@ -36,6 +35,7 @@ public class BookingService {
     private final RestClient restClient;
     private final AuthService authService;
 
+    @Transactional
     @CacheEvict(value = "booking:pages", allEntries = true)
     public TableBookingResponse bookTable(UUID cartId, BookingRequest bookingRequest) {
 
@@ -84,7 +84,7 @@ public class BookingService {
         return tableBookingResponse;
     }
 
-
+    @Transactional
     public PaymentCreateResponse generateBill(UUID bookingId) {
         log.info("Generating pay-now link for bookingId: {}", bookingId);
         Booking booking = bookingRepository.findById(bookingId)
@@ -121,6 +121,7 @@ public class BookingService {
     }
 
     @CacheEvict( value = { "booking:pages" }, allEntries = true)
+    @Transactional
     public void updateBookingStatus(UUID tableBookingId, String status) {
         log.info("Updating booking status for tableBookingId: {}", tableBookingId);
         try {

@@ -6,7 +6,6 @@ import com.dineswift.Api_Auth.Service.payload.LoginResponse;
 import com.dineswift.Api_Auth.Service.payload.MessageResponse;
 import com.dineswift.Api_Auth.Service.payload.TokenResponse;
 import com.dineswift.Api_Auth.Service.service.AuthService;
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -23,14 +22,16 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/login")
-    public ResponseEntity<Mono<LoginResponse>> loginRequest(@RequestBody LoginRequest loginRequest, ServerHttpResponse response){
+    public ResponseEntity<Mono<LoginResponse>> loginRequest(@RequestBody LoginRequest loginRequest,
+                                                            ServerHttpResponse response){
         Mono<LoginResponse> authToken = authService.authenticateUser(loginRequest,response);
         log.info("Generated Auth Token: {}", authToken);
         return ResponseEntity.ok(authToken);
     }
 
     @PostMapping("/refresh-token")
-    public ResponseEntity<Mono<TokenResponse>> refreshToken(@CookieValue(name = "refreshToken") String refreshToken, ServerHttpResponse response){
+    public ResponseEntity<Mono<TokenResponse>> refreshToken(@CookieValue(name = "refreshToken") String refreshToken,
+                                                            ServerHttpResponse response){
         log.info("Received request to refresh token");
         Mono<TokenResponse> newAuthToken = authService.refreshAuthToken(refreshToken,response);
         log.info("Generated new Auth Token: {}", newAuthToken);

@@ -25,6 +25,7 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     @Query("SELECT u FROM User u WHERE u.userId = :userId AND u.isActive = true")
     Optional<User> findByIdAndIsActive(UUID userId);
 
+    @EntityGraph(attributePaths = "roles")
     @Query("SELECT u FROM User u WHERE u.email = :email AND u.isActive = true")
     Optional<User> findByEmailAndIsActive(String email);
 

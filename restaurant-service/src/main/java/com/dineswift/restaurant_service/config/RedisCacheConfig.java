@@ -26,12 +26,12 @@ public class RedisCacheConfig {
         objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
         BasicPolymorphicTypeValidator ptv = BasicPolymorphicTypeValidator.builder()
-                .allowIfBaseType(Object.class) // Adjust policy as needed, Object.class is permissive
+                .allowIfBaseType(Object.class)
                 .build();
         objectMapper.activateDefaultTyping(
                 ptv,
-                ObjectMapper.DefaultTyping.NON_FINAL, // Apply typing to non-final classes
-                JsonTypeInfo.As.PROPERTY // Store type info as a JSON property ("@class")
+                ObjectMapper.DefaultTyping.NON_FINAL,
+                JsonTypeInfo.As.PROPERTY
         );
 
         GenericJackson2JsonRedisSerializer serializer =
@@ -41,7 +41,7 @@ public class RedisCacheConfig {
 
         return RedisCacheConfiguration.defaultCacheConfig()
                 .disableCachingNullValues()
-                .entryTtl(Duration.ofMinutes(15))
+                .entryTtl(Duration.ofMinutes(30))
                 .serializeKeysWith(
                         RedisSerializationContext.SerializationPair.fromSerializer(
                                 new StringRedisSerializer()

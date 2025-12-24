@@ -14,7 +14,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Repository
-public interface EmployeeRepository extends JpaRepository<Employee, UUID>, JpaSpecificationExecutor<Employee> {
+public interface EmployeeRepository extends JpaRepository<Employee, UUID>,
+        JpaSpecificationExecutor<Employee> {
 
     boolean existsByEmployeeName(String employeeName);
 
@@ -56,4 +57,9 @@ public interface EmployeeRepository extends JpaRepository<Employee, UUID>, JpaSp
 
     @Query("SELECT emp FROM Employee emp where employeeId=:employeeId AND employeeIsActive=true")
     Optional<Employee> findByIdAndIsActiveWoEntity(UUID employeeId);
+
+    @EntityGraph(attributePaths = "roles")
+    @Query("SELECT emp FROM Employee emp where employeeId=:employeeId ")
+    Optional<Employee> findByIdWithRoles(UUID employeeId);
+
 }

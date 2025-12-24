@@ -4,7 +4,7 @@ import com.dineswift.restaurant_service.exception.EmployeeException;
 import com.dineswift.restaurant_service.model.GuestInformation;
 import com.dineswift.restaurant_service.payload.response.guestInformation.GuestInformationResponse;
 import com.dineswift.restaurant_service.repository.GuestInformationRepository;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -16,12 +16,12 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-@Transactional
 public class GuestInformationService {
 
     private final GuestInformationRepository guestInformationRepository;
     private final RestClient restClient;
 
+    @Transactional(readOnly = true)
     public GuestInformationResponse getGuestInformationById(UUID guestInformationId) {
         log.info("Service layer: Retrieving guest information for ID: {}", guestInformationId);
         GuestInformation guestInformation = guestInformationRepository.findById(guestInformationId)

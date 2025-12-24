@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 
 import java.math.BigDecimal;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -21,6 +22,8 @@ public class DishDTO {
     private String dishComments;
     private Boolean isVeg;
     private Boolean isActive;
+    private UUID lastModifiedBy;
+    private ZonedDateTime lastModifiedDate;
     private List<DishImageDTO> dishImages;
 
 }

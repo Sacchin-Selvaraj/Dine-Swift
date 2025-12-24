@@ -2,7 +2,6 @@ package com.dineswift.restaurant_service.repository;
 
 import com.dineswift.restaurant_service.model.Restaurant;
 import com.dineswift.restaurant_service.model.RestaurantImage;
-import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -19,9 +18,13 @@ public interface RestaurantImageRepository extends JpaRepository<RestaurantImage
     @Query("SELECT ri FROM RestaurantImage ri WHERE ri.restaurant IN :restaurantList")
     List<RestaurantImage> findByRestaurants(List<Restaurant> restaurantList);
 
-    @EntityGraph(attributePaths = {"restaurant"})
     @Query("SELECT ri FROM RestaurantImage ri WHERE ri.imageId = :imageId")
     Optional<RestaurantImage> findByIdAndRestaurant(UUID imageId);
 
     List<RestaurantImage> findByRestaurant_RestaurantId(UUID restaurantId);
+
+    @Query(
+        "SELECT ri.restaurant.restaurantId FROM RestaurantImage ri WHERE ri.imageId = :imageId"
+    )
+    UUID getRestaurantIdByImageId(UUID imageId);
 }

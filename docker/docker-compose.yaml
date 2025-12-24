@@ -145,11 +145,27 @@ services:
       - '3110:3100' # Tempo
       - '9411:9411' # zipkin
 
+  redpanda:
+    image: redpandadata/redpanda:v25.3.3
+    container_name: redpanda_kafka
+    ports:
+      - 9092:9092
+      - 29092:29092
+    command: >
+      redpanda start
+      --overprovisioned
+      --smp 1
+      --memory 1G
+      --reserve-memory 0M
+    volumes:
+        - kafka-data:/var/lib/redpanda/data
+
 volumes:
   postgres-data:
   redis-data:
   loki-data:
   grafana-data:
+  kafka-data:
 
 networks:
   spring-network:

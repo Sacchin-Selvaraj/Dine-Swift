@@ -15,8 +15,8 @@ import com.dineswift.restaurant_service.repository.OrderItemRepository;
 import com.dineswift.restaurant_service.repository.RestaurantRepository;
 import com.dineswift.restaurant_service.repository.TableRepository;
 import com.dineswift.restaurant_service.security.service.AuthService;
-import com.dineswift.restaurant_service.service.specification.TableSpecification;
-import jakarta.transaction.Transactional;
+import com.dineswift.restaurant_service.specification.TableSpecification;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
@@ -32,7 +32,6 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-@Transactional
 public class TableService {
 
     private final TableRepository tableRepository;
@@ -47,6 +46,7 @@ public class TableService {
             value = "restaurant:getTablesByRestaurantId",
             allEntries = true
     )
+    @Transactional
     public void addTableToRestaurant(UUID restaurantId, TableCreateRequest tableCreateRequest) {
         log.info("Adding table to restaurant with ID: {}", restaurantId);
 
@@ -71,6 +71,7 @@ public class TableService {
             value = "restaurant:getTablesByRestaurantId",
             allEntries = true
     )
+    @Transactional
     public void deleteTable(UUID tableId) {
         log.info("Deleting table with ID: {}", tableId);
 
@@ -89,6 +90,7 @@ public class TableService {
             value = "restaurant:getTablesByRestaurantId",
             allEntries = true
     )
+    @Transactional
     public void updateTable(UUID tableId, TableUpdateRequest tableUpdateRequest) {
         log.info("Updating table with ID:{}", tableId);
         RestaurantTable table = tableRepository.findById(tableId)
@@ -107,6 +109,7 @@ public class TableService {
             key = "#restaurantId.toString().concat('-').concat(#page).concat('-').concat(#size)",
             unless = "#result == null"
     )
+    @Transactional(readOnly = true)
     public CustomPageDto<RestaurantTableDto> getTablesByRestaurantId(UUID restaurantId, int page, int size) {
         log.info("Fetching tables for restaurant with ID: {}", restaurantId);
 
@@ -125,7 +128,7 @@ public class TableService {
 
         if (restaurantTables.isEmpty()) {
             log.warn("No tables found for restaurant with ID: {}", restaurantId);
-            throw new IllegalArgumentException("No tables found for restaurant with ID: " + restaurantId);
+            return new CustomPageDto<>(Page.empty());
         }
         log.info("Fetched {} tables for restaurant with ID: {}", restaurantTables.getTotalElements(), restaurantId);
         Page<RestaurantTableDto> restaurantTableDtos = tableMapper.toPageDto(restaurantTables,restaurantId);
@@ -133,6 +136,7 @@ public class TableService {
         return new CustomPageDto<>(restaurantTableDtos);
     }
 
+    @Transactional(readOnly = true)
     public List<AvailableSlots> getAvailableSlots(UUID restaurantId, CheckAvailableSlots checkAvailableSlots) {
 
         log.info("Fetching available slots for restaurant with ID: {}", restaurantId);
@@ -140,7 +144,7 @@ public class TableService {
 
         if (availableSlots.isEmpty()) {
             log.warn("No available slots found for restaurant with ID: {}", restaurantId);
-            throw new RestaurantException("No available slots found for restaurant with ID: " + restaurantId);
+            return List.of();
         }
 
         log.info("Fetched available slots for restaurant with ID: {}", restaurantId);
@@ -148,6 +152,7 @@ public class TableService {
 
     }
 
+    @Transactional(readOnly = true)
     public AvailableSlots getAvailableSlot(UUID tableId, CheckAvailableSlots checkAvailableSlots) {
         log.info("Fetching available slot for table with ID: {}", tableId);
 
@@ -169,6 +174,7 @@ public class TableService {
         return availableSlot;
     }
 
+    @Transactional(readOnly = true)
     public CustomPageDto<RestaurantTableDto> getTablesByOrderItem(UUID orderItemId, int page, int size) {
         
         log.info("Fetching tables for order item with ID: {}", orderItemId);
@@ -182,10 +188,12 @@ public class TableService {
         Pageable pageable = Pageable.ofSize(size).withPage(page);
         
         Page<RestaurantTable> restaurantTables = tableRepository.findAll(spec, pageable);
-        if (restaurantTables.isEmpty()) {
+
+        if (!restaurantTables.hasContent()) {
             log.warn("No tables found for order item with ID: {}", orderItemId);
-            throw new OrderItemException("No tables found for order item with ID: " + orderItemId);
+            return new CustomPageDto<>(Page.empty());
         }
+
         log.info("Fetched {} tables for order item with ID: {}", restaurantTables.getTotalElements(), orderItemId);
         Page<RestaurantTableDto> restaurantTableDtos = tableMapper.toPageDto(restaurantTables,restaurantId);
 

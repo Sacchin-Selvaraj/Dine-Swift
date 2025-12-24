@@ -14,7 +14,7 @@ import com.razorpay.Order;
 import com.razorpay.RazorpayClient;
 import com.razorpay.RazorpayException;
 import com.razorpay.Refund;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
@@ -36,7 +36,6 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-@Transactional
 public class PaymentService {
 
     private final PaymentRepository paymentRepository;
@@ -50,10 +49,10 @@ public class PaymentService {
     private String secretKey;
 
 
+    @Transactional
     public PaymentCreateResponse initiatePayment(TableBooking newBooking,
                                                  String paymentName,
                                                  BigDecimal amount) {
-
         Payment newPayment = new Payment();
         newPayment.setPaymentName(paymentName);
         newPayment.setAmount(amount);
@@ -96,10 +95,11 @@ public class PaymentService {
         }
     }
 
+    @Transactional
     public boolean verifyPayment(PaymentDetails paymentDetails) {
-        String generatedSignature = "";
+        String generatedSignature;
         boolean isSignatureValid;
-        com.razorpay.Payment paymentData = null;
+        com.razorpay.Payment paymentData;
         try {
             paymentData = razorpayClient.payments.fetch(paymentDetails.getPaymentId());
 
@@ -124,7 +124,7 @@ public class PaymentService {
             }
 
         } catch (Exception e) {
-            log.error("Error generating HMAC SHA256 signature :" + e.getMessage());
+            log.error("Error generating HMAC SHA256 signature : {}", e.getMessage());
             handleSignatureMismatch(paymentDetails);
             return false;
         }
@@ -229,7 +229,7 @@ public class PaymentService {
             String failureReason = paymentData.get("error_description");
             return failureReason != null ? failureReason : "Unknown failure reason";
         } catch (IllegalArgumentException e) {
-            log.error("Error fetching payment detail from Razorpay: " + e.getMessage());
+            log.error("Error fetching payment detail from Razorpay: {}",e.getMessage());
             return "Error fetching failure reason";
         }
     }
@@ -241,11 +241,12 @@ public class PaymentService {
             String paymentMethod = paymentData.get("method");
             return PaymentMethod.getPaymentMethodByName(paymentMethod);
         } catch (RuntimeException e) {
-            log.error("Error fetching payment details from Razorpay: " + e.getMessage());
+            log.error("Error fetching payment details from Razorpay: {} ", e.getMessage());
             throw new PaymentException("Error fetching payment details from Razorpay");
         }
     }
 
+    @Transactional
     public PaymentCreateResponse generatePayNow(UUID tableBookingId) {
 
         log.info("Generating pay-now link for bookingId: {}", tableBookingId);
@@ -253,7 +254,7 @@ public class PaymentService {
         TableBooking existingBooking = tableBookingRepository.findByIdAndIsActive(tableBookingId)
                 .orElseThrow(() -> new PaymentException("Invalid table booking ID: " + tableBookingId));
 
-        PaymentCreateResponse paymentResponse=null;
+        PaymentCreateResponse paymentResponse;
         if (!existingBooking.getIsUpfrontPaid()){
             log.info("Generating upfront payment link for bookingId: {}", tableBookingId);
             paymentResponse = initiatePayment(existingBooking,"Upfront Payment",existingBooking.getUpfrontAmount());
@@ -268,6 +269,7 @@ public class PaymentService {
         return paymentResponse;
     }
 
+    @Transactional
     public void processRefund(TableBooking existingBooking) {
         log.info("Processing refund for bookingId: {}", existingBooking.getTableBookingId());
 
@@ -308,7 +310,7 @@ public class PaymentService {
             createRefundRecord(existingBooking,successfulPayment,refund);
 
         } catch (RazorpayException e) {
-            log.error("Error fetching payments details from Razorpay: " + e.getMessage());
+            log.error("Error fetching payments details from Razorpay: {} ", e.getMessage());
             throw new PaymentException("Error processing refund from Razorpay, please try again later. Error Message : " + e.getMessage());
         }
     }
@@ -329,6 +331,8 @@ public class PaymentService {
         log.info("Refund record created successfully in database for paymentId: {}", successfulPayment.getPaymentId());
     }
 
+
+    @Transactional(readOnly = true)
     public Page<PaymentDto> getPaymentDetails(UUID tableBookingId, int page, int size) {
         log.info("Fetching payment details for bookingId: {}", tableBookingId);
         Pageable pageable = Pageable.ofSize(size).withPage(page);

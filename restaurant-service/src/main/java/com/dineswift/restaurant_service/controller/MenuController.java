@@ -1,8 +1,8 @@
 package com.dineswift.restaurant_service.controller;
 
 import com.dineswift.restaurant_service.payload.request.menu.MenuCreateRequest;
+import com.dineswift.restaurant_service.payload.request.menu.MenuDishAddRequest;
 import com.dineswift.restaurant_service.payload.request.menu.MenuUpdateRequest;
-import com.dineswift.restaurant_service.payload.response.MessageResponse;
 import com.dineswift.restaurant_service.payload.response.menu.MenuDTO;
 import com.dineswift.restaurant_service.payload.response.menu.MenuDTOWoDish;
 import com.dineswift.restaurant_service.payload.response.menu.MenuResponse;
@@ -61,6 +61,15 @@ public class MenuController {
     public ResponseEntity<Void> removeDishFromMenu(@PathVariable UUID menuId, @PathVariable UUID dishId) {
         log.info("Received request to remove dish {} from menu {}", dishId, menuId);
         menuService.removeDishFromMenu(menuId, dishId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PreAuthorize(("hasRole('ROLE_ADMIN') or hasRole('ROLE_MANAGER')"))
+    @PostMapping("/add-dish/{menuId}")
+    public ResponseEntity<Void> addDishToMenu(@PathVariable UUID menuId,
+                                              @RequestBody MenuDishAddRequest menuDishAddRequest){
+        log.info("Received request to add dish");
+        menuService.addDishToMenu(menuId,menuDishAddRequest);
         return ResponseEntity.noContent().build();
     }
 

@@ -11,7 +11,7 @@ import com.dineswift.restaurant_service.projection.RestaurantTimings;
 import com.dineswift.restaurant_service.repository.RestaurantRepository;
 import com.dineswift.restaurant_service.repository.TableBookingRepository;
 import com.dineswift.restaurant_service.repository.TableRepository;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -22,7 +22,6 @@ import java.util.*;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 @Slf4j
 public class ReservationService {
 
@@ -30,6 +29,7 @@ public class ReservationService {
     private final TableBookingRepository tableBookingRepository;
     private final RestaurantRepository restaurantRepository;
 
+    @Transactional(readOnly = true)
     public List<AvailableSlots> getAvailableSlots(UUID restaurantId, CheckAvailableSlots checkAvailableSlots) {
 
         if (!restaurantRepository.existsById(restaurantId)){
@@ -40,11 +40,6 @@ public class ReservationService {
 
         List<RestaurantTable> restaurantTables = tableRepository.findByRestaurantIdAndIsActiveTrue(restaurantId);
 
-        if (restaurantTables.isEmpty()){
-            log.error("No active tables found for restaurant with ID: {}", restaurantId);
-            throw new RestaurantException("No active tables found for the restaurant with ID: " + restaurantId);
-        }
-
         List<AvailableSlots> availableSlots = restaurantTables.stream()
                 .map(table->getAvailableSlot(table,restaurantTimings,checkAvailableSlots)).toList();
 
@@ -52,6 +47,7 @@ public class ReservationService {
         return availableSlots;
     }
 
+    @Transactional(readOnly = true)
     public AvailableSlots getAvailableSlot(RestaurantTable restaurantTable,
                                            RestaurantTimings restaurantTimings,
                                            CheckAvailableSlots checkAvailableSlots) {

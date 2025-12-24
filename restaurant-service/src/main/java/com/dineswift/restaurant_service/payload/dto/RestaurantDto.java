@@ -40,5 +40,6 @@ public class RestaurantDto {
     private Boolean isActive;
     private ZonedDateTime createdAt;
     private ZonedDateTime lastModifiedDate;
+    private UUID lastModifiedBy;
     private List<RestaurantImageDto> restaurantImages;
 }

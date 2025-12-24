@@ -3,10 +3,11 @@ package com.dineswift.restaurant_service.controller;
 import com.dineswift.restaurant_service.payload.request.dish.DishAddRequest;
 import com.dineswift.restaurant_service.payload.request.dish.DishUpdateRequest;
 import com.dineswift.restaurant_service.payload.response.dish.DishDTO;
+import com.dineswift.restaurant_service.payload.response.dish.DishesForMenu;
 import com.dineswift.restaurant_service.service.CustomPageDto;
 import com.dineswift.restaurant_service.service.DishService;
-import com.dineswift.restaurant_service.service.records.DishSearchFilter;
-import com.dineswift.restaurant_service.service.records.DishSearchFilterByRestaurant;
+import com.dineswift.restaurant_service.records.DishSearchFilter;
+import com.dineswift.restaurant_service.records.DishSearchFilterByRestaurant;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -15,8 +16,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
 
 @RestController
 @RequestMapping("/restaurant/dish")
@@ -48,7 +49,7 @@ public class DishController {
     @PreAuthorize(("hasRole('ROLE_ADMIN') or hasRole('ROLE_MANAGER')"))
     @PatchMapping("/update-dish/{dishId}")
     public ResponseEntity<Void> updateDish(@PathVariable UUID dishId,
-                                                      @Valid @RequestBody DishUpdateRequest dishUpdateRequest) {
+                                           @Valid @RequestBody DishUpdateRequest dishUpdateRequest) {
 
         dishService.updateDish(dishId, dishUpdateRequest);
 
@@ -81,7 +82,7 @@ public class DishController {
     @PreAuthorize(("hasRole('ROLE_ADMIN') or hasRole('ROLE_MANAGER')"))
     @PostMapping("/upload-image/{dishId}")
     public ResponseEntity<Void> uploadDishImage(@PathVariable UUID dishId,
-                                                                 @RequestParam("imageFile") MultipartFile imageFile) throws ExecutionException, InterruptedException {
+                                                @RequestParam("imageFile") MultipartFile imageFile) {
         dishService.uploadDishImage(dishId, imageFile);
 
         return ResponseEntity.status(HttpStatus.CREATED).build();
@@ -128,6 +129,20 @@ public class DishController {
 
         CustomPageDto<DishDTO> dishDTOS = dishService.searchDishesByRestaurant(filter);
         return ResponseEntity.ok(dishDTOS);
+    }
+
+    @PreAuthorize("!hasRole('ROLE_USER')")
+    @GetMapping("/get-dish-Ids/{restaurantId}")
+    public ResponseEntity<List<DishesForMenu>> getDishDetailsForMenu(@PathVariable UUID restaurantId){
+        List<DishesForMenu> dishesForMenus = dishService.getDishDetails(restaurantId);
+        return ResponseEntity.ok(dishesForMenus);
+    }
+
+    @PreAuthorize("!hasRole('ROLE_USER')")
+    @GetMapping("/get-dish-Ids-menuId/{menuId}")
+    public ResponseEntity<List<DishesForMenu>> getDishDetailsWithMenu(@PathVariable UUID menuId){
+        List<DishesForMenu> dishesForMenus = dishService.getDishDetailsWithMenu(menuId);
+        return ResponseEntity.ok(dishesForMenus);
     }
 
 }

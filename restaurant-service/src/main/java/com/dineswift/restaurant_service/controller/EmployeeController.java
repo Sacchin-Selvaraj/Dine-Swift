@@ -74,7 +74,6 @@ public class EmployeeController {
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-    @PreAuthorize(("hasAnyRole('ROLE_ADMIN', 'ROLE_MANAGER')"))
     @GetMapping("/get-roles")
     public ResponseEntity<List<RoleDTOResponse>> getAllRoles() {
         List<RoleDTOResponse> roles = employeeService.getAllRoles();

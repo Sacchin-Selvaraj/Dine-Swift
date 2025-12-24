@@ -16,8 +16,8 @@ import com.dineswift.restaurant_service.repository.EmployeeRepository;
 import com.dineswift.restaurant_service.repository.RestaurantRepository;
 import com.dineswift.restaurant_service.repository.RoleRepository;
 import com.dineswift.restaurant_service.security.service.AuthService;
-import com.dineswift.restaurant_service.service.specification.EmployeeSpecification;
-import jakarta.transaction.Transactional;
+import com.dineswift.restaurant_service.specification.EmployeeSpecification;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
@@ -85,13 +85,14 @@ public class EmployeeService {
             key = "#employeeId",
             unless = "#result == null"
     )
+    @Transactional(readOnly = true)
     public EmployeeDto getEmployee(UUID employeeId) {
         if (employeeId == null) {
             throw new EmployeeException("Invalid request with employee id");
         }
         log.info("Fetching employee details for id: {}", employeeId);
 
-        Employee employee=employeeRepository.findByIdAndIsActive(employeeId)
+        Employee employee=employeeRepository.findByIdWithRoles(employeeId)
                 .orElseThrow(() -> new EmployeeException("Employee not found"));
 
         return employeeMapper.toDTO(employee);
@@ -211,7 +212,7 @@ public class EmployeeService {
     @Transactional
     public void createEmployer(EmployeeCreateRequest employeeCreateRequest, UUID restaurantId) {
         if (restaurantId == null || !restaurantRepository.existsById(restaurantId)) {
-            throw new EmployeeException("Invalid Restaurant id or Restaurant Id not found");
+            throw new RestaurantException("Invalid Restaurant id or Restaurant Id not found");
         }
         verifyUser(employeeCreateRequest);
         log.info("Creating employee for restaurant id: {}", restaurantId);
@@ -261,12 +262,11 @@ public class EmployeeService {
             key = "'allRoles'",
             unless = "#result == null || #result.isEmpty()"
     )
+    @Transactional(readOnly = true)
     public List<RoleDTOResponse> getAllRoles() {
+
         List<Role> roles=roleRepository.findAll();
-        if (roles.isEmpty()){
-            log.error("No roles found in the system");
-            throw new RoleException("No roles found");
-        }
+
         return roles.stream().map(employeeMapper::toRoleDTO)
                 .collect(Collectors.toList());
     }
@@ -319,6 +319,7 @@ public class EmployeeService {
         return employeeMapper.toEmployeeResponse(registeredEmployee);
     }
 
+    @Transactional(readOnly = true)
     public List<EmployeeDto> getAllEmployees() {
         log.info("Fetching all active employees");
         UUID employeeId = authService.getAuthenticatedId();
@@ -337,6 +338,7 @@ public class EmployeeService {
             key = "'page:' + #page + ':size:' + #size + ':employeeId:' + @authService.getAuthenticatedId()",
             unless = "#result == null || #result.isEmpty()"
     )
+    @Transactional(readOnly = true)
     public CustomPageDto<EmployeeDto> getEmployeesPaginated(int page, int size) {
 
         log.info("Fetching paginated employees: page {}, size {}", page, size);
@@ -397,6 +399,7 @@ public class EmployeeService {
             key = "@authService.getAuthenticatedId()",
             unless = "#result == null"
     )
+    @Transactional(readOnly = true)
     public EmployeeDto getCurrentEmployee() {
         log.info("Getting current authenticated employee details");
         UUID employeeId = authService.getAuthenticatedId();

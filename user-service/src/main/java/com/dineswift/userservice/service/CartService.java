@@ -11,9 +11,11 @@ import com.dineswift.userservice.model.response.restaurant_service.OrderItemDto;
 import com.dineswift.userservice.repository.CartRepository;
 import com.dineswift.userservice.repository.UserRepository;
 import com.dineswift.userservice.security.service.AuthService;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
@@ -23,7 +25,6 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
-@Transactional
 @RequiredArgsConstructor
 @Slf4j
 public class CartService {
@@ -42,6 +43,11 @@ public class CartService {
         return exists;
     }
 
+    @Cacheable(
+            value = "userService:cartDto",
+            key = "#userId",
+            unless = "#result == null"
+    )
     public CartDTO getCartDetails(UUID userId) {
 
         log.info("Fetching cart details for userId={}", userId);
@@ -78,7 +84,7 @@ public class CartService {
                 .body(CustomOrderItem.class);
     }
 
-
+    @Transactional
     public void updateCartTotalAmount(UUID cartId, CartAmountUpdateRequest cartAmountUpdateRequest) {
         log.info("Updating cart total amount for cartId={} with request={}", cartId, cartAmountUpdateRequest);
 
@@ -94,6 +100,11 @@ public class CartService {
         log.info("Cart total amount updated successfully for cartId={}", cartId);
     }
 
+    @CacheEvict(
+            value = "userService:cartDto",
+            key = "@authService.getAuthenticatedUserId()"
+    )
+    @Transactional
     public void clearCart() {
         UUID userId = authService.getAuthenticatedUserId();
        log.info("Clearing cart for userId={}", userId);

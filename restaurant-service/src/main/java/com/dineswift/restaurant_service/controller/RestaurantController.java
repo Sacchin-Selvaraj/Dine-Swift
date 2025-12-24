@@ -4,9 +4,10 @@ import com.dineswift.restaurant_service.payload.dto.RestaurantDto;
 import com.dineswift.restaurant_service.payload.request.restaurant.RestaurantCreateRequest;
 import com.dineswift.restaurant_service.payload.request.restaurant.RestaurantUpdateRequest;
 import com.dineswift.restaurant_service.payload.response.MessageResponse;
+import com.dineswift.restaurant_service.payload.response.restaurant.RestaurantIdDto;
 import com.dineswift.restaurant_service.service.CustomPageDto;
 import com.dineswift.restaurant_service.service.RestaurantService;
-import com.dineswift.restaurant_service.service.records.RestaurantFilter;
+import com.dineswift.restaurant_service.records.RestaurantFilter;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -31,10 +32,11 @@ public class RestaurantController {
         restaurantService.createRestaurant(restaurantCreateRequest);
         return ResponseEntity.ok().build();
     }
+
     @PreAuthorize("hasAnyRole('ROLE_ADMIN','ROLE_MANAGER')")
     @PatchMapping("/edit-details/{restaurantId}")
     public ResponseEntity<Void> editRestaurantDetails(@PathVariable UUID restaurantId,
-                                                                 @Valid @RequestBody RestaurantUpdateRequest restaurantUpdateRequest) {
+                                                      @Valid @RequestBody RestaurantUpdateRequest restaurantUpdateRequest) {
 
         restaurantService.editRestaurantDetails(restaurantId, restaurantUpdateRequest);
         return ResponseEntity.ok().build();
@@ -113,7 +115,6 @@ public class RestaurantController {
         return ResponseEntity.ok(restaurantService.getRestaurantImages(restaurantId));
     }
 
-    @PreAuthorize("hasAnyRole('ROLE_ADMIN','ROLE_MANAGER')")
     @GetMapping("/get-employee-restaurant")
     public ResponseEntity<RestaurantDto> getEmployeeRestaurant() {
         RestaurantDto restaurantDto = restaurantService.getEmployeeRestaurant();
@@ -126,9 +127,16 @@ public class RestaurantController {
         return ResponseEntity.ok(restaurantDto);
     }
 
+    @PreAuthorize("hasAnyRole('ROLE_ADMIN','ROLE_MANAGER', 'ROLE_USER')")
     @GetMapping("/get-restaurant-tableBooking/{tableBookingId}")
     public ResponseEntity<RestaurantDto> getRestaurantByTableBookingId(@PathVariable UUID tableBookingId) {
         RestaurantDto restaurantDto = restaurantService.getRestaurantByTableBookingId(tableBookingId);
         return ResponseEntity.ok(restaurantDto);
+    }
+
+    @PreAuthorize("!hasRole('ROLE_USER')")
+    @GetMapping("/get-employee-restaurant-id")
+    public RestaurantIdDto getEmployeeRestaurantId() {
+        return restaurantService.getEmployeeRestaurantId();
     }
 }

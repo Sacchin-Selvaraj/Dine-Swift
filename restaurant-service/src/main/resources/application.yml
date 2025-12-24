@@ -7,6 +7,12 @@ dineswift:
 
 
 spring:
+  application:
+    name: restaurant-service
+#
+#  profiles:
+#    active: nokafka
+
   datasource:
     url: ${DATABASE_URL}
     username: ${DATABASE_USERNAME}
@@ -28,29 +34,23 @@ spring:
       host: ${REDIS_HOST}
       port: ${REDIS_PORT}
 #      username: ${REDIS_USERNAME}
-#      password: ${REDIS_PASSWORD}
+      password: ${REDIS_PASSWORD}
 #      ssl:
 #        enabled: true
-      timeout: 60000
+      timeout: 6000
   cache:
     type: redis
 
-
-  logging:
-    level:
-      org:
-        hibernate:
-          SQL: DEBUG
-          type:
-            descriptor:
-              sql:
-                BasicBinder: TRACE
-    file:
-      path: ./docker/logs
-      name: ./docker/logs/${spring.application.name}.log
-
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
+
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 10MB
+      max-request-size: 10MB
+      file-size-threshold: 2MB
+
 
 
 app:
@@ -74,6 +74,48 @@ eureka:
       defaultZone: http://localhost:8761/eureka/
     register-with-eureka: true
     fetch-registry: true
+
+logging:
+  level:
+    org:
+      hibernate:
+        SQL: DEBUG
+        type:
+          descriptor:
+            sql:
+              BasicBinder: TRACE
+  file:
+    path: ./docker/logs
+    name: ./docker/logs/${spring.application.name}.log
+
+cloudinary:
+  cloud-name: ${CLOUDINARY_CLOUD_NAME}
+  api-key: ${CLOUDINARY_API_KEY}
+  api-secret: ${CLOUDINARY_API_SECRET}
+
+razorpay:
+  api:
+    key: ${RAZORPAY_API_KEY}
+    secret: ${RAZORPAY_API_SECRET}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  metrics:
+    distribution:
+      percentiles-histograms:
+        http:
+          server:
+            requests: true
+  observations:
+    key-values:
+      application: restaurant-service
+  tracing:
+    sampling:
+      probability: 1.0
+
 
 
 

@@ -19,6 +19,7 @@ logging:
     org.apache.kafka.clients.admin.AdminClientConfig: OFF
     org.springframework.cloud.commons.util.InetUtils: DEBUG
     com.netflix.appinfo: DEBUG
+
   file:
     path: ./docker/logs
     name: ./docker/logs/${spring.application.name}.log
@@ -33,15 +34,16 @@ jwt:
 spring:
   project:
     name: user-service
+
   datasource:
     url: ${DATABASE_URL}
     username: ${DATABASE_USERNAME}
     password: ${DATABASE_PASSWORD}
     driver-class-name: org.postgresql.Driver
 
-  zipkin:
-    base-url: http://localhost:9411/
-    enabled: true
+#  zipkin:
+#    base-url: http://localhost:9411/
+#    enabled: true
 
   cloud:
     client:

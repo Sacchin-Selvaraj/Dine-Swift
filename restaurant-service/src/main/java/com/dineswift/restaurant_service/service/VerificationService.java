@@ -17,7 +17,7 @@ import com.dineswift.restaurant_service.payload.request.verification.ForgotPassw
 import com.dineswift.restaurant_service.repository.EmployeeRepository;
 import com.dineswift.restaurant_service.repository.VerificationRepository;
 import com.dineswift.restaurant_service.security.service.AuthService;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -28,7 +28,6 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 @Service
-@Transactional
 @RequiredArgsConstructor
 @Slf4j
 public class VerificationService {
@@ -41,6 +40,7 @@ public class VerificationService {
     private final AuthService authService;
 
 
+    @Transactional
     public void updateEmail(EmailUpdateRequest emailUpdateRequest) {
 
         UUID employeeId = authService.getAuthenticatedId();
@@ -74,6 +74,7 @@ public class VerificationService {
     }
 
 
+    @Transactional
     public void verifyEmail( VerifyTokenRequest verifyEmailRequest) {
         UUID employeeId = authService.getAuthenticatedId();
 
@@ -93,6 +94,7 @@ public class VerificationService {
 
     }
 
+    @Transactional
     public void updatePhoneNumber(PhoneNumberUpdateRequest phoneNumberUpdateRequest) {
 
         UUID employeeId = authService.getAuthenticatedId();
@@ -137,6 +139,7 @@ public class VerificationService {
         return verificationToken;
     }
 
+    @Transactional
     public void verifyPhoneNumber( VerifyTokenRequest verifyPhoneNumberRequest) {
 
         UUID employeeId = authService.getAuthenticatedId();
@@ -156,6 +159,7 @@ public class VerificationService {
         verificationRepository.save(verificationToken);
     }
 
+    @Transactional
     public void forgotPassword(ForgotPasswordRequest forgotPasswordRequest) {
 
         String typeOfVerification = forgotPasswordRequest.getTypeOfVerification();
@@ -210,6 +214,7 @@ public class VerificationService {
 
     }
 
+    @Transactional
     public String verifyForgotPassword(PasswordUpdateRequest passwordChangeRequest) {
 
         log.info("Verifying forgot password token");

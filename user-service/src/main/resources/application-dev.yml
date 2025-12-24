@@ -1,7 +1,7 @@
-spring:
-  project:
-    name: user-service
+server:
+    port: 8080
 
+spring:
   datasource:
     url: ${DATABASE_URL}
     username: ${DATABASE_USERNAME}
@@ -29,19 +29,19 @@ spring:
             trusted:
               packages: '*'
 
-  zipkin:
-    base-url: http://localhost:9411/
-    enabled: true
+#  zipkin:
+#    base-url: http://localhost:9411/
+#    enabled: true
 
   data:
     redis:
       host: ${REDIS_HOST}
       port: ${REDIS_PORT}
-      username: ${REDIS_USERNAME}
+#      username: ${REDIS_USERNAME}
       password: ${REDIS_PASSWORD}
-      ssl:
-        enabled: true
-      timeout: 60000
+#      ssl:
+#        enabled: true
+      timeout: 6000
   cache:
     type: redis
 
@@ -78,8 +78,8 @@ app:
 eureka:
   instance:
     hostname: localhost
-  prefer-ip-address: true
-  ip-address: 127:0.0.1
+#  prefer-ip-address: true
+##  ip-address: 127:0.0.1
   client:
     service-url:
       defaultZone: http://localhost:8761/eureka/
@@ -89,5 +89,23 @@ eureka:
 dineswift:
   restaurant-service:
     url: ${ORDER_SERVICE_URL}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  metrics:
+    distribution:
+      percentiles-histograms:
+        http:
+          server:
+            requests: true
+  observations:
+    key-values:
+      application: user-service
+  tracing:
+    sampling:
+      probability: 1.0
 
 
