@@ -8,14 +8,19 @@ spring:
     password: ${DATABASE_PASSWORD}
     driver-class-name: org.postgresql.Driver
 
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 1
+      idle-timeout: 30000
+      connection-timeout: 20000
+
+
   jpa:
     hibernate:
       ddl-auto: none
     database-platform: org.hibernate.dialect.PostgreSQLDialect
-    show-sql: true
-    properties:
-      hibernate:
-        format_sql: true
+    open-in-view: false
+
 
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
@@ -29,18 +34,12 @@ spring:
             trusted:
               packages: '*'
 
-#  zipkin:
-#    base-url: http://localhost:9411/
-#    enabled: true
 
   data:
     redis:
       host: ${REDIS_HOST}
       port: ${REDIS_PORT}
-#      username: ${REDIS_USERNAME}
       password: ${REDIS_PASSWORD}
-#      ssl:
-#        enabled: true
       timeout: 6000
   cache:
     type: redis
@@ -49,16 +48,29 @@ spring:
 # Optional: For better debugging
 logging:
   level:
-    org:
-      hibernate:
-        SQL: DEBUG
-        type:
-          descriptor:
-            sql:
-              BasicBinder: TRACE
-  file:
-    path: ./docker/logs
-    name: ./docker/logs/${spring.application.name}.log
+    root: info
+
+    org.springframework: WARN
+    org.springframework.web: WARN
+
+    com.netflix.discovery: WARN
+    com.netflix.eureka: WARN
+
+    com.netflix.discovery.shared.resolver.aws: WARN
+    com.netflix.discovery.shared.transport: WARN
+    com.netflix.discovery.shared: WARN
+    org.springframework.cloud.netflix: WARN
+
+    org.hibernate: WARN
+    org.hibernate.SQL: OFF
+    org.hibernate.type: OFF
+
+    com.zaxxer.hikari: WARN
+
+    org.apache.kafka: WARN
+
+    redis.clients: WARN
+
 
 
 jwt:
@@ -77,12 +89,10 @@ app:
 
 eureka:
   instance:
-    hostname: localhost
-#  prefer-ip-address: true
-##  ip-address: 127:0.0.1
+    hostname: ${EUREKA_HOSTNAME}
   client:
     service-url:
-      defaultZone: http://localhost:8761/eureka/
+      defaultZone: ${EUREKA_DEFAULT_ZONE}
     register-with-eureka: true
     fetch-registry: true
 

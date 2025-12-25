@@ -12,3 +12,28 @@ eureka:
   client:
     register-with-eureka: false
     fetch-registry: false
+
+logging:
+  level:
+    root: info
+
+    org.springframework: WARN
+    org.springframework.web: WARN
+
+    com.netflix.discovery: WARN
+    com.netflix.eureka: WARN
+
+    com.netflix.discovery.shared.resolver.aws: WARN
+    com.netflix.discovery.shared.transport: WARN
+    com.netflix.discovery.shared: WARN
+    org.springframework.cloud.netflix: WARN
+
+    org.hibernate: WARN
+    org.hibernate.SQL: OFF
+    org.hibernate.type: OFF
+
+    com.zaxxer.hikari: WARN
+
+    org.apache.kafka: WARN
+
+    redis.clients: WARN

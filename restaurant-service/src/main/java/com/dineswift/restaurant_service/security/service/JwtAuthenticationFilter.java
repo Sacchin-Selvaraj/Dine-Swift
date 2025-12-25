@@ -60,10 +60,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal( HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
-        log.info("=== RESTAURANT SERVICE REQUEST ===");
-        log.info("Path: {}", request.getServletPath());
-        log.info("Headers: {}", Collections.list(request.getHeaderNames()).stream()
-                .collect(Collectors.toMap(h -> h, request::getHeader)));
 
         String authUser = request.getHeader("X-Auth-User");
         String roles = request.getHeader("X-Roles");

@@ -1,8 +1,6 @@
 package com.dineswift.userservice.config;
 
-import com.dineswift.userservice.exception.ErrorResponse;
 import com.dineswift.userservice.exception.RemoteApiException;
-import com.dineswift.userservice.exception.UserException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
@@ -18,10 +16,8 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Configuration

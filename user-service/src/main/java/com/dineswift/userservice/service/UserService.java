@@ -90,6 +90,7 @@ public class UserService {
         if (!allowedFields.contains(filter.sortField())) {
             throw new IllegalArgumentException("Invalid sorts field "+ filter.sortField());
         }
+
         log.info("Sorting Field: {}, Order: {}", filter.sortField(), filter.sortOrder());
 
         Sort sort=filter.sortOrder().equalsIgnoreCase("asc")?

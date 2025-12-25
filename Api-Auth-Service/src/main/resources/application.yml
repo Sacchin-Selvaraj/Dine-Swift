@@ -12,22 +12,31 @@ spring:
   main:
     web-application-type: reactive
 
-  zipkin:
-    base-url: http://localhost:9411
-    enabled: true
-
-
 logging:
   level:
-    org.springframework.cloud.gateway: DEBUG
-    org.springframework.web: DEBUG
-    reactor.netty: DEBUG
-    org.springframework.cloud.commons.util.InetUtils: DEBUG
-    com.netflix.appinfo: DEBUG
-  file:
-    path: ./docker/logs
-    name: ./docker/logs/${spring.application.name}.log
+    root: info
 
+    org.springframework: WARN
+    org.springframework.web: WARN
+
+    com.netflix.discovery: WARN
+    com.netflix.eureka: WARN
+
+    com.netflix.discovery.shared.resolver.aws: WARN
+    com.netflix.discovery.shared.transport: WARN
+    com.netflix.discovery.shared: WARN
+    org.springframework.cloud.netflix: WARN
+
+
+    org.hibernate: WARN
+    org.hibernate.SQL: OFF
+    org.hibernate.type: OFF
+
+    com.zaxxer.hikari: WARN
+
+    org.apache.kafka: WARN
+
+    redis.clients: WARN
 
 eureka:
   instance:
@@ -62,6 +71,8 @@ management:
     sampling:
       probability: 1.0
 
+frontend:
+  url: ${FRONTEND_URL}
 
 
 

@@ -33,13 +33,7 @@ public class GatewayJwtFilter implements WebFilter {
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
-        log.info("=== GATEWAY REQUEST ===");
-        log.info("Path: {}", exchange.getRequest().getPath());
-        log.info("Method: {}", exchange.getRequest().getMethod());
-        log.info("Headers: {}", exchange.getRequest().getHeaders());
-        log.info("URI: {}", exchange.getRequest().getURI());
 
-        log.info("Get the path of the request: {}", exchange.getRequest().getURI().getPath());
         String path = exchange.getRequest().getURI().getPath();
         if (isPublicEndpoint(path)) {
             return chain.filter(exchange);

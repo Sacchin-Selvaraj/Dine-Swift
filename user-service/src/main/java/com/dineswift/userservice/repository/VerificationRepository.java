@@ -18,7 +18,6 @@ public interface VerificationRepository extends JpaRepository<VerificationToken,
     @EntityGraph(attributePaths = "user")
     @Query("SELECT vt FROM VerificationToken vt WHERE vt.token=:token AND vt.wasUsed=false AND vt.tokenStatus='SENT'")
     Optional<VerificationToken> findByToken(@Param("token") String token);
-
-    Optional<VerificationToken> findByTokenAndWasUsedFalse(String token);
+    
 
 }
