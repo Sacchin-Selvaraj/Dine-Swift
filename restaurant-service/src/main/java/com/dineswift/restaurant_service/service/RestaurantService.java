@@ -75,12 +75,14 @@ public class RestaurantService {
             throw new RestaurantException("Admin Can have only one Active Restaurant");
         }
         Restaurant restaurant=restaurantMapper.toEntity(restaurantCreateRequest,employee);
+
         restaurant.setLastModifiedBy(authService.getAuthenticatedId());
 
         String fullAddress=String.format("%s, %s, %s, %s", restaurantCreateRequest.getAddress(),
                 restaurantCreateRequest.getCity(),
                 restaurantCreateRequest.getState(),
                 restaurantCreateRequest.getCountry());
+
         Coordinates coordinates=geocodingService.getCoordinates(fullAddress);
 
         restaurant.setLatitude(coordinates.getLatitude());
@@ -109,6 +111,7 @@ public class RestaurantService {
                     ? Sort.by(filter.sortBy()).ascending() : Sort.by(filter.sortBy()).descending();
 
             if (filter.restaurantStatus()==null) restaurantStatus="OPEN";
+
             restaurantStatusEnum=RestaurantStatus.fromDisplayName(restaurantStatus);
 
             log.info("Building restaurant specifications for filtering");

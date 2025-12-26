@@ -426,24 +426,57 @@ public class TableBookingService {
                 .orElseThrow(() -> new TableBookingException("Booking not found with ID: " + tableBookingId));
 
 
-        if (existingBooking.getDishStatus().equals(DishStatus.PREPARING) ||
-                existingBooking.getDishStatus().equals(DishStatus.PREPARED)) {
+        if (EnumSet.of(DishStatus.PREPARED,DishStatus.PREPARING).contains(existingBooking.getDishStatus())) {
             log.error("Cannot add item as the dish is already being prepared or preparing for booking ID: {}", tableBookingId);
             throw new TableBookingException("Cannot add item as the dish is already being prepared or preparing. you can order from the restaurant separately.");
         }
+
+        UUID dishId = addOrderItemRequest.getDishId();
+
+        OrderItem existingOrderItem = orderItemRepository.findByDishAndTableBookingId(dishId,tableBookingId);
+
+        if (existingOrderItem!=null){
+            updateOrderItemQuantityAndBooking(addOrderItemRequest, existingOrderItem, existingBooking);
+        }else {
+            createNewOrderItemAndUpdateBooking(addOrderItemRequest, existingBooking);
+        }
+
+        existingBooking.setLastModifiedBy(authService.getAuthenticatedId());
+
+        evictCachesForTableBookingId(tableBookingId);
+        log.info("Order item added successfully to booking ID: {}", tableBookingId);
+    }
+
+    private void createNewOrderItemAndUpdateBooking(AddOrderItemRequest addOrderItemRequest, TableBooking existingBooking) {
+
         Dish dish = dishRepository.findByIdAndIsActive(addOrderItemRequest.getDishId())
-                .orElseThrow(()->new DishException("Dish not found with ID: "+addOrderItemRequest.getDishId()));
+                .orElseThrow(()->new DishException("Dish not found with ID: "+ addOrderItemRequest.getDishId()));
 
         OrderItem newOrderItem = createNewOrderItem(existingBooking, dish, addOrderItemRequest.getQuantity());
 
         existingBooking.setGrandTotal(existingBooking.getGrandTotal().add(newOrderItem.getFrozenTotalPrice()));
         existingBooking.setPendingAmount(existingBooking.getPendingAmount().add(newOrderItem.getFrozenTotalPrice()));
-        existingBooking.setLastModifiedBy(authService.getAuthenticatedId());
 
         orderItemRepository.save(newOrderItem);
-        evictCachesForTableBookingId(tableBookingId);
+    }
 
-        log.info("Order item added successfully to booking ID: {}", tableBookingId);
+    private void updateOrderItemQuantityAndBooking(AddOrderItemRequest addOrderItemRequest,
+                                         OrderItem existingOrderItem,
+                                         TableBooking existingBooking) {
+
+        BigDecimal dishPriceBeforeAdding = existingOrderItem.getFrozenTotalPrice();
+
+        existingOrderItem.setQuantity(existingOrderItem.getQuantity()+ addOrderItemRequest.getQuantity());
+        existingOrderItem.setFrozenValues();
+
+        BigDecimal finalPriceAfterNewQuantity = existingOrderItem.getFrozenTotalPrice();
+
+        BigDecimal finalPriceNeedToAddInBooking = finalPriceAfterNewQuantity.subtract(dishPriceBeforeAdding);
+
+        existingBooking.setGrandTotal(existingBooking.getGrandTotal().add(finalPriceNeedToAddInBooking));
+        existingBooking.setPendingAmount(existingBooking.getPendingAmount().add(finalPriceNeedToAddInBooking));
+
+        orderItemRepository.save(existingOrderItem);
     }
 
 

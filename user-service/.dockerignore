@@ -1,0 +1,7 @@
+.gradle
+build
+out
+.idea
+node_modules
+.git
+.gitignore

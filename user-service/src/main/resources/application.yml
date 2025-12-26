@@ -1,3 +1,6 @@
+server:
+  port: 8080
+
 
 spring:
   application:
@@ -17,6 +20,32 @@ spring:
   profiles:
     active: dev
 
+  datasource:
+    url: ${DATABASE_URL}
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 1
+      idle-timeout: 30000
+      connection-timeout: 20000
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    open-in-view: false
+
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+      password: ${REDIS_PASSWORD}
+      timeout: 6000
+  cache:
+    type: redis
 
 twilio:
   account:
@@ -26,6 +55,75 @@ twilio:
   phone:
      number: ${TWILIO_PHONE_NUMBER}
 
+
+#eureka:
+#  instance:
+#    hostname: ${EUREKA_HOSTNAME}
+#  client:
+#    service-url:
+#      defaultZone: ${EUREKA_DEFAULT_ZONE}
+#    register-with-eureka: true
+#    fetch-registry: true
+
+
+logging:
+  level:
+    root: info
+
+    org.springframework: WARN
+    org.springframework.web: WARN
+
+    com.netflix.discovery: WARN
+    com.netflix.eureka: WARN
+
+    com.netflix.discovery.shared.resolver.aws: WARN
+    com.netflix.discovery.shared.transport: WARN
+    com.netflix.discovery.shared: WARN
+    org.springframework.cloud.netflix: WARN
+
+    org.hibernate: WARN
+    org.hibernate.SQL: OFF
+    org.hibernate.type: OFF
+
+    com.zaxxer.hikari: WARN
+
+    org.apache.kafka: WARN
+
+    redis.clients: WARN
+
+jwt:
+  secret-key: ${JWT_SECRET_KEY}
+  expiration-time: ${JWT_EXPIRATION_TIME}
+
+dineswift:
+  restaurant-service:
+    url: ${ORDER_SERVICE_URL}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  metrics:
+    distribution:
+      percentiles-histograms:
+        http:
+          server:
+            requests: true
+  observations:
+    key-values:
+      application: user-service
+  tracing:
+    sampling:
+      probability: 1.0
+
+app:
+  kafka:
+    topic:
+      email-verification-topic: email
+      sms-verification-topic: sms
+      email-notification-topic: email-notification
+      sms-notification-topic: sms-notification
 
 
 

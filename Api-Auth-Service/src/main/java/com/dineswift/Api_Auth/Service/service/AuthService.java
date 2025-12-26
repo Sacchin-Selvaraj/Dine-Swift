@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseCookie;
@@ -29,10 +30,16 @@ public class AuthService {
     private final WebClient webClient;
     private final JwtUtilities jwtUtilities;
 
+    @Value("${dineswift.user-service-url2}")
+    private String userServiceUrl;
+
+    @Value("${dineswift.restaurant-url}")
+    private String restaurantServiceUrl;
+
     public Mono<LoginResponse> authenticateUser(LoginRequest loginRequest, ServerHttpResponse response) {
 
         log.info("Based on the login type, forwarding the request ");
-        Mono<TokenPair> tokenPair=null;
+        Mono<TokenPair> tokenPair;
         if (loginRequest.getLoginType().equalsIgnoreCase("user")){
            tokenPair = authenticateWithUserService(loginRequest);
         } else if (loginRequest.getLoginType().equalsIgnoreCase("employee")){
@@ -98,7 +105,7 @@ public class AuthService {
     private Mono<EmployeeResponse> getResponseFromRestaurantService(LoginRequest loginRequest) {
         log.info("Sending login request to Restaurant Service for email: {}", loginRequest.getEmail());
         Mono<EmployeeResponse> employeeResponse = webClient.post()
-                .uri("http://restaurant-service/restaurant/employee/login")
+                .uri(restaurantServiceUrl+"/restaurant/employee/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(loginRequest)
                 .retrieve()
@@ -155,7 +162,7 @@ public class AuthService {
     private Mono<UserResponse> getResponseFromUserService(LoginRequest loginRequest) {
         log.info("Sending login request to User Service for email: {}", loginRequest.getEmail());
         Mono<UserResponse> userResponse = webClient.post()
-                .uri("http://user-service/user/login")
+                .uri(userServiceUrl+"/user/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(loginRequest)
                 .retrieve()

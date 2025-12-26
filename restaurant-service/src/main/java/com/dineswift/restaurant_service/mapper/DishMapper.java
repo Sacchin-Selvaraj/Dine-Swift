@@ -14,6 +14,7 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -27,10 +28,15 @@ public class DishMapper {
 
     public Dish toEntity(DishAddRequest dishAddRequest) {
         Dish dish = mapper.map(dishAddRequest, Dish.class);
-        dish.setDishStarRating(BigDecimal.valueOf(0.0));
+        dish.setDishStarRating(getRandomRating());
         dish.setDishTotalRating(0.0);
         dish.setDishTotalRatingCount(0L);
         return dish;
+    }
+
+    public BigDecimal getRandomRating(){
+        int randomInt = ThreadLocalRandom.current().nextInt(40, 50);
+        return BigDecimal.valueOf(randomInt).divide(BigDecimal.TEN);
     }
 
     public Dish toEntity(DishUpdateRequest dishUpdateRequest, Dish dish) {

@@ -50,4 +50,8 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, UUID> {
 
     @Query("SELECT oi.restaurant.restaurantId FROM OrderItem oi WHERE oi.orderItemsId = :orderItemId")
     Optional<UUID> findRestaurantIdByOrderItemId(UUID orderItemId);
+
+    @EntityGraph(attributePaths = "dish")
+    @Query("SELECT oi FROM OrderItem oi WHERE oi.dish.dishId=:dishId AND oi.tableBooking.tableBookingId=:tableBookingId")
+    OrderItem findByDishAndTableBookingId(UUID dishId, UUID tableBookingId);
 }

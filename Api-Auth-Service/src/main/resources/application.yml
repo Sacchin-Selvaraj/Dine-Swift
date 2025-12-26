@@ -2,7 +2,9 @@ server:
   port: 8090
 
 dineswift:
-  user-service-url: "http://localhost:8080"
+  user-service-url: ${USER_SERVICE_URL}
+  user-service-url2: ${USER_SERVICE_URL2}
+  restaurant-url: ${RESTAURANT_URL}
 
 
 spring:
@@ -73,6 +75,8 @@ management:
 
 frontend:
   url: ${FRONTEND_URL}
+
+
 
 
 

@@ -74,7 +74,7 @@ public class TableBookingController {
     @PreAuthorize(("hasAnyRole('ROLE_USER')"))
     @PostMapping("/add-order-item/{tableBookingId}")
     public ResponseEntity<Void> addOrderItem(@PathVariable UUID tableBookingId,
-                                                        @RequestBody AddOrderItemRequest addOrderItemRequest) {
+                                             @RequestBody AddOrderItemRequest addOrderItemRequest) {
 
         tableBookingService.addOrderItem(tableBookingId, addOrderItemRequest);
         log.info("Added order item successfully for bookingId: {}", tableBookingId);
