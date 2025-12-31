@@ -3,7 +3,6 @@ package com.dineswift.Api_Auth.Service.config;
 import com.dineswift.Api_Auth.Service.exception.RemoteApiException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.reactive.function.client.ClientRequest;
@@ -17,15 +16,15 @@ import reactor.core.publisher.Mono;
 @RequiredArgsConstructor
 public class WebClientConfig {
 
-        @Bean
-        @LoadBalanced
-        public WebClient.Builder loadBalancedWebClientBuilder() {
-            return WebClient.builder();
-        }
+//        @Bean
+//        @LoadBalanced
+//        public WebClient.Builder loadBalancedWebClientBuilder() {
+//            return WebClient.builder();
+//        }
 
         @Bean
-        public WebClient webClient(@LoadBalanced WebClient.Builder loadBalancedBuilder) {
-            return loadBalancedBuilder
+        public WebClient webClient() {
+            return WebClient.builder()
                     .filter(this::logRequest)
                     .filter(this::handleErrors)
                     .build();

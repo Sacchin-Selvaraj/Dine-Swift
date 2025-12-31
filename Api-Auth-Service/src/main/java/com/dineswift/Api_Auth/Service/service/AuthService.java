@@ -30,7 +30,7 @@ public class AuthService {
     private final WebClient webClient;
     private final JwtUtilities jwtUtilities;
 
-    @Value("${dineswift.user-service-url2}")
+    @Value("${dineswift.user-service-url}")
     private String userServiceUrl;
 
     @Value("${dineswift.restaurant-url}")
@@ -42,8 +42,10 @@ public class AuthService {
         Mono<TokenPair> tokenPair;
         if (loginRequest.getLoginType().equalsIgnoreCase("user")){
            tokenPair = authenticateWithUserService(loginRequest);
+           wakeUpRestaurantService();
         } else if (loginRequest.getLoginType().equalsIgnoreCase("employee")){
             tokenPair = authenticateWithRestaurantService(loginRequest);
+            wakeUpUserService();
         }else {
             throw new AuthenticationException("Unsupported login type: " + loginRequest.getLoginType());
         }
@@ -65,6 +67,30 @@ public class AuthService {
                     String errorMessage = extractErrorMessage(error.getMessage());
                     throw new AuthenticationException(errorMessage);
                 });
+    }
+
+    private void wakeUpUserService() {
+        log.info("Sending Warm up request to User Service");
+         webClient.get()
+                .uri(userServiceUrl+"/user/startup")
+                .retrieve()
+                .toBodilessEntity()
+                .subscribe(
+                        success -> log.info("Warm up successful for User Service"),
+                        error -> log.error("Warm up failed for User Service: {}", error.getMessage())
+                );
+    }
+
+    private void wakeUpRestaurantService() {
+        log.info("Sending Warm up request to Restaurant Service");
+       webClient.get()
+                .uri(restaurantServiceUrl+"/restaurant/employee/startup")
+                .retrieve()
+                .toBodilessEntity()
+                .subscribe(
+                        success -> log.info("Warm up successful for Restaurant Service"),
+                        error -> log.error("Warm up failed for Restaurant Service: {}", error.getMessage())
+                );
     }
 
     private Mono<TokenPair> authenticateWithRestaurantService(LoginRequest loginRequest) {

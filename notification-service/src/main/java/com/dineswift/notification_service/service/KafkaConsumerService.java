@@ -43,13 +43,15 @@ public class KafkaConsumerService {
                 return;
             }
 
+            log.info("Message Received in Kafka Consumer");
+
             Map<String,Object> modal = new HashMap<>();
             modal.put("userName", message.getUserName());
             modal.put("companyName", "DineSwift");
             modal.put("verificationCode", message.getToken());
             modal.put("expiryTime", 10);
 
-            emailService.sendMail(
+            emailService.sendMailThroughResend(
                     message.getEmail(),
                     "Verification Code from DineSwift",
                     message.getTemplateType(),
@@ -73,6 +75,9 @@ public class KafkaConsumerService {
             log.error("Invalid message received in SMS verification topic: {}", message);
             return;
         }
+
+        log.info("Message Received in Kafka Consumer at SMS");
+
         try {
             String smsContent = String.format(
                     Locale.ENGLISH,

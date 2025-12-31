@@ -1,11 +1,10 @@
 package com.dineswift.Api_Auth.Service.utilities;
 
 import com.dineswift.Api_Auth.Service.exception.TokenException;
-import io.jsonwebtoken.ExpiredJwtException;
-import jakarta.ws.rs.core.HttpHeaders;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.buffer.DataBuffer;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.server.reactive.ServerHttpRequest;
@@ -39,7 +38,7 @@ public class GatewayJwtFilter implements WebFilter {
             return chain.filter(exchange);
         }
         log.info("Validating JWT token for protected endpoint: {}", path);
-        String authToken = null;
+        String authToken;
         authToken = extractToken(exchange);
         try {
             if (authToken == null || !validateJwtToken(authToken,exchange)) {
@@ -52,14 +51,12 @@ public class GatewayJwtFilter implements WebFilter {
         }
         log.info("JWT token is valid passing request to the next filter");
         Map<String,Object> claims = parseClaims(authToken);
-        log.info("Extracted Claims: {}", claims);
         ServerHttpRequest modifiedRequest = exchange.getRequest().mutate()
                 .header("X-Auth-User",claims.get("authId").toString())
                 .header("X-Roles", getRolesAsString(claims))
                 .header("Authorization", "Bearer " + authToken)
                 .build();
         ServerWebExchange mutatedExchange = exchange.mutate().request(modifiedRequest).build();
-        log.info("Mutated Request Headers: {}", mutatedExchange.getRequest().getHeaders());
 
         log.info("Setting the Authentication Object in the Security Context");
         Authentication authentication = generateAuthenticationFromToken(authToken);
@@ -70,7 +67,6 @@ public class GatewayJwtFilter implements WebFilter {
     private String getRolesAsString(Map<String, Object> claims) {
         try {
             List<String> roles = (List<String>) claims.get("roles");
-            log.info("Extracted roles from claims: {}", roles);
             return String.join(",", roles);
         } catch (NullPointerException | ClassCastException e) {
             log.error("Error while extracting roles from claims: {}", e.getMessage());

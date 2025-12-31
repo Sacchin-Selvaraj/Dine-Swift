@@ -3,7 +3,6 @@ server:
 
 dineswift:
   user-service-url: ${USER_SERVICE_URL}
-  user-service-url2: ${USER_SERVICE_URL2}
   restaurant-url: ${RESTAURANT_URL}
 
 
@@ -39,15 +38,6 @@ logging:
     org.apache.kafka: WARN
 
     redis.clients: WARN
-
-eureka:
-  instance:
-    hostname: localhost
-  client:
-    service-url:
-      defaultZone: http://localhost:8761/eureka/
-    register-with-eureka: true
-    fetch-registry: true
 
 
 jwt:

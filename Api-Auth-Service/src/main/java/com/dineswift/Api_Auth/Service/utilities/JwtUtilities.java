@@ -56,7 +56,7 @@ public class JwtUtilities {
     }
 
     public boolean validateJwtToken(String authToken) {
-        log.info("Validating JWT token: {}", authToken);
+        log.info("Validating JWT token");
         Claims claims = extractClaims(authToken);
         if (claims == null) {
             log.error("Failed to extract claims from JWT token");
