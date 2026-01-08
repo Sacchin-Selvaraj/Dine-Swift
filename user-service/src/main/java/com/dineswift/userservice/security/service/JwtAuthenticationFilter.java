@@ -30,6 +30,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final Set<String> whitelisted = Set.of(
             "/user/login",
             "/user/sign-up",
+            "/user/startup",
             "/user/password/**",
             "/v3/api-docs/**",
             "/swagger-ui/**",

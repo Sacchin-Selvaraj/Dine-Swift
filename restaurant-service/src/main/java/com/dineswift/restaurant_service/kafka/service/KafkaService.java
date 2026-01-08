@@ -86,7 +86,11 @@ public class KafkaService {
 
     }
 
-    public CompletableFuture<Boolean> sendEmailNotification(UUID userId, String status, String templateType, TableBooking existingBooking, boolean isBookingStatusUpdated) {
+    public CompletableFuture<Boolean> sendEmailNotification(UUID userId,
+                                                            String status,
+                                                            String templateType,
+                                                            TableBooking existingBooking,
+                                                            boolean isBookingStatusUpdated) {
 
         try {
             if (userId == null || status == null || templateType == null) {

@@ -31,6 +31,9 @@ public class KafkaConfig {
     @Value("${app.kafka.topic.email-notification-topic}")
     private String emailNotificationTopic;
 
+    @Value("${app.kafka.topic.booking-status}")
+    private String bookingStatusTopic;
+
     @Value("${spring.kafka.bootstrap-servers}")
     private String bootstrapServers;
 
@@ -40,7 +43,7 @@ public class KafkaConfig {
     @Bean
     public NewTopic emailVerificationTopic(){
         return TopicBuilder.name(emailVerificationTopic)
-                .partitions(2)
+                .partitions(1)
                 .replicas(1)
                 .build();
     }
@@ -48,7 +51,7 @@ public class KafkaConfig {
     @Bean
     public NewTopic smsVerificationTopic(){
         return TopicBuilder.name(smsVerificationTopic)
-                .partitions(2)
+                .partitions(1)
                 .replicas(1)
                 .build();
     }
@@ -56,10 +59,19 @@ public class KafkaConfig {
     @Bean
     public NewTopic emailNotificationTopic() {
         return TopicBuilder.name(emailNotificationTopic)
-                .partitions(2)
+                .partitions(1)
                 .replicas(1)
                 .build();
     }
+
+    @Bean
+    public NewTopic bookingStatusTopic() {
+        return TopicBuilder.name(bookingStatusTopic)
+                .partitions(1)
+                .replicas(1)
+                .build();
+    }
+
 
     public ProducerFactory<String,Object> producerFactory(){
         Map<String,Object> configProps=new HashMap<>();

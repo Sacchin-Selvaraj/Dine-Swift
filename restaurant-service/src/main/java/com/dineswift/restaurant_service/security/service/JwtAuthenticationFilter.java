@@ -20,7 +20,6 @@ import java.io.IOException;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -33,6 +32,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final Set<String> whitelisted = Set.of(
             "/restaurant/employee/login",
             "/restaurant/employee/sign-up",
+            "/restaurant/employee/startup",
             "/restaurant/dish/search-dish/**",
             "/restaurant/dish/search-dish-restaurant/**",
             "/restaurant/menu/get-menu/**",

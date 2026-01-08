@@ -2,7 +2,6 @@ package com.dineswift.userservice.kafka.service;
 
 import com.dineswift.notification_service.model.BookingStatusUpdateDetail;
 import com.dineswift.userservice.model.entites.User;
-import com.dineswift.userservice.notification.service.EmailService;
 import com.dineswift.userservice.service.BookingService;
 import com.dineswift.userservice.service.UserCommonService;
 import lombok.RequiredArgsConstructor;
@@ -22,16 +21,16 @@ import java.util.Map;
 @Slf4j
 public class NotificationConsumerService {
 
-    private final EmailService emailService;
     private final UserCommonService userCommonService;
     private final BookingService bookingService;
+    private final KafkaProducerService kafkaProducerService;
 
     @RetryableTopic(
             attempts = "4",
             backoff = @Backoff(delay = 2000, multiplier = 2),
             dltTopicSuffix = "-booking-status-update-dlt"
     )
-    @KafkaListener(topics = "${app.kafka.topic.email-notification-topic}", groupId = "user-service-group")
+    @KafkaListener(topics = "${app.kafka.topic.email-notification-topic}", groupId = "user-service-group-v1")
     public void listenEmailVerification(@Payload BookingStatusUpdateDetail message) {
         if (message==null){
             log.error("Invalid message received in email notification topic: {}", message);
@@ -52,12 +51,12 @@ public class NotificationConsumerService {
             bookingService.updateBookingStatus(message.getTableBookingId(), message.getStatus());
         }
 
-        emailService.sendMail(
-                userDetail.getEmail(),
+        kafkaProducerService.sendBookingStatusNotification(userDetail.getEmail(),
                 "Booking Status Update",
                 message.getTemplateType(),
                 model
-        );
+                );
+
         log.info("Booking status update email sent to: {}", userDetail.getEmail());
     }
 

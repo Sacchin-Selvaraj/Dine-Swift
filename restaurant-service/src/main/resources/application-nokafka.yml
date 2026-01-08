@@ -44,14 +44,14 @@ spring:
     listener:
       auto-startup: false
 
-eureka:
-  instance:
-    hostname: ${EUREKA_HOSTNAME}
-  client:
-    service-url:
-      defaultZone: ${EUREKA_DEFAULT_ZONE}
-    register-with-eureka: true
-    fetch-registry: true
+#eureka:
+#  instance:
+#    hostname: ${EUREKA_HOSTNAME}
+#  client:
+#    service-url:
+#      defaultZone: ${EUREKA_DEFAULT_ZONE}
+#    register-with-eureka: true
+#    fetch-registry: true
 
 logging:
   level:

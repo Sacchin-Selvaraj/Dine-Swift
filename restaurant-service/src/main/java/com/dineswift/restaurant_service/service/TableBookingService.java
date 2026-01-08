@@ -292,7 +292,10 @@ public class TableBookingService {
 
         guestInformation.setCancellationTime(ZonedDateTime.now());
 
-        sendNotificationViaKafka(guestInformation.getUserId(), existingBooking.getBookingStatus().name(), existingBooking,true);
+        sendNotificationViaKafka(guestInformation.getUserId(),
+                existingBooking.getBookingStatus().name(),
+                existingBooking,
+                true);
 
         tableBookingRepository.save(existingBooking);
         log.info("Booking cancelled successfully with ID: {}", tableBookingId);

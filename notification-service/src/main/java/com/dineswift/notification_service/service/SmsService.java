@@ -1,12 +1,9 @@
-package com.dineswift.userservice.notification.service;
+package com.dineswift.notification_service.service;
 
-
-import com.dineswift.userservice.exception.UserException;
 import com.twilio.exception.ApiException;
 import com.twilio.rest.api.v2010.account.Message;
 import com.twilio.type.PhoneNumber;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.util.concurrent.CompletableFuture;
@@ -30,7 +27,7 @@ public class SmsService {
                     CompletableFuture.completedFuture(true) :
                     CompletableFuture.completedFuture(false);
         } catch (ApiException e) {
-            throw new UserException(e.getMessage());
+            throw new RuntimeException(e.getMessage());
         }
     }
 

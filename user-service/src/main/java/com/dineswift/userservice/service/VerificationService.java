@@ -41,6 +41,7 @@ public class VerificationService {
     public String updateEmail(EmailUpdateRequest emailUpdateRequest) {
 
         UUID userId=authService.getAuthenticatedUserId();
+
         if (userRepository.existsByEmail(emailUpdateRequest.getEmail())){
             throw new UserException("Email already registered by another user");
         }
@@ -54,7 +55,8 @@ public class VerificationService {
 
         verificationRepository.save(verificationToken);
 
-        kafkaService.sendEmailVerification(emailUpdateRequest.getEmail(),token,user.getUsername(),"email-verification").thenApply(status->{
+        kafkaService.sendEmailVerification(emailUpdateRequest.getEmail(),
+                token,user.getUsername(),"email-verification").thenApply(status->{
             if (!status){
                 verificationToken.setTokenStatus(TokenStatus.FAILED);
                 throw new NotificationException("Failed to send Email");

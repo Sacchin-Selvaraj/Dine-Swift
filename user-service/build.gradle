@@ -21,8 +21,8 @@ configurations {
 }
 
 repositories {
-	mavenCentral()
 	mavenLocal()
+	mavenCentral()
 }
 
 ext {
@@ -39,12 +39,11 @@ dependencies {
 	implementation 'org.apache.httpcomponents.client5:httpclient5:5.5.1'
 	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 	testImplementation 'org.springframework.boot:spring-boot-starter-data-redis-test'
-	implementation 'com.twilio.sdk:twilio:10.9.2'
 	implementation 'io.jsonwebtoken:jjwt-api:0.13.0'
 	implementation 'org.springframework.kafka:spring-kafka'
 	implementation 'com.dineswift:kafka.payloads:1.0.0'
-//	implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+//	implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
 //	runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
 //	implementation 'io.zipkin.reporter2:zipkin-reporter-brave'
 //	implementation 'io.micrometer:micrometer-tracing-bridge-brave'

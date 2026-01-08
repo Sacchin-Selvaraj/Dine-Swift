@@ -1,18 +1,16 @@
-package com.dineswift.userservice.kafka.service;
+package com.dineswift.notification_service.service;
 
 import com.dineswift.notification_service.model.EmailVerificationDetail;
 import com.dineswift.notification_service.model.SmsVerificationDetail;
-import com.dineswift.userservice.notification.service.EmailService;
-import com.dineswift.userservice.notification.service.SmsService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.annotation.RetryableTopic;
+import org.springframework.stereotype.Service;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.retry.annotation.Backoff;
-import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.Locale;
@@ -33,7 +31,7 @@ public class KafkaConsumerService {
             exclude = {RuntimeException.class},
             dltTopicSuffix = "-email-verification-dlt"
     )
-    @KafkaListener(topics = "${app.kafka.topic.email-verification-topic}", groupId = "user-service-group",
+    @KafkaListener(topics = "${app.kafka.topic.email-verification-topic}", groupId = "user-service-group-v1",
             containerFactory = "kafkaListenerContainerFactory")
     public void listenEmailVerification(@Payload EmailVerificationDetail message) {
 
@@ -51,7 +49,7 @@ public class KafkaConsumerService {
             modal.put("verificationCode", message.getToken());
             modal.put("expiryTime", 10);
 
-            emailService.sendMailThroughResend(
+            emailService.sendMail(
                     message.getEmail(),
                     "Verification Code from DineSwift",
                     message.getTemplateType(),
@@ -63,6 +61,23 @@ public class KafkaConsumerService {
         }
 
     }
+    @RetryableTopic(
+            attempts = "4",
+            backoff = @Backoff(delay = 2000, multiplier = 2),
+            dltTopicSuffix = "-sms-verification-dlt"
+    )
+    @KafkaListener(topics = "${app.kafka.topic.email-verification-topic}-email-verification-dlt",
+            groupId = "dlt-listener-group",
+            containerFactory = "kafkaListenerContainerFactory")
+    public void dltListenerEmailVerification(@Payload EmailVerificationDetail message,
+                                             @Header(value = KafkaHeaders.ORIGINAL_TOPIC,required = false) String originalTopic,
+                                             @Header(value = KafkaHeaders.ORIGINAL_PARTITION,required = false) Integer originalPartition,
+                                             @Header(value = KafkaHeaders.ORIGINAL_OFFSET,required = false) Long originalOffset
+    ) {
+        log.error("DLT reached for email verification message: {}", message);
+        log.error("Original Topics: {}, Partition: {}, Offset: {}", originalTopic, originalPartition, originalOffset);
+    }
+
     @RetryableTopic(
             attempts = "4",
             backoff = @Backoff(delay = 2000, multiplier = 2),
@@ -91,17 +106,6 @@ public class KafkaConsumerService {
         } catch (Exception e) {
             log.error("Error processing SMS verification message: {}", e.getMessage());
         }
-    }
-    @KafkaListener(topics = "${app.kafka.topic.email-verification-topic}-email-verification-dlt",
-            groupId = "dlt-listener-group",
-            containerFactory = "kafkaListenerContainerFactory")
-    public void dltListenerEmailVerification(@Payload EmailVerificationDetail message,
-                                             @Header(value = KafkaHeaders.ORIGINAL_TOPIC,required = false) String originalTopic,
-                                             @Header(value = KafkaHeaders.ORIGINAL_PARTITION,required = false) Integer originalPartition,
-                                             @Header(value = KafkaHeaders.ORIGINAL_OFFSET,required = false) Long originalOffset
-    ) {
-        log.error("DLT reached for email verification message: {}", message);
-        log.error("Original Topics: {}, Partition: {}, Offset: {}", originalTopic, originalPartition, originalOffset);
     }
 
     @KafkaListener(topics = "${app.kafka.topic.sms-verification-topic}-sms-verification-dlt",

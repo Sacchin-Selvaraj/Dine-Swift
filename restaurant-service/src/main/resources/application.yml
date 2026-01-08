@@ -62,14 +62,14 @@ google:
   api:
     key: ${GOOGLE_API_KEY}
 
-eureka:
-  instance:
-    hostname: ${EUREKA_HOSTNAME}
-  client:
-    service-url:
-      defaultZone: ${EUREKA_DEFAULT_ZONE}
-    register-with-eureka: true
-    fetch-registry: true
+#eureka:
+#  instance:
+#    hostname: ${EUREKA_HOSTNAME}
+#  client:
+#    service-url:
+#      defaultZone: ${EUREKA_DEFAULT_ZONE}
+#    register-with-eureka: true
+#    fetch-registry: true
 
 logging:
   level:

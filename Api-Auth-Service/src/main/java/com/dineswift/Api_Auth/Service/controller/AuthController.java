@@ -45,5 +45,4 @@ public class AuthController {
         MessageResponse messageResponse = new MessageResponse("User logged out successfully");
         return ResponseEntity.ok(messageResponse);
     }
-
 }

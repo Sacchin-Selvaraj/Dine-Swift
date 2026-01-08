@@ -1,28 +1,32 @@
-# ---------- Build Stage ----------
-FROM eclipse-temurin:21-jdk AS builder
-WORKDIR /app
+# Stage 1: Build Stage
+FROM gradle:8-jdk21 AS build
+WORKDIR /home/gradle
 
-# Copy only wrapper + build files first (cache optimization)
-COPY gradlew .
-COPY gradle gradle
-COPY build.gradle settings.gradle ./
+# 1. Copy the library sub-folder first
+# We copy it to its own directory in the container
+COPY --chown=gradle:gradle ./kafka-payloads /home/gradle/kafka-payloads
 
-RUN chmod +x gradlew
+# 2. Build and publish the library to the container's mavenLocal
+WORKDIR /home/gradle/kafka-payloads
 
-# Download dependencies
-RUN ./gradlew dependencies --no-daemon
+RUN gradle publishToMavenLocal --no-daemon
 
-# Copy source code
-COPY src src
+# 3. Build the Main Application
+# Switch back to a separate directory for the main app
+WORKDIR /home/gradle/app
+# Copy everything from the main project (including build.gradle and src)
+# The .dockerignore should ideally ignore the kafka-payloads folder here
+# to keep this layer clean, but it's not strictly required.
+COPY --chown=gradle:gradle . .
 
-# Build JAR
-RUN ./gradlew bootJar --no-daemon
+# Build the main service
+RUN gradle build -x test --no-daemon
 
-# ---------- Runtime Stage ----------
+# Stage 2: Lightweight Runtime
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
-
-COPY --from=builder /app/build/libs/*.jar app.jar
+# Copy the jar from the /home/gradle/app/build/libs path
+COPY --from=build /home/gradle/app/build/libs/*.jar app.jar
 
 EXPOSE 8080
-ENTRYPOINT ["java","-jar","app.jar"]
+ENTRYPOINT ["java", "-jar", "app.jar"]

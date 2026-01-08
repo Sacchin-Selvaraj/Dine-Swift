@@ -33,6 +33,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth-> auth.requestMatchers(
                                 "/restaurant/employee/login",
                                 "/restaurant/employee/sign-up",
+                                "/restaurant/employee/startup",
                                 "/restaurant/dish/search-dish/**",
                                 "/restaurant/dish/search-dish-restaurant/**",
                                 "/restaurant/menu/get-menu/**",

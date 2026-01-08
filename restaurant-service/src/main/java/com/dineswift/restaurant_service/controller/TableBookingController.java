@@ -120,7 +120,7 @@ public class TableBookingController {
     @PreAuthorize(("hasAnyRole('ROLE_ADMIN', 'ROLE_MANAGER','ROLE_CHEF', 'ROLE_WAITER')"))
     @PutMapping("/update-status/{tableBookingId}")
     public ResponseEntity<Void> updateBookingStatus(@PathVariable UUID tableBookingId,
-                                                               @RequestBody TableBookingStatusUpdateRequest statusUpdateRequest) {
+                                                    @RequestBody TableBookingStatusUpdateRequest statusUpdateRequest) {
 
         tableBookingService.updateBookingStatus(tableBookingId, statusUpdateRequest);
         log.info("Updated booking status successfully for bookingId: {}", tableBookingId);

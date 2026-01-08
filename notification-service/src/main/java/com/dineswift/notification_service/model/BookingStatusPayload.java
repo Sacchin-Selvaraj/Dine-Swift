@@ -1,12 +1,13 @@
 package com.dineswift.notification_service.model;
 
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 
 import java.util.Map;
 
 @Data
-@RequiredArgsConstructor
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 public class BookingStatusPayload {
 
     private String email;

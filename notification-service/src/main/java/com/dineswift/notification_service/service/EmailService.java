@@ -1,10 +1,5 @@
-package com.dineswift.userservice.notification.service;
+package com.dineswift.notification_service.service;
 
-import com.dineswift.userservice.exception.NotificationException;
-import com.resend.Resend;
-import com.resend.core.exception.ResendException;
-import com.resend.services.emails.model.CreateEmailOptions;
-import com.resend.services.emails.model.CreateEmailResponse;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.extern.slf4j.Slf4j;
@@ -33,74 +28,27 @@ public class EmailService {
     @Value("${spring.mail.username}")
     public String fromMail;
 
-    @Value("${resend.api-key}")
-    public String resendApiKey;
+    public void sendMail(String toMail, String subject,String templateType, Map<String, Object> model) {
 
-    public void sendMailThroughResend(String toMail,
-                                      String subject,
-                                      String templateType,
-                                      Map<String, Object> model){
-
-        log.info("Received request to send Email to: {}",toMail);
-
-        Resend resend = new Resend(resendApiKey);
-
-        Context context = new Context();
-        context.setVariables(model);
-        String htmlContent = templateEngine.process(templateType, context);
-
-        CreateEmailOptions params = CreateEmailOptions.builder()
-                .from(fromMail)
-                .to(toMail)
-                .text(htmlContent)
-                .subject(subject)
-                .build();
+        log.info("Received Request to send Mail");
 
         try {
-            CreateEmailResponse data = resend.emails().send(params);
-            System.out.println(data.getId());
-        } catch (ResendException e) {
-            throw new NotificationException("Failed to send Email through Resend: "+e.getMessage());
+            MimeMessage mimeMessage = javaMailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
+
+            Context context = new Context();
+            context.setVariables(model);
+            String htmlContent = templateEngine.process(templateType, context);
+
+            helper.setFrom(fromMail);
+            helper.setTo(toMail);
+            helper.setSubject(subject);
+            helper.setText(htmlContent, true);
+
+            javaMailSender.send(mimeMessage);
+
+        } catch (MessagingException e) {
+            throw new RuntimeException("Failed to Send Notification: "+e.getMessage());
         }
     }
-
-//    public void sendMail(String toMail, String subject,String templateType, Map<String, Object> model) {
-//
-//        try {
-//            MimeMessage mimeMessage = javaMailSender.createMimeMessage();
-//            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
-//
-//            Context context = new Context();
-//            context.setVariables(model);
-//            String htmlContent = templateEngine.process(templateType, context);
-//
-//            helper.setFrom(fromMail);
-//            helper.setTo(toMail);
-//            helper.setSubject(subject);
-//            helper.setText(htmlContent, true);
-//
-//            javaMailSender.send(mimeMessage);
-//
-//        } catch (MessagingException e) {
-//            throw new NotificationException("Failed to send email");
-//        }
-//    }
 }
-
-//Context context = new Context();
-//            context.setVariable("userName", userName);
-//            context.setVariable("companyName", companyName);
-//            context.setVariable("companyDomain", companyDomain);
-//            context.setVariable("verificationCode", verificationCode);
-//            context.setVariable("expiryTime", 30); // 30 minutes expiry
-//            context.setVariable("currentYear", LocalDate.now().getYear());
-
-
-// forgot-password
-//            context.setVariable("userName", userName);
-//            context.setVariable("companyName", companyName);
-//            context.setVariable("companyDomain", companyDomain);
-//            context.setVariable("resetLink", resetLink);
-//            context.setVariable("resetCode", resetCode);
-//            context.setVariable("expiryTime", expiryMinutes);
-//            context.setVariable("currentYear", LocalDate.now().getYear());

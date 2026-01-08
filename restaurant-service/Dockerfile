@@ -28,5 +28,6 @@ WORKDIR /app
 # Copy the jar from the /home/gradle/app/build/libs path
 COPY --from=build /home/gradle/app/build/libs/*.jar app.jar
 
-EXPOSE 8080
+EXPOSE 8081
+
 ENTRYPOINT ["java", "-jar", "app.jar"]

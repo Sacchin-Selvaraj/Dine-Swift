@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -172,21 +172,21 @@
 
     <!-- Content -->
     <div class="content">
-        <p class="welcome-text">Hello <strong>${userName}</strong>,</p>
+        <p class="welcome-text">Hello <strong th:text="${userName}"></strong>,</p>
         <p class="welcome-text">Thank you for registering. To complete your registration and verify your email address, please use the verification code below:</p>
 
         <!-- Verification Code -->
         <div class="verification-code">
             <p style="margin: 0 0 15px 0; color: #495057; font-weight: 500;">Your verification code is:</p>
-            <div class="code">${verificationCode}</div>
-            <p class="expiry-note">This code will expire in <strong>${expiryTime}</strong> minutes</p>
+            <div class="code" th:text="${verificationCode}"></div>
+            <p class="expiry-note">This code will expire in <strong th:text="${expiryTime}"></strong> minutes</p>
         </div>
 
         <!-- Instructions -->
         <div class="instructions">
             <h3>📋 How to use this code:</h3>
             <ol>
-                <li>Return to the ${companyName} application or website</li>
+                <li>Return to the Dine swift application or website</li>
                 <li>Navigate to the email verification page</li>
                 <li>Enter the verification code shown above</li>
                 <li>Click "Verify" to complete your registration</li>
@@ -195,20 +195,14 @@
 
         <p class="welcome-text">If you didn't create an account with us, please ignore this email or contact our support team if you have concerns.</p>
 
-        <!-- Optional: Verification Button -->
-         <div style="text-align: center;">
-            <a href="${verificationLink}" class="button">Verify Email Address</a>
-        </div>
     </div>
 
     <!-- Footer -->
     <div class="footer">
         <p class="support-text">Need help? We're here for you!</p>
-        <p class="contact-info">📧 Email: <a href="mailto:support@${companyDomain}" style="color: #495057; text-decoration: none;">support@${companyDomain}</a></p>
-        <p class="contact-info">🌐 Website: <a href="https://${companyDomain}" style="color: #495057; text-decoration: none;">${companyDomain}</a></p>
 
         <p class="copyright">
-            © ${currentYear} DineSwift. All rights reserved.<br>
+            © 2025 DineSwift. All rights reserved.<br>
             This is an automated message, please do not reply to this email.
         </p>
     </div>

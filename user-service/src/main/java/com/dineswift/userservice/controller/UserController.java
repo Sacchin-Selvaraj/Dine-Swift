@@ -25,12 +25,11 @@ public class UserController {
 
     private final UserService userService;
 
-    @GetMapping("/greet")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
-    public String greet(){
-        return "Hello World !!!";
+    @GetMapping("/startup")
+    public ResponseEntity<String> initialStartUp(){
+        log.info("Request to start the User Service");
+        return ResponseEntity.ok("User Service Started");
     }
-
 
     @PostMapping("/sign-up")
     public ResponseEntity<Void> signUpUser(@Valid @RequestBody UserRequest userRequest){

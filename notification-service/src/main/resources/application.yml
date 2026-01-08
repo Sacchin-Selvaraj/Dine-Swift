@@ -1,0 +1,30 @@
+app:
+  kafka:
+    topic:
+      email-verification-topic: email
+      sms-verification-topic: sms
+      email-notification-topic: email-notification
+      sms-notification-topic: sms-notification
+      booking-status: booking-status
+
+spring:
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
+
+    consumer:
+      group-id: user-service-group-v1
+      auto-commit-interval: 100
+      properties:
+        spring:
+          json:
+            trusted:
+              packages: '*'
+
+
+twilio:
+  account:
+    sid: ${TWILIO_ACCOUNT_SID}
+  auth:
+    token: ${TWILIO_AUTH_TOKEN}
+  phone:
+    number: ${TWILIO_PHONE_NUMBER}
